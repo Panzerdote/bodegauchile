@@ -68,11 +68,6 @@ const App = {
         if (busquedaMov) {
             busquedaMov.addEventListener('input', () => this.renderMovimientos());
         }
-        
-        const busquedaInv = document.getElementById('busqueda-inventario');
-        if (busquedaInv) {
-            busquedaInv.addEventListener('input', (e) => this.renderInventario(e.target.value));
-        }
 
         document.addEventListener('keydown', (e) => { 
             if (e.key === 'Escape') UI.closeModal(); 
@@ -253,7 +248,7 @@ const App = {
     },
 
     // ============================================
-    // INVENTARIO
+    // INVENTARIO (CON FILTROS POR CHECKBOX)
     // ============================================
     async showInventario() {
         UI.setActiveSection('inventario');
@@ -261,41 +256,87 @@ const App = {
         this.renderInventario();
     },
 
-    renderInventario(filtro = '') {
-        let items = this.state.inventario;
-        if (filtro) {
-            const f = filtro.toLowerCase();
-            items = items.filter(i => i.nombre?.toLowerCase().includes(f) || i.anaquel?.toLowerCase().includes(f) || i.seccion?.toLowerCase().includes(f));
-        }
+    renderInventario() {
+        const mostrarStockTotal = document.getElementById('filtro-stock-total')?.checked ?? true;
+        const mostrarStockCritico = document.getElementById('filtro-stock-critico')?.checked ?? false;
+        const mostrarPorVencer = document.getElementById('filtro-por-vencer')?.checked ?? false;
+        const mostrarVencidos = document.getElementById('filtro-vencidos')?.checked ?? false;
+        
+        const hoy = new Date();
+        const limite = new Date(hoy);
+        limite.setDate(limite.getDate() + (this.state.config.dias_vencimiento || 30));
+        
+        let items = [...this.state.inventario];
+        let filtrados = [];
+        
+        items.forEach(item => {
+            const esCritico = this.esStockCritico(item);
+            const venc = item.vencimiento ? new Date(item.vencimiento + 'T00:00:00') : null;
+            const vencido = venc && venc < hoy;
+            const vencePronto = venc && !vencido && venc <= limite;
+            const esNormal = !esCritico && !vencido && !vencePronto;
+            
+            let incluir = false;
+            
+            if (mostrarStockTotal && esNormal) incluir = true;
+            if (mostrarStockCritico && esCritico && !vencido) incluir = true;
+            if (mostrarPorVencer && vencePronto && !esCritico) incluir = true;
+            if (mostrarVencidos && vencido) incluir = true;
+            
+            if (esCritico && vencido) {
+                if (mostrarStockCritico || mostrarVencidos) incluir = true;
+            }
+            
+            if (incluir) filtrados.push(item);
+        });
+        
+        const contador = document.getElementById('contador-inventario');
+        if (contador) contador.textContent = filtrados.length;
+        
         const container = document.getElementById('tabla-inventario');
-        if (items.length === 0) {
-            container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.box}</div><p>Sin resultados.</p></div>`;
+        
+        if (filtrados.length === 0) {
+            container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.box}</div><p>Sin insumos que coincidan con los filtros seleccionados.</p></div>`;
             return;
         }
+        
         let html = '<table><thead><tr><th class="text-center">ID</th><th>Nombre</th><th class="text-center">Anaquel</th><th class="text-center">Stock</th><th class="text-center">Und.</th><th class="text-center">Lote</th><th class="text-center">Venc.</th><th class="text-center">Acc.</th></tr></thead><tbody>';
-        items.forEach(item => {
+        
+        filtrados.forEach(item => {
             const critico = this.esStockCritico(item);
-            const venc = item.vencimiento ? new Date(item.vencimiento) : null;
-            const vencido = venc && venc < new Date();
-            html += `<tr class="${critico ? 'stock-critical' : ''}">
+            const venc = item.vencimiento ? new Date(item.vencimiento + 'T00:00:00') : null;
+            const vencido = venc && venc < hoy;
+            const vencePronto = venc && !vencido && venc <= limite;
+            
+            let clase = '';
+            if (vencido) clase = 'stock-critical';
+            else if (critico) clase = 'stock-critical';
+            else if (vencePronto) clase = 'stock-warning';
+            
+            html += `<tr class="${clase}">
                 <td class="text-center">${item.id}</td>
                 <td><strong>${item.nombre}</strong></td>
                 <td class="text-center">${item.anaquel}</td>
                 <td class="text-center">${item.stock}</td>
                 <td class="text-center">${item.unidad || ''}</td>
                 <td class="text-center">${item.lote || '-'}</td>
-                <td class="text-center">${item.vencimiento || '-'} ${vencido ? '<span class="badge badge-danger">VENC</span>' : ''}</td>
+                <td class="text-center">
+                    ${item.vencimiento || '-'}
+                    ${vencido ? ' <span class="badge badge-danger">VENC</span>' : ''}
+                    ${vencePronto && !critico ? ' <span class="badge badge-warning">PRONT</span>' : ''}
+                </td>
                 <td class="text-center">
                     <button class="btn btn-warning btn-sm" onclick="App.editarInsumo(${item.id})" title="Editar">${UI.icons.edit}</button>
                     <button class="btn btn-danger btn-sm" onclick="App.eliminarInsumo(${item.id})" title="Eliminar">${UI.icons.trash}</button>
                 </td></tr>`;
         });
+        
         html += '</tbody></table>';
         container.innerHTML = html;
     },
 
     // ============================================
-    // MOVIMIENTOS (CON FILTRO FUNCIONAL - SIN ICONOS)
+    // MOVIMIENTOS (CON FILTRO FUNCIONAL)
     // ============================================
     async showMovimientos() {
         UI.setActiveSection('movimientos');
@@ -479,9 +520,6 @@ const App = {
         }, 100);
     },
 
-    // ============================================
-    // AUTOCOMPLETADO
-    // ============================================
     async buscarCoincidencias(tipo) {
         const input = document.getElementById(tipo === 'ing' ? 'ing-nombre' : 'sal-busqueda');
         const sugerencias = document.getElementById(tipo === 'ing' ? 'sugerencias-ing' : 'sugerencias-sal');
@@ -694,9 +732,6 @@ const App = {
         }
     },
 
-    // ============================================
-    // BÚSQUEDA POR ANAQUEL
-    // ============================================
     showBusquedaAnaquelModal() {
         const anaqueles = this.state.secciones.map(s => s.seccion + s.anaquel).sort();
         
@@ -739,9 +774,6 @@ const App = {
         container.innerHTML = html;
     },
 
-    // ============================================
-    // GESTIÓN DE SECCIONES Y UNIDADES (CON PESTAÑAS)
-    // ============================================
     showGestionSeccionesModal() {
         let html = '<h2>Configuración</h2>';
         
@@ -1086,9 +1118,6 @@ const App = {
         }
     },
 
-    // ============================================
-    // EDITAR INSUMO (CON TRAZABILIDAD)
-    // ============================================
     editarInsumo(id) {
         const item = this.state.inventario.find(i => i.id === id);
         if (!item) return;
@@ -1131,7 +1160,6 @@ const App = {
             UI.showToast('Complete los campos obligatorios (*)', 'error'); return;
         }
         
-        // Detectar cambios para la trazabilidad
         const cambios = [];
         if (updates.nombre !== item.nombre) cambios.push(`Nombre: "${item.nombre}" → "${updates.nombre}"`);
         if (updates.anaquel !== item.anaquel) cambios.push(`Anaquel: ${item.anaquel} → ${updates.anaquel}`);
@@ -1143,7 +1171,6 @@ const App = {
         try {
             await DB.updateInventarioItem(id, updates);
             
-            // Registrar movimiento de edición con detalles
             await DB.addMovimiento({
                 tipo: 'EDICION',
                 insumo: updates.nombre,
@@ -1171,7 +1198,6 @@ const App = {
         if (!confirm(`¿Eliminar "${item.nombre}" permanentemente?`)) return;
         
         try {
-            // Registrar movimiento antes de eliminar
             await DB.addMovimiento({
                 tipo: 'ELIMINACION',
                 insumo: item.nombre,
@@ -1193,9 +1219,6 @@ const App = {
         }
     },
 
-        // ============================================
-    // EXPORTAR A EXCEL
-    // ============================================
     exportarExcel() {
         const { inventario } = this.state;
         if (inventario.length === 0) { UI.showToast('No hay datos para exportar', 'warning'); return; }
