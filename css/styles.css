@@ -931,18 +931,55 @@ tr:nth-child(even) td {
     /* PÁGINA DE MOVIMIENTOS EN MÓVIL */
     /* ============================================ */
     #section-movimientos .section {
-        padding: 10px;
+        padding: 8px;
+    }
+
+    #section-movimientos .section > div:first-child {
+        flex-direction: column !important;
+        gap: 8px !important;
     }
 
     #filtro-tipo-movimiento {
-        width: 100%;
-        font-size: 14px;
-        padding: 10px;
+        width: 100% !important;
+        min-width: 100% !important;
+        font-size: 14px !important;
+        padding: 10px !important;
     }
 
     #busqueda-movimientos {
-        font-size: 14px;
-        padding: 10px;
+        width: 100% !important;
+        flex: none !important;
+        font-size: 14px !important;
+        padding: 10px !important;
+        margin-bottom: 0 !important;
+    }
+
+    #tabla-movimientos .table-container {
+        max-height: 55vh;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #tabla-movimientos table {
+        min-width: 700px;
+        font-size: 10px;
+    }
+
+    #tabla-movimientos th {
+        padding: 6px 4px;
+        font-size: 8px;
+        white-space: nowrap;
+    }
+
+    #tabla-movimientos td {
+        padding: 5px 4px;
+        font-size: 10px;
+        white-space: nowrap;
+    }
+
+    #tabla-movimientos .badge {
+        padding: 2px 5px;
+        font-size: 8px;
     }
 
     /* Toast */
