@@ -113,7 +113,6 @@ body {
     text-align: center;
 }
 
-/* CONTENEDOR DEL ESCUDO - TRANSPARENTE */
 .escudo-container {
     width: 70px;
     height: 100px;
@@ -293,7 +292,6 @@ body {
     gap: 15px;
 }
 
-/* HEADER MÓVIL - ESCUDO PEQUEÑO */
 .header-escudo-small {
     width: 28px;
     height: 42px;
@@ -375,7 +373,7 @@ body {
 }
 
 /* ============================================ */
-/* DASHBOARD CARDS - ESCRITORIO */
+/* DASHBOARD CARDS */
 /* ============================================ */
 .dashboard-cards {
     display: grid;
@@ -612,6 +610,7 @@ tr:nth-child(even) td {
     margin-bottom: 20px;
     color: var(--primary);
     padding-right: 40px;
+    font-size: 18px;
 }
 
 .modal-close {
@@ -797,6 +796,7 @@ tr:nth-child(even) td {
         font-size: 11px;
     }
 
+    /* Dashboard cards compactas */
     .dashboard-cards {
         grid-template-columns: repeat(5, 1fr);
         gap: 6px;
@@ -841,6 +841,7 @@ tr:nth-child(even) td {
         font-size: 14px;
     }
 
+    /* Tablas */
     .table-container {
         max-height: 350px;
     }
@@ -863,6 +864,7 @@ tr:nth-child(even) td {
         display: none;
     }
 
+    /* Formularios */
     .form-row {
         grid-template-columns: 1fr;
         gap: 0;
@@ -879,22 +881,33 @@ tr:nth-child(even) td {
         font-size: 16px;
     }
 
+    /* ============================================ */
+    /* MODAL ADAPTADO PARA MÓVIL */
+    /* ============================================ */
     .modal-content {
-        width: 95%;
-        margin: 10px auto;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
         padding: 15px;
-        max-height: 90vh;
+        max-height: 85vh;
         border-radius: 15px 15px 0 0;
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
         animation: slideUp 0.3s ease;
+        border-top: 4px solid var(--primary);
     }
 
     @keyframes slideUp {
         from { transform: translateY(100%); }
         to { transform: translateY(0); }
+    }
+
+    .modal-content h2 {
+        font-size: 16px;
+        margin-bottom: 15px;
+        padding-right: 35px;
     }
 
     .modal-close {
@@ -903,6 +916,7 @@ tr:nth-child(even) td {
         font-size: 20px;
     }
 
+    /* Form actions en columna */
     .form-actions {
         flex-direction: column;
         gap: 8px;
@@ -913,6 +927,25 @@ tr:nth-child(even) td {
         justify-content: center;
     }
 
+    /* ============================================ */
+    /* PÁGINA DE MOVIMIENTOS EN MÓVIL */
+    /* ============================================ */
+    #section-movimientos .section {
+        padding: 10px;
+    }
+
+    #filtro-tipo-movimiento {
+        width: 100%;
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    #busqueda-movimientos {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    /* Toast */
     .toast {
         bottom: 20px;
         right: 10px;
@@ -923,17 +956,29 @@ tr:nth-child(even) td {
         padding: 12px 15px;
     }
 
+    /* Badges más pequeños */
     .badge {
         padding: 2px 6px;
         font-size: 9px;
     }
 
+    /* Botones de acción en tablas */
     .btn-sm {
         padding: 4px 8px;
         font-size: 10px;
     }
+
+    /* Pestañas de configuración */
+    #tab-secciones,
+    #tab-unidades {
+        font-size: 11px;
+        padding: 8px 12px;
+    }
 }
 
+/* ============================================ */
+/* RESPONSIVE - MÓVIL PEQUEÑO */
+/* ============================================ */
 @media (max-width: 480px) {
     .dashboard-cards {
         grid-template-columns: repeat(5, 1fr);
@@ -959,5 +1004,22 @@ tr:nth-child(even) td {
     .header-actions .btn {
         padding: 5px 8px;
         font-size: 10px;
+    }
+
+    /* Modal aún más compacto */
+    .modal-content {
+        max-height: 80vh;
+        padding: 12px;
+    }
+
+    .modal-content h2 {
+        font-size: 15px;
+    }
+
+    /* Pestañas más compactas */
+    #tab-secciones,
+    #tab-unidades {
+        font-size: 10px;
+        padding: 6px 10px;
     }
 }
