@@ -213,10 +213,10 @@ const App = {
             movimientos.forEach(mov => {
                 const fecha = new Date(mov.fecha);
                 const color = this.getColorTipo(mov.tipo);
-                const icono = this.getIconoTipo(mov.tipo);
+                const tipoFormateado = this.formatearTipo(mov.tipo);
                 html += `<tr>
                     <td>${fecha.toLocaleString('es-CL')}</td>
-                    <td class="text-center"><span class="badge" style="background:${color};">${icono} ${mov.tipo}</span></td>
+                    <td class="text-center"><span class="badge" style="background:${color};">${tipoFormateado}</span></td>
                     <td>${mov.insumo || '-'}</td>
                     <td class="text-center">${mov.cantidad || '-'}</td>
                     <td class="text-center">${mov.stock_anterior !== null && mov.stock_anterior !== undefined ? mov.stock_anterior : '-'}</td>
@@ -295,7 +295,7 @@ const App = {
     },
 
     // ============================================
-    // MOVIMIENTOS (CON FILTRO FUNCIONAL)
+    // MOVIMIENTOS (CON FILTRO FUNCIONAL - SIN ICONOS)
     // ============================================
     async showMovimientos() {
         UI.setActiveSection('movimientos');
@@ -340,11 +340,11 @@ const App = {
         movs.forEach(mov => {
             const fecha = new Date(mov.fecha);
             const color = this.getColorTipo(mov.tipo);
-            const icono = this.getIconoTipo(mov.tipo);
+            const tipoFormateado = this.formatearTipo(mov.tipo);
             
             html += `<tr>
                 <td>${fecha.toLocaleString('es-CL')}</td>
-                <td class="text-center"><span class="badge" style="background:${color};">${icono} ${mov.tipo}</span></td>
+                <td class="text-center"><span class="badge" style="background:${color};">${tipoFormateado}</span></td>
                 <td>${mov.insumo || '-'}</td>
                 <td class="text-center">${mov.cantidad || '-'}</td>
                 <td class="text-center">${mov.stock_anterior !== null && mov.stock_anterior !== undefined ? mov.stock_anterior : '-'}</td>
@@ -371,18 +371,18 @@ const App = {
         return colores[tipo] || '#6c757d';
     },
 
-    getIconoTipo(tipo) {
-        const iconos = {
-            'INGRESO': '📥',
-            'SALIDA': '📤',
-            'EDICION': '✏️',
-            'ELIMINACION': '🗑️',
-            'CREACION_SECCION': '📁',
-            'ELIMINACION_SECCION': '🗑️',
-            'CREACION_UNIDAD': '📏',
-            'ELIMINACION_UNIDAD': '🗑️'
+    formatearTipo(tipo) {
+        const tipos = {
+            'INGRESO': 'Ingreso',
+            'SALIDA': 'Salida',
+            'EDICION': 'Edición',
+            'ELIMINACION': 'Eliminación',
+            'CREACION_SECCION': 'Creación Sección',
+            'ELIMINACION_SECCION': 'Eliminación Sección',
+            'CREACION_UNIDAD': 'Creación Unidad',
+            'ELIMINACION_UNIDAD': 'Eliminación Unidad'
         };
-        return iconos[tipo] || '📋';
+        return tipos[tipo] || tipo;
     },
 
     // ============================================
