@@ -55,8 +55,13 @@ const App = {
         document.getElementById('busqueda-inventario').addEventListener('input', (e) => this.renderInventario(e.target.value));
         document.getElementById('busqueda-movimientos').addEventListener('input', (e) => this.renderMovimientos(e.target.value));
 
-        document.getElementById('modal').addEventListener('click', (e) => { if (e.target === e.currentTarget) UI.closeModal(); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') UI.closeModal(); });
+        // CORRECCIÓN 2: NO cerrar modal al hacer clic fuera
+        // Eliminamos el evento de clic en el overlay
+        // Solo se cierra con el botón Cancelar o Escape
+        
+        document.addEventListener('keydown', (e) => { 
+            if (e.key === 'Escape') UI.closeModal(); 
+        });
     },
 
     // ============================================
@@ -242,10 +247,9 @@ const App = {
     },
 
     // ============================================
-    // MODAL DE INGRESO (CORREGIDO - Anaquel unificado)
+    // MODAL DE INGRESO
     // ============================================
     showIngresoModal() {
-        // Obtener todos los códigos de anaquel (A1, B2, etc.)
         const anaqueles = this.state.secciones
             .map(s => s.seccion + s.anaquel)
             .sort();
@@ -297,7 +301,7 @@ const App = {
 
     async procesarIngreso() {
         const nombre = document.getElementById('ing-nombre').value.trim();
-        const anaquel = document.getElementById('ing-anaquel').value; // Ya viene como "A1"
+        const anaquel = document.getElementById('ing-anaquel').value;
         const cantidad = parseInt(document.getElementById('ing-cantidad').value);
         const unidad = document.getElementById('ing-unidad').value.trim();
         const lote = document.getElementById('ing-lote').value.trim();
@@ -309,7 +313,6 @@ const App = {
             return;
         }
         
-        // Extraer sección del anaquel (primera letra)
         const seccion = anaquel.charAt(0);
         
         try {
@@ -324,29 +327,69 @@ const App = {
     },
 
     // ============================================
-    // MODAL DE SALIDA (CORREGIDO - Solo anaqueles del insumo)
+    // MODAL DE SALIDA (CORREGIDO - Con opción de filtrar por anaquel)
     // ============================================
     showSalidaModal() {
+        const anaqueles = this.state.secciones
+            .map(s => s.seccion + s.anaquel)
+            .sort();
+        
         const html = `
             <h2>📤 Salida de Insumo</h2>
+            
+            <!-- Opción 1: Filtrar por anaquel -->
             <div class="form-group">
-                <label>Buscar Insumo</label>
-                <input type="text" id="sal-busqueda" placeholder="Escriba el nombre del insumo..." onkeyup="App.buscarInsumoSalida()" autofocus>
+                <label>Filtrar por Anaquel</label>
+                <select id="sal-anaquel-filtro" onchange="App.filtrarPorAnaquelSalida()">
+                    <option value="">Todos los anaqueles</option>
+                    ${anaqueles.map(a => `<option value="${a}">${a}</option>`).join('')}
+                </select>
             </div>
-            <div id="resultados-busqueda"></div>
+            
+            <!-- Opción 2: Buscar por nombre -->
+            <div class="form-group">
+                <label>Buscar por Nombre</label>
+                <input type="text" id="sal-busqueda" placeholder="Escriba el nombre del insumo..." onkeyup="App.buscarInsumoSalida()">
+            </div>
+            
+            <div id="resultados-busqueda">
+                <p style="color:#666; padding:15px;">Seleccione un anaquel o escriba un nombre para buscar insumos.</p>
+            </div>
             <div class="form-actions">
                 <button class="btn btn-secondary" onclick="UI.closeModal()">Cancelar</button>
             </div>`;
         UI.openModal(html);
     },
 
+    filtrarPorAnaquelSalida() {
+        const anaquel = document.getElementById('sal-anaquel-filtro').value;
+        const busqueda = document.getElementById('sal-busqueda');
+        
+        // Limpiar búsqueda por texto si se selecciona anaquel
+        if (anaquel) {
+            busqueda.value = '';
+        }
+        
+        this.buscarInsumoSalida();
+    },
+
     buscarInsumoSalida() {
+        const anaquelFiltro = document.getElementById('sal-anaquel-filtro').value;
         const busqueda = document.getElementById('sal-busqueda').value.trim().toLowerCase();
         
-        // Buscar insumos con stock > 0 que coincidan
-        const resultados = this.state.inventario.filter(item => 
-            item.nombre.toLowerCase().includes(busqueda) && item.stock > 0
-        );
+        let resultados = this.state.inventario.filter(item => item.stock > 0);
+        
+        // Aplicar filtro por anaquel si está seleccionado
+        if (anaquelFiltro) {
+            resultados = resultados.filter(item => item.anaquel === anaquelFiltro);
+        }
+        
+        // Aplicar filtro por nombre si hay texto
+        if (busqueda) {
+            resultados = resultados.filter(item => 
+                item.nombre.toLowerCase().includes(busqueda)
+            );
+        }
         
         const container = document.getElementById('resultados-busqueda');
         
@@ -355,17 +398,19 @@ const App = {
             return;
         }
         
-        let html = '';
+        let html = '<div style="max-height:400px; overflow-y:auto;">';
         resultados.forEach(item => {
             html += `
                 <div style="border:1px solid #ddd; padding:12px; margin:5px 0; border-radius:5px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <strong>${item.nombre}</strong><br>
                         <small>Stock: ${item.stock} ${item.unidad || ''} | Anaquel: <span class="badge badge-info">${item.anaquel}</span></small>
+                        ${item.lote ? `<br><small>Lote: ${item.lote}</small>` : ''}
                     </div>
                     <button class="btn btn-danger btn-sm" onclick="App.prepararSalida(${item.id})">Retirar</button>
                 </div>`;
         });
+        html += '</div>';
         
         container.innerHTML = html;
     },
@@ -392,7 +437,7 @@ const App = {
                 <textarea id="sal-comentarios" placeholder="Ej: Uso en pabellón, cirugía..."></textarea>
             </div>
             <div class="form-actions">
-                <button class="btn btn-secondary" onclick="App.showSalidaModal()">← Volver a buscar</button>
+                <button class="btn btn-secondary" onclick="App.showSalidaModal()">← Volver</button>
                 <button class="btn btn-danger" onclick="App.procesarSalida(${id})">✅ Confirmar Retiro</button>
             </div>`;
         UI.openModal(html);
@@ -573,7 +618,7 @@ const App = {
     },
 
     // ============================================
-    // EDITAR INSUMO
+    // EDITAR INSUMO (CORREGIDO - Registra movimiento al modificar stock)
     // ============================================
     editarInsumo(id) {
         const item = this.state.inventario.find(i => i.id === id);
@@ -597,7 +642,7 @@ const App = {
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Stock *</label>
+                    <label>Stock Actual: ${item.stock}</label>
                     <input type="number" id="edit-stock" value="${item.stock}" min="0">
                 </div>
                 <div class="form-group">
@@ -627,27 +672,50 @@ const App = {
     },
 
     async procesarEdicion(id) {
+        const item = this.state.inventario.find(i => i.id === id);
+        if (!item) return;
+        
         const anaquel = document.getElementById('edit-anaquel').value;
         const seccion = anaquel.charAt(0);
+        const nuevoStock = parseInt(document.getElementById('edit-stock').value);
+        const stockAnterior = item.stock;
         
         const updates = {
             nombre: document.getElementById('edit-nombre').value.trim(),
             seccion: seccion,
             anaquel: anaquel,
-            stock: parseInt(document.getElementById('edit-stock').value),
+            stock: nuevoStock,
             unidad: document.getElementById('edit-unidad').value.trim(),
             lote: document.getElementById('edit-lote').value.trim(),
             vencimiento: document.getElementById('edit-vencimiento').value || null,
             comentarios: document.getElementById('edit-comentarios').value.trim()
         };
         
-        if (!updates.nombre || !anaquel || isNaN(updates.stock) || updates.stock < 0) {
+        if (!updates.nombre || !anaquel || isNaN(nuevoStock) || nuevoStock < 0) {
             UI.showToast('Complete los campos obligatorios (*)', 'error');
             return;
         }
         
         try {
             await DB.updateInventarioItem(id, updates);
+            
+            // CORRECCIÓN 1: Registrar movimiento si cambió el stock
+            if (nuevoStock !== stockAnterior) {
+                const tipo = nuevoStock > stockAnterior ? 'INGRESO' : 'SALIDA';
+                const diferencia = Math.abs(nuevoStock - stockAnterior);
+                
+                await DB.addMovimiento({
+                    tipo: tipo,
+                    insumo: updates.nombre,
+                    cantidad: diferencia,
+                    stock_anterior: stockAnterior,
+                    stock_nuevo: nuevoStock,
+                    anaquel: anaquel,
+                    comentarios: 'Stock modificado manualmente',
+                    usuario: 'web'
+                });
+            }
+            
             UI.closeModal();
             UI.showToast('✅ Insumo actualizado!', 'success');
             await this.loadAllData();
