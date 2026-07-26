@@ -9,6 +9,10 @@ const App = {
         try {
             UI.setConnectionStatus('🟡', 'Conectando...');
             if (typeof supabaseClient === 'undefined') throw new Error('Cliente de Supabase no inicializado');
+            
+            // Configurar menú móvil
+            UI.setupMobileMenu();
+            
             await this.loadAllData();
             this.setupEventListeners();
             this.showDashboard();
@@ -491,13 +495,12 @@ const App = {
     },
 
     // ============================================
-    // GESTIÓN DE SECCIONES (COMPLETAMENTE NUEVA)
+    // GESTIÓN DE SECCIONES
     // ============================================
     showGestionSeccionesModal() {
         let html = '<h2>⚙ Gestionar Secciones y Anaqueles</h2>';
         html += '<p style="font-size:12px;color:#666;margin-bottom:15px;">Primero cree una <strong>Sección</strong> (categoría con descripción), luego agregue <strong>Anaqueles</strong> (numeración) dentro de ella.</p>';
         
-        // Agrupar secciones
         const seccionesAgrupadas = {};
         this.state.secciones.forEach(s => {
             if (!seccionesAgrupadas[s.seccion]) {
@@ -545,7 +548,6 @@ const App = {
             html += '</div>';
         }
         
-        // Crear nueva sección
         html += `
             <h3 style="margin-top:25px; padding-top:20px; border-top:2px solid #eee;">➕ Crear Nueva Sección</h3>
             <p style="font-size:12px;color:#666;margin-bottom:12px;">Cree una nueva categoría para organizar sus insumos.</p>
@@ -589,7 +591,6 @@ const App = {
             return;
         }
         
-        // Verificar que la letra no exista ya
         const existeLetra = this.state.secciones.some(s => s.seccion === letra);
         if (existeLetra) {
             UI.showToast('La sección ' + letra + ' ya existe. Puede agregar anaqueles a ella desde la lista.', 'error');
@@ -784,7 +785,6 @@ const App = {
         try {
             await DB.updateInventarioItem(id, updates);
             
-            // Registrar movimiento si cambió el stock
             if (nuevoStock !== stockAnterior) {
                 const tipo = nuevoStock > stockAnterior ? 'INGRESO' : 'SALIDA';
                 const diferencia = Math.abs(nuevoStock - stockAnterior);
