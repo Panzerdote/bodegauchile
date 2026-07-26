@@ -78,7 +78,6 @@ const App = {
         const { inventario, secciones, config } = this.state;
         
         document.getElementById('total-insumos').textContent = inventario.length;
-        document.getElementById('total-badge').textContent = inventario.length;
         document.getElementById('stock-total').textContent = inventario.reduce((s, i) => s + (i.stock || 0), 0);
         document.getElementById('secciones-activas').textContent = [...new Set(secciones.map(s => s.seccion))].length;
         
@@ -88,11 +87,28 @@ const App = {
         const hoy = new Date();
         const limite = new Date(hoy);
         limite.setDate(limite.getDate() + (config.dias_vencimiento || 30));
-        document.getElementById('vencimientos-proximos').textContent = inventario.filter(item => {
+        
+        const porVencer = inventario.filter(item => {
             if (!item.vencimiento) return false;
-            const v = new Date(item.vencimiento);
+            const v = new Date(item.vencimiento + 'T00:00:00');
             return v >= hoy && v <= limite;
         }).length;
+        
+        document.getElementById('vencimientos-proximos').textContent = porVencer;
+        
+        // Actualizar badge del menú con total de alertas
+        const criticosIds = new Set(criticos.map(i => i.id));
+        const totalAlertas = criticos.length + inventario.filter(i => {
+            if (!i.vencimiento || criticosIds.has(i.id)) return false;
+            const v = new Date(i.vencimiento + 'T00:00:00');
+            return v >= hoy && v <= limite;
+        }).length;
+        
+        const badge = document.getElementById('total-badge');
+        if (badge) {
+            badge.textContent = inventario.length;
+            badge.style.display = 'inline-block';
+        }
 
         this.renderAlertas(criticos);
         this.renderUltimosMovimientos();
@@ -110,21 +126,69 @@ const App = {
 
     renderAlertas(criticos) {
         const container = document.getElementById('alertas-stock');
-        if (criticos.length === 0) {
-            container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.check}</div><p>No hay insumos con stock crítico.</p></div>`;
+        const { inventario, config } = this.state;
+        
+        // Obtener insumos próximos a vencer
+        const hoy = new Date();
+        const limite = new Date(hoy);
+        limite.setDate(limite.getDate() + (config.dias_vencimiento || 30));
+        
+        const porVencer = inventario.filter(item => {
+            if (!item.vencimiento) return false;
+            const venc = new Date(item.vencimiento + 'T00:00:00');
+            return venc >= hoy && venc <= limite;
+        });
+        
+        // Combinar críticos y por vencer (sin duplicados)
+        const criticosIds = new Set(criticos.map(i => i.id));
+        const porVencerFiltrados = porVencer.filter(i => !criticosIds.has(i.id));
+        
+        const totalAlertas = criticos.length + porVencerFiltrados.length;
+        
+        if (totalAlertas === 0) {
+            container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.check}</div><p>No hay alertas. Todos los insumos están al día.</p></div>`;
             return;
         }
-        let html = '<div class="table-container"><table><thead><tr><th>Insumo</th><th>Stock</th><th>Anaquel</th><th>Vencimiento</th><th>Estado</th></tr></thead><tbody>';
+        
+        let html = '<div class="table-container"><table><thead><tr><th>Insumo</th><th class="text-center">Stock</th><th class="text-center">Anaquel</th><th class="text-center">Vencimiento</th><th class="text-center">Tipo Alerta</th></tr></thead><tbody>';
+        
+        // Primero los críticos (con o sin vencimiento)
         criticos.forEach(item => {
-            const venc = item.vencimiento ? new Date(item.vencimiento) : null;
-            const vencido = venc && venc < new Date();
-            html += `<tr class="${vencido ? 'stock-critical' : 'stock-warning'}">
+            const venc = item.vencimiento ? new Date(item.vencimiento + 'T00:00:00') : null;
+            const vencido = venc && venc < hoy;
+            const vencePronto = venc && !vencido && venc <= limite;
+            
+            let tipoAlerta = '';
+            if (vencido && vencePronto) {
+                tipoAlerta = '<span class="badge badge-danger">VENCIDO</span> <span class="badge badge-danger">STOCK CRÍTICO</span> <span class="badge badge-warning">POR VENCER</span>';
+            } else if (vencido) {
+                tipoAlerta = '<span class="badge badge-danger">VENCIDO</span> <span class="badge badge-danger">STOCK CRÍTICO</span>';
+            } else if (vencePronto) {
+                tipoAlerta = '<span class="badge badge-danger">STOCK CRÍTICO</span> <span class="badge badge-warning">POR VENCER</span>';
+            } else {
+                tipoAlerta = '<span class="badge badge-danger">STOCK CRÍTICO</span>';
+            }
+            
+            html += `<tr class="stock-critical">
                 <td><strong>${item.nombre}</strong></td>
                 <td class="text-center">${item.stock} ${item.unidad || ''}</td>
                 <td class="text-center">${item.anaquel}</td>
                 <td class="text-center">${item.vencimiento || 'N/A'}</td>
-                <td class="text-center">${vencido ? '<span class="badge badge-danger">VENCIDO</span>' : '<span class="badge badge-warning">CRÍTICO</span>'}</td></tr>`;
+                <td class="text-center">${tipoAlerta}</td></tr>`;
         });
+        
+        // Luego los que solo están por vencer
+        porVencerFiltrados.forEach(item => {
+            const diasRestantes = Math.ceil((new Date(item.vencimiento + 'T00:00:00') - hoy) / (1000 * 60 * 60 * 24));
+            
+            html += `<tr class="stock-warning">
+                <td><strong>${item.nombre}</strong></td>
+                <td class="text-center">${item.stock} ${item.unidad || ''}</td>
+                <td class="text-center">${item.anaquel}</td>
+                <td class="text-center">${item.vencimiento || 'N/A'} <small style="color:#856404;">(${diasRestantes} días)</small></td>
+                <td class="text-center"><span class="badge badge-warning">POR VENCER</span></td></tr>`;
+        });
+        
         html += '</tbody></table></div>';
         container.innerHTML = html;
     },
@@ -138,7 +202,7 @@ const App = {
                 container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.list}</div><p>Sin movimientos registrados.</p></div>`;
                 return;
             }
-            let html = '<div class="table-container"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Insumo</th><th class="text-center">Cant.</th><th class="text-center">Stock Ant.</th><th class="text-center">Stock Nuevo</th><th class="text-center">Anaquel</th></tr></thead><tbody>';
+            let html = '<div class="table-container"><table><thead><tr><th>Fecha</th><th class="text-center">Tipo</th><th>Insumo</th><th class="text-center">Cant.</th><th class="text-center">Stock Ant.</th><th class="text-center">Stock Nuevo</th><th class="text-center">Anaquel</th></tr></thead><tbody>';
             movimientos.forEach(mov => {
                 const fecha = new Date(mov.fecha);
                 const color = mov.tipo === 'INGRESO' ? '#27ae60' : '#c0392b';
@@ -360,7 +424,7 @@ const App = {
     },
 
     // ============================================
-    // AUTOCOMPLETADO GENÉRICO
+    // AUTOCOMPLETADO
     // ============================================
     async buscarCoincidencias(tipo) {
         const input = document.getElementById(tipo === 'ing' ? 'ing-nombre' : 'sal-busqueda');
@@ -416,7 +480,6 @@ const App = {
             return;
         }
         
-        // Buscar en inventario local (insumos con stock)
         let resultados = this.state.inventario.filter(item => 
             item.stock > 0 && item.nombre.toLowerCase().includes(busqueda)
         );
@@ -425,7 +488,6 @@ const App = {
             resultados = resultados.filter(item => item.anaquel === anaquelFiltro);
         }
         
-        // Eliminar duplicados
         const unicos = [];
         const nombres = new Set();
         resultados.forEach(item => {
