@@ -961,8 +961,10 @@ tr:nth-child(even) td {
     }
 
     #tabla-movimientos table {
-        min-width: 700px;
+        width: 100%;
+        min-width: auto;
         font-size: 10px;
+        table-layout: auto;
     }
 
     #tabla-movimientos th {
@@ -973,8 +975,16 @@ tr:nth-child(even) td {
 
     #tabla-movimientos td {
         padding: 5px 4px;
-        font-size: 10px;
+        font-size: 9px;
         white-space: nowrap;
+    }
+
+    /* Ocultar columnas Stock Anterior y Stock Nuevo en móvil */
+    #tabla-movimientos th:nth-child(5),
+    #tabla-movimientos td:nth-child(5),
+    #tabla-movimientos th:nth-child(6),
+    #tabla-movimientos td:nth-child(6) {
+        display: none;
     }
 
     #tabla-movimientos .badge {
