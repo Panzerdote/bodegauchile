@@ -193,6 +193,73 @@ const DB = {
     },
 
     // ============================================
+    // UNIDADES DE MEDIDA
+    // ============================================
+    async getUnidadesMedida() {
+        const { data, error } = await supabaseClient
+            .from('unidades_medida')
+            .select('*')
+            .order('nombre');
+        
+        if (error) {
+            console.error('Error al obtener unidades:', error);
+            throw error;
+        }
+        return data || [];
+    },
+
+    async addUnidadMedida(nombre) {
+        const { data, error } = await supabaseClient
+            .from('unidades_medida')
+            .insert([{ nombre }])
+            .select();
+        
+        if (error) {
+            if (error.code === '23505') {
+                throw new Error('La unidad "' + nombre + '" ya existe');
+            }
+            throw error;
+        }
+        return data[0];
+    },
+
+    async deleteUnidadMedida(id) {
+        const { error } = await supabaseClient
+            .from('unidades_medida')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        return true;
+    },
+
+    // ============================================
+    // BÚSQUEDA DE INSUMOS (AUTOCOMPLETADO)
+    // ============================================
+    async buscarInsumosNombre(busqueda) {
+        const { data, error } = await supabaseClient
+            .from('inventario')
+            .select('nombre, unidad')
+            .ilike('nombre', `%${busqueda}%`)
+            .order('nombre')
+            .limit(10);
+        
+        if (error) throw error;
+        
+        // Eliminar duplicados
+        const unicos = [];
+        const nombres = new Set();
+        (data || []).forEach(item => {
+            if (!nombres.has(item.nombre.toLowerCase())) {
+                nombres.add(item.nombre.toLowerCase());
+                unicos.push(item);
+            }
+        });
+        
+        return unicos;
+    },
+
+    // ============================================
     // OPERACIONES COMBINADAS
     // ============================================
     async procesarIngreso(nombre, seccion, anaquel, cantidad, unidad, lote, vencimiento, comentarios) {
