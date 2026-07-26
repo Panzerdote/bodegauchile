@@ -55,10 +55,6 @@ const App = {
         document.getElementById('busqueda-inventario').addEventListener('input', (e) => this.renderInventario(e.target.value));
         document.getElementById('busqueda-movimientos').addEventListener('input', (e) => this.renderMovimientos(e.target.value));
 
-        // CORRECCIÓN 2: NO cerrar modal al hacer clic fuera
-        // Eliminamos el evento de clic en el overlay
-        // Solo se cierra con el botón Cancelar o Escape
-        
         document.addEventListener('keydown', (e) => { 
             if (e.key === 'Escape') UI.closeModal(); 
         });
@@ -327,7 +323,7 @@ const App = {
     },
 
     // ============================================
-    // MODAL DE SALIDA (CORREGIDO - Con opción de filtrar por anaquel)
+    // MODAL DE SALIDA
     // ============================================
     showSalidaModal() {
         const anaqueles = this.state.secciones
@@ -337,7 +333,6 @@ const App = {
         const html = `
             <h2>📤 Salida de Insumo</h2>
             
-            <!-- Opción 1: Filtrar por anaquel -->
             <div class="form-group">
                 <label>Filtrar por Anaquel</label>
                 <select id="sal-anaquel-filtro" onchange="App.filtrarPorAnaquelSalida()">
@@ -346,7 +341,6 @@ const App = {
                 </select>
             </div>
             
-            <!-- Opción 2: Buscar por nombre -->
             <div class="form-group">
                 <label>Buscar por Nombre</label>
                 <input type="text" id="sal-busqueda" placeholder="Escriba el nombre del insumo..." onkeyup="App.buscarInsumoSalida()">
@@ -364,12 +358,7 @@ const App = {
     filtrarPorAnaquelSalida() {
         const anaquel = document.getElementById('sal-anaquel-filtro').value;
         const busqueda = document.getElementById('sal-busqueda');
-        
-        // Limpiar búsqueda por texto si se selecciona anaquel
-        if (anaquel) {
-            busqueda.value = '';
-        }
-        
+        if (anaquel) busqueda.value = '';
         this.buscarInsumoSalida();
     },
 
@@ -378,18 +367,8 @@ const App = {
         const busqueda = document.getElementById('sal-busqueda').value.trim().toLowerCase();
         
         let resultados = this.state.inventario.filter(item => item.stock > 0);
-        
-        // Aplicar filtro por anaquel si está seleccionado
-        if (anaquelFiltro) {
-            resultados = resultados.filter(item => item.anaquel === anaquelFiltro);
-        }
-        
-        // Aplicar filtro por nombre si hay texto
-        if (busqueda) {
-            resultados = resultados.filter(item => 
-                item.nombre.toLowerCase().includes(busqueda)
-            );
-        }
+        if (anaquelFiltro) resultados = resultados.filter(item => item.anaquel === anaquelFiltro);
+        if (busqueda) resultados = resultados.filter(item => item.nombre.toLowerCase().includes(busqueda));
         
         const container = document.getElementById('resultados-busqueda');
         
@@ -411,7 +390,6 @@ const App = {
                 </div>`;
         });
         html += '</div>';
-        
         container.innerHTML = html;
     },
 
@@ -446,20 +424,13 @@ const App = {
     async procesarSalida(id) {
         const cantidad = parseInt(document.getElementById('sal-cantidad').value);
         const comentarios = document.getElementById('sal-comentarios').value.trim();
-        
-        if (!cantidad || cantidad <= 0) {
-            UI.showToast('Cantidad inválida', 'error');
-            return;
-        }
-        
+        if (!cantidad || cantidad <= 0) { UI.showToast('Cantidad inválida', 'error'); return; }
         try {
             const result = await DB.procesarSalida(id, cantidad, comentarios);
             UI.closeModal();
-            
             let msg = '✅ Salida registrada!';
             if (result.stockNuevo <= 5) msg += ' ⚠ Stock bajo!';
             UI.showToast(msg, result.stockNuevo <= 5 ? 'warning' : 'success');
-            
             await this.loadAllData();
             this.renderDashboard();
         } catch (error) {
@@ -569,7 +540,10 @@ const App = {
             <p style="font-size:11px;color:#666;margin-bottom:10px;">
                 Ejemplo: Sección <strong>A</strong> + Anaquel <strong>1</strong> = <span class="badge badge-info">A1</span>
             </p>
-            <button class="btn btn-success" onclick="App.agregarSeccion()">➕ Agregar Anaquel</button>`;
+            <button class="btn btn-success" onclick="App.agregarSeccion()">➕ Agregar Anaquel</button>
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="UI.closeModal()">Cerrar</button>
+            </div>`;
         UI.openModal(html);
     },
 
@@ -578,15 +552,8 @@ const App = {
         const anaquel = document.getElementById('nuevo-anaquel').value.trim();
         const descripcion = document.getElementById('nueva-descripcion').value.trim();
         
-        if (!seccion || !anaquel) {
-            UI.showToast('Complete sección y anaquel', 'error');
-            return;
-        }
-        
-        if (!/^[A-Z]$/.test(seccion)) {
-            UI.showToast('La sección debe ser una sola letra (A-Z)', 'error');
-            return;
-        }
+        if (!seccion || !anaquel) { UI.showToast('Complete sección y anaquel', 'error'); return; }
+        if (!/^[A-Z]$/.test(seccion)) { UI.showToast('La sección debe ser una sola letra (A-Z)', 'error'); return; }
         
         const codigo = seccion + anaquel;
         if (this.state.secciones.find(s => s.seccion + s.anaquel === codigo)) {
@@ -618,7 +585,7 @@ const App = {
     },
 
     // ============================================
-    // EDITAR INSUMO (CORREGIDO - Registra movimiento al modificar stock)
+    // EDITAR INSUMO
     // ============================================
     editarInsumo(id) {
         const item = this.state.inventario.find(i => i.id === id);
@@ -642,7 +609,7 @@ const App = {
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Stock Actual: ${item.stock}</label>
+                    <label>Stock (Actual: ${item.stock})</label>
                     <input type="number" id="edit-stock" value="${item.stock}" min="0">
                 </div>
                 <div class="form-group">
@@ -699,7 +666,7 @@ const App = {
         try {
             await DB.updateInventarioItem(id, updates);
             
-            // CORRECCIÓN 1: Registrar movimiento si cambió el stock
+            // Registrar movimiento si cambió el stock
             if (nuevoStock !== stockAnterior) {
                 const tipo = nuevoStock > stockAnterior ? 'INGRESO' : 'SALIDA';
                 const diferencia = Math.abs(nuevoStock - stockAnterior);
