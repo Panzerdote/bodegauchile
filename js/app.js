@@ -27,7 +27,7 @@ const App = {
 
     async loadAllData() {
         const [inventario, secciones, unidades, config, movimientos] = await Promise.all([
-            DB.getInventario(), DB.getSecciones(), DB.getUnidadesMedida(), DB.getConfig(), DB.getMovimientos(500)
+            DB.getInventario(), DB.getSecciones(), DB.getUnidadesMedida(), DB.getConfig(), DB.getTodosMovimientos()
         ]);
         this.state.inventario = inventario || [];
         this.state.secciones = secciones || [];
@@ -59,8 +59,20 @@ const App = {
             else if (e.target.closest('#header-btn-buscar')) this.showBusquedaAnaquelModal();
         });
 
-        document.getElementById('busqueda-inventario').addEventListener('input', (e) => this.renderInventario(e.target.value));
-        document.getElementById('busqueda-movimientos').addEventListener('input', (e) => this.renderMovimientos(e.target.value));
+        const filtroTipo = document.getElementById('filtro-tipo-movimiento');
+        if (filtroTipo) {
+            filtroTipo.addEventListener('change', () => this.renderMovimientos());
+        }
+        
+        const busquedaMov = document.getElementById('busqueda-movimientos');
+        if (busquedaMov) {
+            busquedaMov.addEventListener('input', () => this.renderMovimientos());
+        }
+        
+        const busquedaInv = document.getElementById('busqueda-inventario');
+        if (busquedaInv) {
+            busquedaInv.addEventListener('input', (e) => this.renderInventario(e.target.value));
+        }
 
         document.addEventListener('keydown', (e) => { 
             if (e.key === 'Escape') UI.closeModal(); 
@@ -102,29 +114,24 @@ const App = {
     },
 
     esStockCritico(item) {
-        // Si no hay stock, siempre es crítico
         if (!item.stock || item.stock === 0) return true;
         
-        // Buscar el stock máximo histórico de este insumo específico en los movimientos
         const movimientosInsumo = this.state.movimientos.filter(m => 
             m.insumo && item.nombre && 
             m.insumo.toLowerCase() === item.nombre.toLowerCase() && 
             m.anaquel === item.anaquel
         );
         
-        // Si hay movimientos, usar el máximo stock alcanzado históricamente
         let stockMax = item.stock;
         if (movimientosInsumo.length > 0) {
             const maximos = movimientosInsumo.map(m => m.stock_nuevo || 0);
             stockMax = Math.max(...maximos, item.stock);
         }
         
-        // Si no hay movimientos y el stock es muy bajo (5 o menos), considerarlo crítico
         if (movimientosInsumo.length === 0 && item.stock <= 5) {
             return true;
         }
         
-        // Calcular porcentaje respecto al máximo histórico
         if (stockMax === 0) return false;
         const porcentaje = (item.stock / stockMax) * 100;
         return porcentaje <= this.state.config.porcentaje_critico;
@@ -134,7 +141,6 @@ const App = {
         const container = document.getElementById('alertas-stock');
         const { inventario, config } = this.state;
         
-        // Obtener insumos próximos a vencer
         const hoy = new Date();
         const limite = new Date(hoy);
         limite.setDate(limite.getDate() + (config.dias_vencimiento || 30));
@@ -145,7 +151,6 @@ const App = {
             return venc >= hoy && venc <= limite;
         });
         
-        // Combinar críticos y por vencer (sin duplicados)
         const criticosIds = new Set(criticos.map(i => i.id));
         const porVencerFiltrados = porVencer.filter(i => !criticosIds.has(i.id));
         
@@ -158,7 +163,6 @@ const App = {
         
         let html = '<div class="table-container"><table><thead><tr><th>Insumo</th><th class="text-center">Stock</th><th class="text-center">Anaquel</th><th class="text-center">Vencimiento</th><th class="text-center">Tipo Alerta</th></tr></thead><tbody>';
         
-        // Primero los críticos
         criticos.forEach(item => {
             const venc = item.vencimiento ? new Date(item.vencimiento + 'T00:00:00') : null;
             const vencido = venc && venc < hoy;
@@ -181,7 +185,6 @@ const App = {
                 <td class="text-center">${tipoAlerta}</td></tr>`;
         });
         
-        // Luego los que solo están por vencer
         porVencerFiltrados.forEach(item => {
             const diasRestantes = Math.ceil((new Date(item.vencimiento + 'T00:00:00') - hoy) / (1000 * 60 * 60 * 24));
             
@@ -209,14 +212,15 @@ const App = {
             let html = '<div class="table-container"><table><thead><tr><th>Fecha</th><th class="text-center">Tipo</th><th>Insumo</th><th class="text-center">Cant.</th><th class="text-center">Stock Ant.</th><th class="text-center">Stock Nuevo</th><th class="text-center">Anaquel</th></tr></thead><tbody>';
             movimientos.forEach(mov => {
                 const fecha = new Date(mov.fecha);
-                const color = mov.tipo === 'INGRESO' ? '#27ae60' : '#c0392b';
+                const color = this.getColorTipo(mov.tipo);
+                const icono = this.getIconoTipo(mov.tipo);
                 html += `<tr>
                     <td>${fecha.toLocaleString('es-CL')}</td>
-                    <td class="text-center"><span class="badge" style="background:${color};">${mov.tipo}</span></td>
-                    <td>${mov.insumo}</td>
-                    <td class="text-center">${mov.cantidad}</td>
-                    <td class="text-center">${mov.stock_anterior || '-'}</td>
-                    <td class="text-center">${mov.stock_nuevo || '-'}</td>
+                    <td class="text-center"><span class="badge" style="background:${color};">${icono} ${mov.tipo}</span></td>
+                    <td>${mov.insumo || '-'}</td>
+                    <td class="text-center">${mov.cantidad || '-'}</td>
+                    <td class="text-center">${mov.stock_anterior !== null && mov.stock_anterior !== undefined ? mov.stock_anterior : '-'}</td>
+                    <td class="text-center">${mov.stock_nuevo !== null && mov.stock_nuevo !== undefined ? mov.stock_nuevo : '-'}</td>
                     <td class="text-center">${mov.anaquel || '-'}</td></tr>`;
             });
             html += '</tbody></table></div>';
@@ -291,46 +295,94 @@ const App = {
     },
 
     // ============================================
-    // MOVIMIENTOS
+    // MOVIMIENTOS (CON FILTRO FUNCIONAL)
     // ============================================
     async showMovimientos() {
         UI.setActiveSection('movimientos');
         const container = document.getElementById('tabla-movimientos');
         UI.showLoading('tabla-movimientos');
         try {
-            const movimientos = await DB.getMovimientos(100);
-            this.renderMovimientos('', movimientos);
+            await this.loadAllData();
+            this.renderMovimientos();
         } catch (e) {
             container.innerHTML = '<div class="empty-state"><p>Error al cargar.</p></div>';
         }
     },
 
-    renderMovimientos(filtro = '', data = null) {
-        let movs = data || [];
-        if (filtro && data) {
-            const f = filtro.toLowerCase();
-            movs = movs.filter(m => m.insumo?.toLowerCase().includes(f) || m.tipo?.toLowerCase().includes(f));
+    renderMovimientos() {
+        const filtroTexto = document.getElementById('busqueda-movimientos')?.value?.trim().toLowerCase() || '';
+        const filtroTipo = document.getElementById('filtro-tipo-movimiento')?.value || 'TODOS';
+        
+        let movs = [...this.state.movimientos];
+        
+        if (filtroTipo !== 'TODOS') {
+            movs = movs.filter(m => m.tipo === filtroTipo);
         }
+        
+        if (filtroTexto) {
+            movs = movs.filter(m => 
+                (m.insumo && m.insumo.toLowerCase().includes(filtroTexto)) ||
+                (m.anaquel && m.anaquel.toLowerCase().includes(filtroTexto)) ||
+                (m.comentarios && m.comentarios.toLowerCase().includes(filtroTexto)) ||
+                (m.tipo && m.tipo.toLowerCase().includes(filtroTexto))
+            );
+        }
+        
         const container = document.getElementById('tabla-movimientos');
+        
         if (movs.length === 0) {
-            container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.list}</div><p>Sin movimientos.</p></div>`;
+            container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.list}</div><p>Sin movimientos que coincidan con el filtro.</p></div>`;
             return;
         }
-        let html = '<table><thead><tr><th>Fecha</th><th class="text-center">Tipo</th><th>Insumo</th><th class="text-center">Cant.</th><th class="text-center">Stock Ant.</th><th class="text-center">Stock Nuevo</th><th class="text-center">Anaquel</th></tr></thead><tbody>';
+        
+        let html = '<div class="table-container"><table><thead><tr><th>Fecha</th><th class="text-center">Tipo</th><th>Insumo / Detalle</th><th class="text-center">Cant.</th><th class="text-center">Stock Ant.</th><th class="text-center">Stock Nuevo</th><th class="text-center">Anaquel</th><th>Comentarios</th></tr></thead><tbody>';
+        
         movs.forEach(mov => {
             const fecha = new Date(mov.fecha);
-            const color = mov.tipo === 'INGRESO' ? '#27ae60' : '#c0392b';
+            const color = this.getColorTipo(mov.tipo);
+            const icono = this.getIconoTipo(mov.tipo);
+            
             html += `<tr>
                 <td>${fecha.toLocaleString('es-CL')}</td>
-                <td class="text-center"><span class="badge" style="background:${color};">${mov.tipo}</span></td>
-                <td>${mov.insumo}</td>
-                <td class="text-center">${mov.cantidad}</td>
-                <td class="text-center">${mov.stock_anterior || '-'}</td>
-                <td class="text-center">${mov.stock_nuevo || '-'}</td>
-                <td class="text-center">${mov.anaquel || '-'}</td></tr>`;
+                <td class="text-center"><span class="badge" style="background:${color};">${icono} ${mov.tipo}</span></td>
+                <td>${mov.insumo || '-'}</td>
+                <td class="text-center">${mov.cantidad || '-'}</td>
+                <td class="text-center">${mov.stock_anterior !== null && mov.stock_anterior !== undefined ? mov.stock_anterior : '-'}</td>
+                <td class="text-center">${mov.stock_nuevo !== null && mov.stock_nuevo !== undefined ? mov.stock_nuevo : '-'}</td>
+                <td class="text-center">${mov.anaquel || '-'}</td>
+                <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${mov.comentarios || ''}">${mov.comentarios || ''}</td></tr>`;
         });
-        html += '</tbody></table>';
+        
+        html += '</tbody></table></div>';
         container.innerHTML = html;
+    },
+
+    getColorTipo(tipo) {
+        const colores = {
+            'INGRESO': '#27ae60',
+            'SALIDA': '#c0392b',
+            'EDICION': '#2980b9',
+            'ELIMINACION': '#e74c3c',
+            'CREACION_SECCION': '#8e44ad',
+            'ELIMINACION_SECCION': '#c0392b',
+            'CREACION_UNIDAD': '#16a085',
+            'ELIMINACION_UNIDAD': '#e67e22'
+        };
+        return colores[tipo] || '#6c757d';
+    },
+
+    getIconoTipo(tipo) {
+        const iconos = {
+            'INGRESO': '📥',
+            'SALIDA': '📤',
+            'EDICION': '✏️',
+            'ELIMINACION': '🗑️',
+            'CREACION_SECCION': '📁',
+            'ELIMINACION_SECCION': '🗑️',
+            'CREACION_UNIDAD': '📏',
+            'ELIMINACION_UNIDAD': '🗑️'
+        };
+        return iconos[tipo] || '📋';
     },
 
     // ============================================
@@ -804,6 +856,15 @@ const App = {
         
         try {
             await DB.addUnidadMedida(nombre);
+            
+            await DB.addMovimiento({
+                tipo: 'CREACION_UNIDAD',
+                insumo: `Unidad: ${nombre}`,
+                cantidad: 0,
+                comentarios: `Unidad de medida "${nombre}" creada`,
+                usuario: 'web'
+            });
+            
             await this.loadAllData();
             this.mostrarContenidoUnidades();
             UI.showToast('Unidad "' + nombre + '" agregada', 'success');
@@ -818,6 +879,14 @@ const App = {
         if (!confirm('¿Eliminar la unidad "' + unidad.nombre + '"?')) return;
         
         try {
+            await DB.addMovimiento({
+                tipo: 'ELIMINACION_UNIDAD',
+                insumo: `Unidad: ${unidad.nombre}`,
+                cantidad: 0,
+                comentarios: `Unidad de medida "${unidad.nombre}" eliminada`,
+                usuario: 'web'
+            });
+            
             await DB.deleteUnidadMedida(id);
             await this.loadAllData();
             this.mostrarContenidoUnidades();
@@ -865,6 +934,15 @@ const App = {
             for (let i = 1; i <= cantidad; i++) {
                 await DB.addSeccion(letra, descripcion, String(i));
             }
+            
+            await DB.addMovimiento({
+                tipo: 'CREACION_SECCION',
+                insumo: `Sección ${letra}`,
+                cantidad: cantidad,
+                anaquel: `${letra}1${cantidad > 1 ? ' al ' + letra + cantidad : ''}`,
+                comentarios: `Sección creada: ${letra} - ${descripcion}. ${cantidad} anaquel(es)`,
+                usuario: 'web'
+            });
             
             await this.loadAllData();
             this.mostrarContenidoSecciones();
@@ -935,6 +1013,16 @@ const App = {
                 await DB.addSeccion(seccion, descripcion, String(numeroInicial + i));
             }
             
+            const ultimoNumero = numeroInicial + cantidad - 1;
+            await DB.addMovimiento({
+                tipo: 'CREACION_SECCION',
+                insumo: `Sección ${seccion}`,
+                cantidad: cantidad,
+                anaquel: `${seccion}${numeroInicial}${cantidad > 1 ? ' al ' + seccion + ultimoNumero : ''}`,
+                comentarios: `${cantidad} anaquel(es) agregado(s) a Sección ${seccion}`,
+                usuario: 'web'
+            });
+            
             await this.loadAllData();
             this.mostrarContenidoSecciones();
             this.renderDashboard();
@@ -955,6 +1043,15 @@ const App = {
         const item = this.state.secciones.find(s => s.seccion === seccion && s.anaquel === anaquel);
         if (!item) return;
         try {
+            await DB.addMovimiento({
+                tipo: 'ELIMINACION_SECCION',
+                insumo: `Anaquel ${codigo}`,
+                cantidad: 0,
+                anaquel: codigo,
+                comentarios: `Anaquel ${codigo} eliminado de Sección ${seccion}`,
+                usuario: 'web'
+            });
+            
             await DB.deleteSeccion(item.id);
             await this.loadAllData();
             this.mostrarContenidoSecciones();
@@ -970,6 +1067,15 @@ const App = {
         if (!confirm('¿ESTÁ COMPLETAMENTE SEGURO?')) return;
         const items = this.state.secciones.filter(s => s.seccion === seccion);
         try {
+            await DB.addMovimiento({
+                tipo: 'ELIMINACION_SECCION',
+                insumo: `Sección ${seccion} (completa)`,
+                cantidad: items.length,
+                anaquel: seccion,
+                comentarios: `Sección ${seccion} eliminada con ${items.length} anaquel(es)`,
+                usuario: 'web'
+            });
+            
             for (const item of items) { await DB.deleteSeccion(item.id); }
             await this.loadAllData();
             this.mostrarContenidoSecciones();
@@ -981,7 +1087,7 @@ const App = {
     },
 
     // ============================================
-    // EDITAR INSUMO
+    // EDITAR INSUMO (CON TRAZABILIDAD)
     // ============================================
     editarInsumo(id) {
         const item = this.state.inventario.find(i => i.id === id);
@@ -1025,18 +1131,29 @@ const App = {
             UI.showToast('Complete los campos obligatorios (*)', 'error'); return;
         }
         
+        // Detectar cambios para la trazabilidad
+        const cambios = [];
+        if (updates.nombre !== item.nombre) cambios.push(`Nombre: "${item.nombre}" → "${updates.nombre}"`);
+        if (updates.anaquel !== item.anaquel) cambios.push(`Anaquel: ${item.anaquel} → ${updates.anaquel}`);
+        if (nuevoStock !== stockAnterior) cambios.push(`Stock: ${stockAnterior} → ${nuevoStock}`);
+        if (updates.unidad !== item.unidad) cambios.push(`Unidad: "${item.unidad || 'N/A'}" → "${updates.unidad || 'N/A'}"`);
+        if (updates.lote !== item.lote) cambios.push(`Lote: "${item.lote || 'N/A'}" → "${updates.lote || 'N/A'}"`);
+        if (updates.vencimiento !== item.vencimiento) cambios.push(`Venc.: "${item.vencimiento || 'N/A'}" → "${updates.vencimiento || 'N/A'}"`);
+        
         try {
             await DB.updateInventarioItem(id, updates);
             
-            if (nuevoStock !== stockAnterior) {
-                const tipo = nuevoStock > stockAnterior ? 'INGRESO' : 'SALIDA';
-                const diferencia = Math.abs(nuevoStock - stockAnterior);
-                await DB.addMovimiento({
-                    tipo: tipo, insumo: updates.nombre, cantidad: diferencia,
-                    stock_anterior: stockAnterior, stock_nuevo: nuevoStock, anaquel: anaquel,
-                    comentarios: 'Stock modificado manualmente', usuario: 'web'
-                });
-            }
+            // Registrar movimiento de edición con detalles
+            await DB.addMovimiento({
+                tipo: 'EDICION',
+                insumo: updates.nombre,
+                cantidad: nuevoStock !== stockAnterior ? Math.abs(nuevoStock - stockAnterior) : 0,
+                stock_anterior: stockAnterior,
+                stock_nuevo: nuevoStock,
+                anaquel: anaquel,
+                comentarios: cambios.length > 0 ? 'Cambios: ' + cambios.join(' | ') : 'Sin cambios detectados',
+                usuario: 'web'
+            });
             
             UI.closeModal();
             UI.showToast('Insumo actualizado', 'success');
@@ -1049,8 +1166,23 @@ const App = {
     },
 
     async eliminarInsumo(id) {
-        if (!confirm('¿Eliminar este insumo permanentemente?')) return;
+        const item = this.state.inventario.find(i => i.id === id);
+        if (!item) return;
+        if (!confirm(`¿Eliminar "${item.nombre}" permanentemente?`)) return;
+        
         try {
+            // Registrar movimiento antes de eliminar
+            await DB.addMovimiento({
+                tipo: 'ELIMINACION',
+                insumo: item.nombre,
+                cantidad: 0,
+                stock_anterior: item.stock,
+                stock_nuevo: 0,
+                anaquel: item.anaquel,
+                comentarios: `Insumo eliminado. Stock final: ${item.stock} ${item.unidad || ''}. Lote: ${item.lote || 'N/A'}`,
+                usuario: 'web'
+            });
+            
             await DB.deleteInventarioItem(id);
             UI.showToast('Insumo eliminado', 'success');
             await this.loadAllData();
