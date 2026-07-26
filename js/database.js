@@ -152,15 +152,29 @@ const DB = {
         return data || [];
     },
 
+    async getTodosMovimientos() {
+        const { data, error } = await supabaseClient
+            .from('movimientos')
+            .select('*')
+            .order('fecha', { ascending: false })
+            .limit(1000);
+        
+        if (error) {
+            console.error('Error al obtener movimientos:', error);
+            throw error;
+        }
+        return data || [];
+    },
+
     async addMovimiento(movimiento) {
         const { data, error } = await supabaseClient
             .from('movimientos')
             .insert([{
                 tipo: movimiento.tipo,
                 insumo: movimiento.insumo,
-                cantidad: movimiento.cantidad,
-                stock_anterior: movimiento.stock_anterior || 0,
-                stock_nuevo: movimiento.stock_nuevo || 0,
+                cantidad: movimiento.cantidad || 0,
+                stock_anterior: movimiento.stock_anterior !== undefined ? movimiento.stock_anterior : null,
+                stock_nuevo: movimiento.stock_nuevo !== undefined ? movimiento.stock_nuevo : null,
                 anaquel: movimiento.anaquel || null,
                 comentarios: movimiento.comentarios || null,
                 usuario: movimiento.usuario || 'web'
@@ -246,7 +260,6 @@ const DB = {
         
         if (error) throw error;
         
-        // Eliminar duplicados
         const unicos = [];
         const nombres = new Set();
         (data || []).forEach(item => {
