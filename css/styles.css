@@ -1072,3 +1072,32 @@ tr:nth-child(even) td {
         padding: 6px 10px;
     }
 }
+/* ============================================ */
+/* CHECKBOXES DE FILTRO */
+/* ============================================ */
+#section-inventario input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+#section-inventario label {
+    padding: 6px 10px;
+    border-radius: 5px;
+    transition: var(--transition);
+    background: #f8f9fa;
+    border: 1px solid var(--border);
+}
+
+#section-inventario label:hover {
+    background: #eef2f7;
+    border-color: var(--primary);
+}
+
+#section-inventario label:has(input:checked) {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    font-weight: 600;
+}
