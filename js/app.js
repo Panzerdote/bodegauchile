@@ -119,9 +119,11 @@ const App = {
             const venc = item.vencimiento ? new Date(item.vencimiento) : null;
             const vencido = venc && venc < new Date();
             html += `<tr class="${vencido ? 'stock-critical' : 'stock-warning'}">
-                <td><strong>${item.nombre}</strong></td><td>${item.stock} ${item.unidad || ''}</td>
-                <td>${item.anaquel}</td><td>${item.vencimiento || 'N/A'}</td>
-                <td>${vencido ? '<span class="badge badge-danger">VENCIDO</span>' : '<span class="badge badge-warning">CRÍTICO</span>'}</td></tr>`;
+                <td><strong>${item.nombre}</strong></td>
+                <td class="text-center">${item.stock} ${item.unidad || ''}</td>
+                <td class="text-center">${item.anaquel}</td>
+                <td class="text-center">${item.vencimiento || 'N/A'}</td>
+                <td class="text-center">${vencido ? '<span class="badge badge-danger">VENCIDO</span>' : '<span class="badge badge-warning">CRÍTICO</span>'}</td></tr>`;
         });
         html += '</tbody></table></div>';
         container.innerHTML = html;
@@ -136,15 +138,18 @@ const App = {
                 container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.list}</div><p>Sin movimientos registrados.</p></div>`;
                 return;
             }
-            let html = '<div class="table-container"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Insumo</th><th>Cant.</th><th>Stock Ant.</th><th>Stock Nuevo</th><th>Anaquel</th></tr></thead><tbody>';
+            let html = '<div class="table-container"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Insumo</th><th class="text-center">Cant.</th><th class="text-center">Stock Ant.</th><th class="text-center">Stock Nuevo</th><th class="text-center">Anaquel</th></tr></thead><tbody>';
             movimientos.forEach(mov => {
                 const fecha = new Date(mov.fecha);
                 const color = mov.tipo === 'INGRESO' ? '#27ae60' : '#c0392b';
-                html += `<tr><td>${fecha.toLocaleString('es-CL')}</td>
-                    <td><span class="badge" style="background:${color};">${mov.tipo}</span></td>
-                    <td>${mov.insumo}</td><td>${mov.cantidad}</td>
-                    <td>${mov.stock_anterior || '-'}</td><td>${mov.stock_nuevo || '-'}</td>
-                    <td>${mov.anaquel || '-'}</td></tr>`;
+                html += `<tr>
+                    <td>${fecha.toLocaleString('es-CL')}</td>
+                    <td class="text-center"><span class="badge" style="background:${color};">${mov.tipo}</span></td>
+                    <td>${mov.insumo}</td>
+                    <td class="text-center">${mov.cantidad}</td>
+                    <td class="text-center">${mov.stock_anterior || '-'}</td>
+                    <td class="text-center">${mov.stock_nuevo || '-'}</td>
+                    <td class="text-center">${mov.anaquel || '-'}</td></tr>`;
             });
             html += '</tbody></table></div>';
             container.innerHTML = html;
@@ -160,12 +165,16 @@ const App = {
             container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.box}</div><p>Sin insumos registrados.</p></div>`;
             return;
         }
-        let html = '<div class="table-container"><table><thead><tr><th>Insumo</th><th>Anaquel</th><th>Stock</th><th>Und.</th><th>Lote</th><th>Venc.</th></tr></thead><tbody>';
+        let html = '<div class="table-container"><table><thead><tr><th>Insumo</th><th class="text-center">Anaquel</th><th class="text-center">Stock</th><th class="text-center">Und.</th><th class="text-center">Lote</th><th class="text-center">Venc.</th></tr></thead><tbody>';
         items.forEach(item => {
             const clase = this.esStockCritico(item) ? 'stock-critical' : '';
-            html += `<tr class="${clase}"><td><strong>${item.nombre}</strong></td>
-                <td>${item.anaquel}</td><td>${item.stock}</td><td>${item.unidad || ''}</td>
-                <td>${item.lote || '-'}</td><td>${item.vencimiento || '-'}</td></tr>`;
+            html += `<tr class="${clase}">
+                <td><strong>${item.nombre}</strong></td>
+                <td class="text-center">${item.anaquel}</td>
+                <td class="text-center">${item.stock}</td>
+                <td class="text-center">${item.unidad || ''}</td>
+                <td class="text-center">${item.lote || '-'}</td>
+                <td class="text-center">${item.vencimiento || '-'}</td></tr>`;
         });
         html += '</tbody></table></div>';
         container.innerHTML = html;
@@ -191,16 +200,20 @@ const App = {
             container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.box}</div><p>Sin resultados.</p></div>`;
             return;
         }
-        let html = '<table><thead><tr><th>ID</th><th>Nombre</th><th>Anaquel</th><th>Stock</th><th>Und.</th><th>Lote</th><th>Venc.</th><th>Acc.</th></tr></thead><tbody>';
+        let html = '<table><thead><tr><th class="text-center">ID</th><th>Nombre</th><th class="text-center">Anaquel</th><th class="text-center">Stock</th><th class="text-center">Und.</th><th class="text-center">Lote</th><th class="text-center">Venc.</th><th class="text-center">Acc.</th></tr></thead><tbody>';
         items.forEach(item => {
             const critico = this.esStockCritico(item);
             const venc = item.vencimiento ? new Date(item.vencimiento) : null;
             const vencido = venc && venc < new Date();
             html += `<tr class="${critico ? 'stock-critical' : ''}">
-                <td>${item.id}</td><td><strong>${item.nombre}</strong></td>
-                <td>${item.anaquel}</td><td>${item.stock}</td><td>${item.unidad || ''}</td>
-                <td>${item.lote || '-'}</td><td>${item.vencimiento || '-'} ${vencido ? '<span class="badge badge-danger">VENC</span>' : ''}</td>
-                <td>
+                <td class="text-center">${item.id}</td>
+                <td><strong>${item.nombre}</strong></td>
+                <td class="text-center">${item.anaquel}</td>
+                <td class="text-center">${item.stock}</td>
+                <td class="text-center">${item.unidad || ''}</td>
+                <td class="text-center">${item.lote || '-'}</td>
+                <td class="text-center">${item.vencimiento || '-'} ${vencido ? '<span class="badge badge-danger">VENC</span>' : ''}</td>
+                <td class="text-center">
                     <button class="btn btn-warning btn-sm" onclick="App.editarInsumo(${item.id})" title="Editar">${UI.icons.edit}</button>
                     <button class="btn btn-danger btn-sm" onclick="App.eliminarInsumo(${item.id})" title="Eliminar">${UI.icons.trash}</button>
                 </td></tr>`;
@@ -235,15 +248,18 @@ const App = {
             container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.list}</div><p>Sin movimientos.</p></div>`;
             return;
         }
-        let html = '<table><thead><tr><th>Fecha</th><th>Tipo</th><th>Insumo</th><th>Cant.</th><th>Stock Ant.</th><th>Stock Nuevo</th><th>Anaquel</th></tr></thead><tbody>';
+        let html = '<table><thead><tr><th>Fecha</th><th class="text-center">Tipo</th><th>Insumo</th><th class="text-center">Cant.</th><th class="text-center">Stock Ant.</th><th class="text-center">Stock Nuevo</th><th class="text-center">Anaquel</th></tr></thead><tbody>';
         movs.forEach(mov => {
             const fecha = new Date(mov.fecha);
             const color = mov.tipo === 'INGRESO' ? '#27ae60' : '#c0392b';
-            html += `<tr><td>${fecha.toLocaleString('es-CL')}</td>
-                <td><span class="badge" style="background:${color};">${mov.tipo}</span></td>
-                <td>${mov.insumo}</td><td>${mov.cantidad}</td>
-                <td>${mov.stock_anterior || '-'}</td><td>${mov.stock_nuevo || '-'}</td>
-                <td>${mov.anaquel || '-'}</td></tr>`;
+            html += `<tr>
+                <td>${fecha.toLocaleString('es-CL')}</td>
+                <td class="text-center"><span class="badge" style="background:${color};">${mov.tipo}</span></td>
+                <td>${mov.insumo}</td>
+                <td class="text-center">${mov.cantidad}</td>
+                <td class="text-center">${mov.stock_anterior || '-'}</td>
+                <td class="text-center">${mov.stock_nuevo || '-'}</td>
+                <td class="text-center">${mov.anaquel || '-'}</td></tr>`;
         });
         html += '</tbody></table>';
         container.innerHTML = html;
@@ -260,8 +276,8 @@ const App = {
             <h2>Nuevo Ingreso</h2>
             <div class="form-group" style="position:relative;">
                 <label>Nombre del Insumo *</label>
-                <input type="text" id="ing-nombre" placeholder="Escriba el nombre..." autofocus autocomplete="off" onkeyup="App.buscarCoincidencias()" onfocus="App.buscarCoincidencias()">
-                <div id="sugerencias-insumos" style="position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; border-radius:0 0 5px 5px; max-height:200px; overflow-y:auto; z-index:100; display:none; box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div>
+                <input type="text" id="ing-nombre" placeholder="Escriba el nombre..." autofocus autocomplete="off" onkeyup="App.buscarCoincidencias('ing')" onfocus="App.buscarCoincidencias('ing')">
+                <div id="sugerencias-ing" style="position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; border-radius:0 0 5px 5px; max-height:200px; overflow-y:auto; z-index:100; display:none; box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div>
             </div>
             <div class="form-group">
                 <label>Anaquel *</label>
@@ -295,11 +311,10 @@ const App = {
             </div>`;
         UI.openModal(html);
         
-        // Cerrar sugerencias al hacer clic fuera
         setTimeout(() => {
-            document.addEventListener('click', function cerrarSugerencias(e) {
+            document.addEventListener('click', function cerrarSugerenciasIng(e) {
                 const input = document.getElementById('ing-nombre');
-                const sugerencias = document.getElementById('sugerencias-insumos');
+                const sugerencias = document.getElementById('sugerencias-ing');
                 if (input && sugerencias && e.target !== input && !sugerencias.contains(e.target)) {
                     sugerencias.style.display = 'none';
                 }
@@ -307,9 +322,49 @@ const App = {
         }, 100);
     },
 
-    async buscarCoincidencias() {
-        const input = document.getElementById('ing-nombre');
-        const sugerencias = document.getElementById('sugerencias-insumos');
+    // ============================================
+    // MODAL DE SALIDA (CON AUTOCOMPLETADO)
+    // ============================================
+    showSalidaModal() {
+        const anaqueles = this.state.secciones.map(s => s.seccion + s.anaquel).sort();
+        
+        const html = `
+            <h2>Nueva Salida</h2>
+            <div class="form-group">
+                <label>Filtrar por Anaquel</label>
+                <select id="sal-anaquel-filtro" onchange="App.filtrarPorAnaquelSalida()">
+                    <option value="">Todos los anaqueles</option>
+                    ${anaqueles.map(a => `<option value="${a}">${a}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group" style="position:relative;">
+                <label>Buscar por Nombre</label>
+                <input type="text" id="sal-busqueda" placeholder="Escriba el nombre del insumo..." autocomplete="off" onkeyup="App.buscarCoincidenciasSalida()" onfocus="App.buscarCoincidenciasSalida()">
+                <div id="sugerencias-sal" style="position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; border-radius:0 0 5px 5px; max-height:200px; overflow-y:auto; z-index:100; display:none; box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div>
+            </div>
+            <div id="resultados-busqueda">
+                <p style="color:#666; padding:15px;">Seleccione un anaquel o escriba un nombre para buscar insumos.</p>
+            </div>
+            <div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">Cancelar</button></div>`;
+        UI.openModal(html);
+        
+        setTimeout(() => {
+            document.addEventListener('click', function cerrarSugerenciasSal(e) {
+                const input = document.getElementById('sal-busqueda');
+                const sugerencias = document.getElementById('sugerencias-sal');
+                if (input && sugerencias && e.target !== input && !sugerencias.contains(e.target)) {
+                    sugerencias.style.display = 'none';
+                }
+            });
+        }, 100);
+    },
+
+    // ============================================
+    // AUTOCOMPLETADO GENÉRICO
+    // ============================================
+    async buscarCoincidencias(tipo) {
+        const input = document.getElementById(tipo === 'ing' ? 'ing-nombre' : 'sal-busqueda');
+        const sugerencias = document.getElementById(tipo === 'ing' ? 'sugerencias-ing' : 'sugerencias-sal');
         if (!input || !sugerencias) return;
         
         const busqueda = input.value.trim();
@@ -329,7 +384,10 @@ const App = {
             
             let html = '';
             resultados.forEach(item => {
-                html += `<div onclick="App.seleccionarSugerencia('${item.nombre.replace(/'/g, "\\'")}', '${(item.unidad || '').replace(/'/g, "\\'")}')" 
+                const nombreEscapado = item.nombre.replace(/'/g, "\\'");
+                const unidadEscapada = (item.unidad || '').replace(/'/g, "\\'");
+                
+                html += `<div onclick="App.seleccionarSugerencia('${tipo}', '${nombreEscapado}', '${unidadEscapada}')" 
                     style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #eee; font-size:13px;"
                     onmouseover="this.style.background='#eef2f7'" onmouseout="this.style.background='white'">
                     <strong>${item.nombre}</strong>
@@ -344,18 +402,82 @@ const App = {
         }
     },
 
-    seleccionarSugerencia(nombre, unidad) {
-        document.getElementById('ing-nombre').value = nombre;
-        if (unidad) {
-            const selectUnidad = document.getElementById('ing-unidad');
-            for (let i = 0; i < selectUnidad.options.length; i++) {
-                if (selectUnidad.options[i].value === unidad) {
-                    selectUnidad.selectedIndex = i;
-                    break;
+    buscarCoincidenciasSalida() {
+        const anaquelFiltro = document.getElementById('sal-anaquel-filtro').value;
+        const input = document.getElementById('sal-busqueda');
+        const sugerencias = document.getElementById('sugerencias-sal');
+        if (!input || !sugerencias) return;
+        
+        const busqueda = input.value.trim().toLowerCase();
+        
+        if (busqueda.length < 1) {
+            sugerencias.style.display = 'none';
+            this.buscarInsumoSalida();
+            return;
+        }
+        
+        // Buscar en inventario local (insumos con stock)
+        let resultados = this.state.inventario.filter(item => 
+            item.stock > 0 && item.nombre.toLowerCase().includes(busqueda)
+        );
+        
+        if (anaquelFiltro) {
+            resultados = resultados.filter(item => item.anaquel === anaquelFiltro);
+        }
+        
+        // Eliminar duplicados
+        const unicos = [];
+        const nombres = new Set();
+        resultados.forEach(item => {
+            if (!nombres.has(item.nombre.toLowerCase())) {
+                nombres.add(item.nombre.toLowerCase());
+                unicos.push(item);
+            }
+        });
+        
+        if (unicos.length === 0) {
+            sugerencias.style.display = 'none';
+            return;
+        }
+        
+        let html = '';
+        unicos.slice(0, 10).forEach(item => {
+            html += `<div onclick="App.seleccionarSugerenciaSalida('${item.nombre.replace(/'/g, "\\'")}')" 
+                style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #eee; font-size:13px;"
+                onmouseover="this.style.background='#eef2f7'" onmouseout="this.style.background='white'">
+                <strong>${item.nombre}</strong>
+                <span style="color:#888; font-size:11px;">Stock: ${item.stock} | ${item.anaquel}</span>
+            </div>`;
+        });
+        
+        sugerencias.innerHTML = html;
+        sugerencias.style.display = 'block';
+    },
+
+    seleccionarSugerencia(tipo, nombre, unidad) {
+        if (tipo === 'ing') {
+            document.getElementById('ing-nombre').value = nombre;
+            if (unidad) {
+                const selectUnidad = document.getElementById('ing-unidad');
+                for (let i = 0; i < selectUnidad.options.length; i++) {
+                    if (selectUnidad.options[i].value === unidad) {
+                        selectUnidad.selectedIndex = i;
+                        break;
+                    }
                 }
             }
+            document.getElementById('sugerencias-ing').style.display = 'none';
+        } else {
+            document.getElementById('sal-busqueda').value = nombre;
+            document.getElementById('sugerencias-sal').style.display = 'none';
+            this.buscarInsumoSalida();
         }
-        document.getElementById('sugerencias-insumos').style.display = 'none';
+    },
+
+    seleccionarSugerenciaSalida(nombre) {
+        document.getElementById('sal-busqueda').value = nombre;
+        document.getElementById('sugerencias-sal').style.display = 'none';
+        this.buscarInsumoSalida();
     },
 
     async procesarIngreso() {
@@ -385,25 +507,11 @@ const App = {
         }
     },
 
-    // ============================================
-    // MODAL DE SALIDA
-    // ============================================
-    showSalidaModal() {
-        const anaqueles = this.state.secciones.map(s => s.seccion + s.anaquel).sort();
-        
-        const html = `
-            <h2>Nueva Salida</h2>
-            <div class="form-group"><label>Filtrar por Anaquel</label><select id="sal-anaquel-filtro" onchange="App.filtrarPorAnaquelSalida()"><option value="">Todos los anaqueles</option>${anaqueles.map(a => `<option value="${a}">${a}</option>`).join('')}</select></div>
-            <div class="form-group"><label>Buscar por Nombre</label><input type="text" id="sal-busqueda" placeholder="Escriba el nombre del insumo..." onkeyup="App.buscarInsumoSalida()"></div>
-            <div id="resultados-busqueda"><p style="color:#666; padding:15px;">Seleccione un anaquel o escriba un nombre para buscar insumos.</p></div>
-            <div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">Cancelar</button></div>`;
-        UI.openModal(html);
-    },
-
     filtrarPorAnaquelSalida() {
         const anaquel = document.getElementById('sal-anaquel-filtro').value;
         const busqueda = document.getElementById('sal-busqueda');
         if (anaquel) busqueda.value = '';
+        document.getElementById('sugerencias-sal').style.display = 'none';
         this.buscarInsumoSalida();
     },
 
@@ -494,16 +602,19 @@ const App = {
         if (items.length === 0) {
             html += '<p style="padding:15px;">Anaquel vacío o sin insumos asignados.</p>';
         } else {
-            html += '<div class="table-container"><table><thead><tr><th>Insumo</th><th>Stock</th><th>Und.</th><th>Lote</th><th>Venc.</th><th>Estado</th></tr></thead><tbody>';
+            html += '<div class="table-container"><table><thead><tr><th>Insumo</th><th class="text-center">Stock</th><th class="text-center">Und.</th><th class="text-center">Lote</th><th class="text-center">Venc.</th><th class="text-center">Estado</th></tr></thead><tbody>';
             items.forEach(item => {
                 const venc = item.vencimiento ? new Date(item.vencimiento) : null;
                 const hoy = new Date();
                 const vencido = venc && venc < hoy;
                 const critico = this.esStockCritico(item);
                 html += `<tr class="${vencido || critico ? 'stock-critical' : ''}">
-                    <td><strong>${item.nombre}</strong></td><td>${item.stock}</td><td>${item.unidad||''}</td>
-                    <td>${item.lote||'-'}</td><td>${item.vencimiento||'-'}</td>
-                    <td>${vencido?'<span class="badge badge-danger">VENC</span> ':''}${critico?'<span class="badge badge-danger">CRIT</span>':''}${!vencido&&!critico?'<span class="badge badge-success">OK</span>':''}</td></tr>`;
+                    <td><strong>${item.nombre}</strong></td>
+                    <td class="text-center">${item.stock}</td>
+                    <td class="text-center">${item.unidad||''}</td>
+                    <td class="text-center">${item.lote||'-'}</td>
+                    <td class="text-center">${item.vencimiento||'-'}</td>
+                    <td class="text-center">${vencido?'<span class="badge badge-danger">VENC</span> ':''}${critico?'<span class="badge badge-danger">CRIT</span>':''}${!vencido&&!critico?'<span class="badge badge-success">OK</span>':''}</td></tr>`;
             });
             html += '</tbody></table></div>';
         }
