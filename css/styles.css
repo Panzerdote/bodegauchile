@@ -95,24 +95,31 @@ body {
     text-align: center;
 }
 
+/* CONTENEDOR DEL ESCUDO - TRANSPARENTE */
 .escudo-container {
-    width: 65px;
-    height: 85px;
-    margin: 0 auto 12px;
+    width: 70px;
+    height: 100px;
+    margin: 0 auto 15px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: white;
-    border-radius: 8px;
-    border: 2px solid var(--accent);
-    padding: 5px;
-    overflow: hidden;
+    background: transparent;
+    border: none;
+    padding: 0;
+    overflow: visible;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
+    transition: transform 0.3s ease;
+}
+
+.escudo-container:hover {
+    transform: scale(1.08);
 }
 
 .escudo-svg {
     width: 100%;
     height: auto;
     max-height: 100%;
+    object-fit: contain;
 }
 
 .sidebar-header h2 {
@@ -237,14 +244,15 @@ body {
     gap: 15px;
 }
 
+/* HEADER MÓVIL - ESCUDO PEQUEÑO */
 .header-escudo-small {
     width: 28px;
-    height: 36px;
+    height: 42px;
     display: none;
-    border-radius: 4px;
-    border: 2px solid var(--accent);
-    padding: 1px;
-    background: white;
+    background: transparent;
+    border: none;
+    padding: 0;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.3));
 }
 
 .header h1 {
