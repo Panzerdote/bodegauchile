@@ -257,10 +257,12 @@ const App = {
     },
 
     renderInventario() {
-        const mostrarStockTotal = document.getElementById('filtro-stock-total')?.checked ?? true;
         const mostrarStockCritico = document.getElementById('filtro-stock-critico')?.checked ?? false;
         const mostrarPorVencer = document.getElementById('filtro-por-vencer')?.checked ?? false;
         const mostrarVencidos = document.getElementById('filtro-vencidos')?.checked ?? false;
+        
+        // Si ningún filtro está activo, mostrar todo
+        const ningunFiltroActivo = !mostrarStockCritico && !mostrarPorVencer && !mostrarVencidos;
         
         const hoy = new Date();
         const limite = new Date(hoy);
@@ -269,26 +271,28 @@ const App = {
         let items = [...this.state.inventario];
         let filtrados = [];
         
-        items.forEach(item => {
-            const esCritico = this.esStockCritico(item);
-            const venc = item.vencimiento ? new Date(item.vencimiento + 'T00:00:00') : null;
-            const vencido = venc && venc < hoy;
-            const vencePronto = venc && !vencido && venc <= limite;
-            const esNormal = !esCritico && !vencido && !vencePronto;
-            
-            let incluir = false;
-            
-            if (mostrarStockTotal && esNormal) incluir = true;
-            if (mostrarStockCritico && esCritico && !vencido) incluir = true;
-            if (mostrarPorVencer && vencePronto && !esCritico) incluir = true;
-            if (mostrarVencidos && vencido) incluir = true;
-            
-            if (esCritico && vencido) {
-                if (mostrarStockCritico || mostrarVencidos) incluir = true;
-            }
-            
-            if (incluir) filtrados.push(item);
-        });
+        if (ningunFiltroActivo) {
+            filtrados = items;
+        } else {
+            items.forEach(item => {
+                const esCritico = this.esStockCritico(item);
+                const venc = item.vencimiento ? new Date(item.vencimiento + 'T00:00:00') : null;
+                const vencido = venc && venc < hoy;
+                const vencePronto = venc && !vencido && venc <= limite;
+                
+                let incluir = false;
+                
+                if (mostrarStockCritico && esCritico && !vencido) incluir = true;
+                if (mostrarPorVencer && vencePronto && !esCritico) incluir = true;
+                if (mostrarVencidos && vencido) incluir = true;
+                
+                if (esCritico && vencido) {
+                    if (mostrarStockCritico || mostrarVencidos) incluir = true;
+                }
+                
+                if (incluir) filtrados.push(item);
+            });
+        }
         
         const contador = document.getElementById('contador-inventario');
         if (contador) contador.textContent = filtrados.length;
@@ -427,7 +431,7 @@ const App = {
     },
 
     // ============================================
-    // MODAL DE INGRESO (CON AUTOCOMPLETADO)
+    // MODAL DE INGRESO
     // ============================================
     showIngresoModal() {
         const anaqueles = this.state.secciones.map(s => s.seccion + s.anaquel).sort();
@@ -483,9 +487,6 @@ const App = {
         }, 100);
     },
 
-    // ============================================
-    // MODAL DE SALIDA (CON AUTOCOMPLETADO)
-    // ============================================
     showSalidaModal() {
         const anaqueles = this.state.secciones.map(s => s.seccion + s.anaquel).sort();
         
