@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Bodega - Insumos Clínicos</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">🏥</div>
+            <h2>Bodega UChile</h2>
+            <p>Gestión de Insumos Clínicos</p>
+        </div>
+
+        <nav>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Principal</div>
+                <ul class="sidebar-menu">
+                    <li><a href="#" class="active" data-section="dashboard"><span class="icon">📊</span>Dashboard</a></li>
+                    <li><a href="#" data-section="inventario"><span class="icon">📦</span>Inventario<span class="badge-menu" id="total-badge">0</span></a></li>
+                    <li><a href="#" data-section="movimientos"><span class="icon">📋</span>Movimientos</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Operaciones</div>
+                <ul class="sidebar-menu">
+                    <li><a href="#" id="btn-ingreso"><span class="icon">➕</span>Nuevo Ingreso</a></li>
+                    <li><a href="#" id="btn-salida"><span class="icon">➖</span>Nueva Salida</a></li>
+                    <li><a href="#" id="btn-buscar-anaquel"><span class="icon">🔍</span>Buscar Anaquel</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Configuración</div>
+                <ul class="sidebar-menu">
+                    <li><a href="#" id="btn-gestionar"><span class="icon">⚙</span>Anaqueles</a></li>
+                    <li><a href="#" id="btn-exportar"><span class="icon">💾</span>Exportar Datos</a></li>
+                    <li><a href="#" id="btn-importar"><span class="icon">📂</span>Importar Datos</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Sistema</div>
+                <ul class="sidebar-menu">
+                    <li><a href="#" id="btn-reiniciar"><span class="icon">🔄</span>Reiniciar</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <span id="connection-status">🟢 Conectado</span>
+            <br>v3.0 | Supabase
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <header class="header">
+            <h1 id="page-title">📊 Dashboard</h1>
+            <div class="header-actions" id="header-actions">
+                <button class="btn btn-success" id="header-btn-ingreso">➕ Ingreso</button>
+                <button class="btn btn-danger" id="header-btn-salida">➖ Salida</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- DASHBOARD -->
+            <section id="section-dashboard">
+                <div class="dashboard-cards">
+                    <div class="card">
+                        <div class="card-icon">📦</div>
+                        <div class="card-title">Total Insumos</div>
+                        <div class="card-value" id="total-insumos">0</div>
+                    </div>
+                    <div class="card success">
+                        <div class="card-icon">📊</div>
+                        <div class="card-title">Stock Total</div>
+                        <div class="card-value" id="stock-total" style="color:#28a745;">0</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🏷️</div>
+                        <div class="card-title">Secciones</div>
+                        <div class="card-value" id="secciones-activas">0</div>
+                    </div>
+                    <div class="card critical">
+                        <div class="card-icon">⚠️</div>
+                        <div class="card-title">Stock Crítico</div>
+                        <div class="card-value danger" id="stock-critico">0</div>
+                    </div>
+                    <div class="card warning">
+                        <div class="card-icon">📅</div>
+                        <div class="card-title">Vencen ≤30 días</div>
+                        <div class="card-value warning" id="vencimientos-proximos">0</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>⚠ Alertas - Stock Crítico</h2>
+                    <div id="alertas-stock"></div>
+                </div>
+
+                <div class="section">
+                    <h2>📋 Últimos Movimientos</h2>
+                    <div id="ultimos-movimientos"></div>
+                </div>
+                
+                <div class="section">
+                    <h2>📦 Vista Rápida - Inventario</h2>
+                    <div id="inventario-rapido"></div>
+                </div>
+            </section>
+
+            <!-- INVENTARIO -->
+            <section id="section-inventario" style="display:none;">
+                <div class="section">
+                    <input type="text" class="search-box" id="busqueda-inventario" placeholder="🔍 Buscar por nombre, anaquel, sección, lote...">
+                    <div class="table-container" id="tabla-inventario"></div>
+                </div>
+            </section>
+            
+            <!-- MOVIMIENTOS -->
+            <section id="section-movimientos" style="display:none;">
+                <div class="section">
+                    <input type="text" class="search-box" id="busqueda-movimientos" placeholder="🔍 Filtrar por insumo, tipo, anaquel...">
+                    <div class="table-container" id="tabla-movimientos"></div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- MODAL -->
+    <div id="modal" class="modal">
+        <div class="modal-content" id="modal-content"></div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast" style="display:none;"></div>
+
+    <!-- SCRIPTS -->
+    <script src="js/config.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
