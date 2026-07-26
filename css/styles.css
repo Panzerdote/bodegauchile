@@ -979,11 +979,13 @@ tr:nth-child(even) td {
         white-space: nowrap;
     }
 
-    /* Ocultar columnas Stock Anterior y Stock Nuevo en móvil */
+    /* Ocultar columnas Stock Ant, Stock Nuevo y Comentarios en móvil */
     #tabla-movimientos th:nth-child(5),
     #tabla-movimientos td:nth-child(5),
     #tabla-movimientos th:nth-child(6),
-    #tabla-movimientos td:nth-child(6) {
+    #tabla-movimientos td:nth-child(6),
+    #tabla-movimientos th:nth-child(8),
+    #tabla-movimientos td:nth-child(8) {
         display: none;
     }
 
