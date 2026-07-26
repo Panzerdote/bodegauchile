@@ -693,7 +693,7 @@ const App = {
             <div style="display:flex; gap:0; margin-bottom:20px; border-bottom:2px solid #e0e0e0;">
                 <button class="btn btn-light" onclick="App.mostrarTabConfig('secciones')" id="tab-secciones" 
                     style="border-radius:5px 5px 0 0; border-bottom:none; margin-bottom:-2px; border:2px solid #e0e0e0; border-bottom:2px solid var(--primary); background:white; font-weight:bold;">
-                    ${UI.icons.settings} Secciones y Anaqueles
+                    ${UI.icons.settings} Secciones
                 </button>
                 <button class="btn btn-light" onclick="App.mostrarTabConfig('unidades')" id="tab-unidades"
                     style="border-radius:5px 5px 0 0; border-bottom:none; margin-bottom:-2px; border:2px solid transparent; background:transparent;">
