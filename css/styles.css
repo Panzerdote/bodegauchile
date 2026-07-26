@@ -33,6 +33,41 @@ body {
 }
 
 /* ============================================ */
+/* BOTÓN HAMBURGUESA (MÓVIL) */
+/* ============================================ */
+.hamburger {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 26px;
+    cursor: pointer;
+    padding: 5px 10px;
+    color: var(--dark);
+    z-index: 200;
+    line-height: 1;
+}
+
+.hamburger:hover {
+    color: var(--primary);
+}
+
+/* Overlay para cerrar sidebar en móvil */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 99;
+}
+
+.sidebar-overlay.active {
+    display: block;
+}
+
+/* ============================================ */
 /* SIDEBAR */
 /* ============================================ */
 .sidebar {
@@ -48,6 +83,7 @@ body {
     box-shadow: 2px 0 15px rgba(0,0,0,0.3);
     display: flex;
     flex-direction: column;
+    transition: transform 0.3s ease;
 }
 
 .sidebar-header {
@@ -155,6 +191,7 @@ body {
     margin-left: var(--sidebar-width);
     flex: 1;
     min-height: 100vh;
+    transition: margin-left 0.3s ease;
 }
 
 .header {
@@ -169,6 +206,12 @@ body {
     position: sticky;
     top: 0;
     z-index: 50;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
 .header h1 {
@@ -225,6 +268,11 @@ body {
 .btn-sm {
     padding: 5px 10px;
     font-size: 11px;
+}
+
+.btn-block {
+    width: 100%;
+    justify-content: center;
 }
 
 .btn:disabled {
@@ -301,6 +349,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 table {
@@ -347,6 +397,12 @@ tr:hover td {
     overflow-y: auto;
     border: 1px solid var(--border);
     border-radius: 5px;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .search-box {
@@ -448,9 +504,7 @@ tr:hover td {
     padding-right: 40px;
 }
 
-/* ============================================ */
-/* BOTÓN CERRAR MODAL */
-/* ============================================ */
+/* Botón cerrar modal */
 .modal-close {
     position: absolute;
     top: 15px;
@@ -574,55 +628,233 @@ tr:hover td {
 }
 
 /* ============================================ */
-/* RESPONSIVE */
+/* RESPONSIVE - TABLET */
 /* ============================================ */
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
     .dashboard-cards {
         grid-template-columns: repeat(3, 1fr);
     }
-}
-
-@media (max-width: 768px) {
-    .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-    }
-    
-    .main-content {
-        margin-left: 0;
-    }
-    
-    .dashboard-cards {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .header {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .modal-content {
-        width: 95%;
-        margin: 15px auto;
-        padding: 15px;
-    }
-    
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 480px) {
-    .dashboard-cards {
-        grid-template-columns: 1fr;
-    }
-    
-    .header-actions {
-        flex-direction: column;
-    }
     
     .container {
+        padding: 15px;
+    }
+}
+
+/* ============================================ */
+/* RESPONSIVE - MÓVIL */
+/* ============================================ */
+@media (max-width: 768px) {
+    /* Mostrar botón hamburguesa */
+    .hamburger {
+        display: block;
+    }
+
+    /* Sidebar oculto por defecto en móvil */
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    /* Sidebar visible cuando está activo */
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    /* Overlay */
+    .sidebar-overlay.active {
+        display: block;
+    }
+
+    /* Main content ocupa todo el ancho */
+    .main-content {
+        margin-left: 0 !important;
+    }
+
+    /* Header más compacto */
+    .header {
+        padding: 10px 15px;
+        flex-direction: row;
+        flex-wrap: nowrap;
+    }
+
+    .header h1 {
+        font-size: 16px;
+    }
+
+    .header-actions {
+        gap: 5px;
+    }
+
+    .header-actions .btn {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    /* Dashboard cards: 2 columnas */
+    .dashboard-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .card {
+        padding: 12px;
+    }
+
+    .card-icon {
+        font-size: 20px;
+    }
+
+    .card-value {
+        font-size: 20px;
+    }
+
+    .card-title {
+        font-size: 9px;
+    }
+
+    /* Contenedor */
+    .container {
         padding: 10px;
+    }
+
+    /* Secciones */
+    .section {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .section h2 {
+        font-size: 14px;
+    }
+
+    /* Tablas con scroll horizontal */
+    .table-container {
+        max-height: 350px;
+    }
+
+    table {
+        font-size: 11px;
+    }
+
+    th {
+        padding: 8px 6px;
+        font-size: 9px;
+    }
+
+    td {
+        padding: 6px;
+        font-size: 11px;
+    }
+
+    /* Ocultar columnas menos importantes en móvil */
+    .hide-mobile {
+        display: none;
+    }
+
+    /* Formularios */
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .form-group {
+        margin-bottom: 10px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 10px;
+        font-size: 16px; /* Evita zoom en iOS */
+    }
+
+    /* Modal ocupa casi toda la pantalla */
+    .modal-content {
+        width: 95%;
+        margin: 10px auto;
+        padding: 15px;
+        max-height: 90vh;
+        border-radius: 10px 10px 0 0;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+
+    .modal-close {
+        top: 10px;
+        right: 10px;
+        font-size: 20px;
+    }
+
+    /* Form actions en columna */
+    .form-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Toast */
+    .toast {
+        bottom: 20px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        text-align: center;
+        font-size: 13px;
+        padding: 12px 15px;
+    }
+
+    /* Badges más pequeños */
+    .badge {
+        padding: 2px 6px;
+        font-size: 9px;
+    }
+
+    /* Botones de acción en tablas */
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+}
+
+/* ============================================ */
+/* RESPONSIVE - MÓVIL PEQUEÑO */
+/* ============================================ */
+@media (max-width: 480px) {
+    .dashboard-cards {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    .card {
+        padding: 10px;
+    }
+
+    .card-value {
+        font-size: 18px;
+    }
+
+    .header h1 {
+        font-size: 14px;
+    }
+
+    .header-actions .btn {
+        padding: 5px 8px;
+        font-size: 10px;
+    }
+
+    /* Una sola columna para cards si son muchas */
+    .dashboard-cards {
+        grid-template-columns: 1fr;
     }
 }
