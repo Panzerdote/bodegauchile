@@ -3,6 +3,7 @@ const App = {
         inventario: [],
         secciones: [],
         unidades: [],
+        movimientos: [],
         config: { porcentaje_critico: 20, dias_vencimiento: 30 }
     },
 
@@ -25,13 +26,14 @@ const App = {
     },
 
     async loadAllData() {
-        const [inventario, secciones, unidades, config] = await Promise.all([
-            DB.getInventario(), DB.getSecciones(), DB.getUnidadesMedida(), DB.getConfig()
+        const [inventario, secciones, unidades, config, movimientos] = await Promise.all([
+            DB.getInventario(), DB.getSecciones(), DB.getUnidadesMedida(), DB.getConfig(), DB.getMovimientos(500)
         ]);
         this.state.inventario = inventario || [];
         this.state.secciones = secciones || [];
         this.state.unidades = unidades || [];
         this.state.config = config || { porcentaje_critico: 20, dias_vencimiento: 30 };
+        this.state.movimientos = movimientos || [];
     },
 
     setupEventListeners() {
@@ -78,6 +80,7 @@ const App = {
         const { inventario, secciones, config } = this.state;
         
         document.getElementById('total-insumos').textContent = inventario.length;
+        document.getElementById('total-badge').textContent = inventario.length;
         document.getElementById('stock-total').textContent = inventario.reduce((s, i) => s + (i.stock || 0), 0);
         document.getElementById('secciones-activas').textContent = [...new Set(secciones.map(s => s.seccion))].length;
         
@@ -87,28 +90,11 @@ const App = {
         const hoy = new Date();
         const limite = new Date(hoy);
         limite.setDate(limite.getDate() + (config.dias_vencimiento || 30));
-        
-        const porVencer = inventario.filter(item => {
+        document.getElementById('vencimientos-proximos').textContent = inventario.filter(item => {
             if (!item.vencimiento) return false;
             const v = new Date(item.vencimiento + 'T00:00:00');
             return v >= hoy && v <= limite;
         }).length;
-        
-        document.getElementById('vencimientos-proximos').textContent = porVencer;
-        
-        // Actualizar badge del menú con total de alertas
-        const criticosIds = new Set(criticos.map(i => i.id));
-        const totalAlertas = criticos.length + inventario.filter(i => {
-            if (!i.vencimiento || criticosIds.has(i.id)) return false;
-            const v = new Date(i.vencimiento + 'T00:00:00');
-            return v >= hoy && v <= limite;
-        }).length;
-        
-        const badge = document.getElementById('total-badge');
-        if (badge) {
-            badge.textContent = inventario.length;
-            badge.style.display = 'inline-block';
-        }
 
         this.renderAlertas(criticos);
         this.renderUltimosMovimientos();
@@ -116,12 +102,32 @@ const App = {
     },
 
     esStockCritico(item) {
+        // Si no hay stock, siempre es crítico
         if (!item.stock || item.stock === 0) return true;
-        const stockMax = Math.max(item.stock, ...this.state.inventario
-            .filter(i => i.nombre === item.nombre)
-            .map(i => i.stock));
+        
+        // Buscar el stock máximo histórico de este insumo específico en los movimientos
+        const movimientosInsumo = this.state.movimientos.filter(m => 
+            m.insumo && item.nombre && 
+            m.insumo.toLowerCase() === item.nombre.toLowerCase() && 
+            m.anaquel === item.anaquel
+        );
+        
+        // Si hay movimientos, usar el máximo stock alcanzado históricamente
+        let stockMax = item.stock;
+        if (movimientosInsumo.length > 0) {
+            const maximos = movimientosInsumo.map(m => m.stock_nuevo || 0);
+            stockMax = Math.max(...maximos, item.stock);
+        }
+        
+        // Si no hay movimientos y el stock es muy bajo (5 o menos), considerarlo crítico
+        if (movimientosInsumo.length === 0 && item.stock <= 5) {
+            return true;
+        }
+        
+        // Calcular porcentaje respecto al máximo histórico
         if (stockMax === 0) return false;
-        return (item.stock / stockMax) * 100 <= this.state.config.porcentaje_critico;
+        const porcentaje = (item.stock / stockMax) * 100;
+        return porcentaje <= this.state.config.porcentaje_critico;
     },
 
     renderAlertas(criticos) {
@@ -152,16 +158,14 @@ const App = {
         
         let html = '<div class="table-container"><table><thead><tr><th>Insumo</th><th class="text-center">Stock</th><th class="text-center">Anaquel</th><th class="text-center">Vencimiento</th><th class="text-center">Tipo Alerta</th></tr></thead><tbody>';
         
-        // Primero los críticos (con o sin vencimiento)
+        // Primero los críticos
         criticos.forEach(item => {
             const venc = item.vencimiento ? new Date(item.vencimiento + 'T00:00:00') : null;
             const vencido = venc && venc < hoy;
             const vencePronto = venc && !vencido && venc <= limite;
             
             let tipoAlerta = '';
-            if (vencido && vencePronto) {
-                tipoAlerta = '<span class="badge badge-danger">VENCIDO</span> <span class="badge badge-danger">STOCK CRÍTICO</span> <span class="badge badge-warning">POR VENCER</span>';
-            } else if (vencido) {
+            if (vencido) {
                 tipoAlerta = '<span class="badge badge-danger">VENCIDO</span> <span class="badge badge-danger">STOCK CRÍTICO</span>';
             } else if (vencePronto) {
                 tipoAlerta = '<span class="badge badge-danger">STOCK CRÍTICO</span> <span class="badge badge-warning">POR VENCER</span>';
@@ -693,7 +697,7 @@ const App = {
             <div style="display:flex; gap:0; margin-bottom:20px; border-bottom:2px solid #e0e0e0;">
                 <button class="btn btn-light" onclick="App.mostrarTabConfig('secciones')" id="tab-secciones" 
                     style="border-radius:5px 5px 0 0; border-bottom:none; margin-bottom:-2px; border:2px solid #e0e0e0; border-bottom:2px solid var(--primary); background:white; font-weight:bold;">
-                    ${UI.icons.settings} Secciones
+                    ${UI.icons.settings} Secciones y Anaqueles
                 </button>
                 <button class="btn btn-light" onclick="App.mostrarTabConfig('unidades')" id="tab-unidades"
                     style="border-radius:5px 5px 0 0; border-bottom:none; margin-bottom:-2px; border:2px solid transparent; background:transparent;">
