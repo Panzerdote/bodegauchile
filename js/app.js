@@ -2,6 +2,7 @@ const App = {
     state: {
         inventario: [],
         secciones: [],
+        unidades: [],
         config: { porcentaje_critico: 20, dias_vencimiento: 30 }
     },
 
@@ -24,11 +25,12 @@ const App = {
     },
 
     async loadAllData() {
-        const [inventario, secciones, config] = await Promise.all([
-            DB.getInventario(), DB.getSecciones(), DB.getConfig()
+        const [inventario, secciones, unidades, config] = await Promise.all([
+            DB.getInventario(), DB.getSecciones(), DB.getUnidadesMedida(), DB.getConfig()
         ]);
         this.state.inventario = inventario || [];
         this.state.secciones = secciones || [];
+        this.state.unidades = unidades || [];
         this.state.config = config || { porcentaje_critico: 20, dias_vencimiento: 30 };
     },
 
@@ -155,7 +157,7 @@ const App = {
         const container = document.getElementById('inventario-rapido');
         const items = this.state.inventario.slice(0, 8);
         if (items.length === 0) {
-            container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.box}</div><p>Sin insumos registrados. Comience agregando uno.</p></div>`;
+            container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.box}</div><p>Sin insumos registrados.</p></div>`;
             return;
         }
         let html = '<div class="table-container"><table><thead><tr><th>Insumo</th><th>Anaquel</th><th>Stock</th><th>Und.</th><th>Lote</th><th>Venc.</th></tr></thead><tbody>';
@@ -248,27 +250,119 @@ const App = {
     },
 
     // ============================================
-    // MODAL DE INGRESO
+    // MODAL DE INGRESO (CON AUTOCOMPLETADO)
     // ============================================
     showIngresoModal() {
         const anaqueles = this.state.secciones.map(s => s.seccion + s.anaquel).sort();
+        const unidades = this.state.unidades.map(u => u.nombre).sort();
         
         const html = `
             <h2>Nuevo Ingreso</h2>
-            <div class="form-group"><label>Nombre del Insumo *</label><input type="text" id="ing-nombre" placeholder="Nombre del insumo" autofocus></div>
-            <div class="form-group"><label>Anaquel *</label><select id="ing-anaquel"><option value="">Seleccione anaquel...</option>${anaqueles.map(a => `<option value="${a}">${a}</option>`).join('')}</select>${anaqueles.length === 0 ? '<small style="color:#c0392b;">No hay anaqueles configurados. Vaya a Anaqueles para crear uno.</small>' : ''}</div>
-            <div class="form-row"><div class="form-group"><label>Cantidad *</label><input type="number" id="ing-cantidad" value="1" min="1"></div><div class="form-group"><label>Unidad de Medida</label><input type="text" id="ing-unidad" placeholder="Caja, Unidad, Botella..."></div></div>
-            <div class="form-row"><div class="form-group"><label>N° Lote</label><input type="text" id="ing-lote" placeholder="LOTE-2024-001"></div><div class="form-group"><label>Fecha Vencimiento</label><input type="date" id="ing-vencimiento"></div></div>
+            <div class="form-group" style="position:relative;">
+                <label>Nombre del Insumo *</label>
+                <input type="text" id="ing-nombre" placeholder="Escriba el nombre..." autofocus autocomplete="off" onkeyup="App.buscarCoincidencias()" onfocus="App.buscarCoincidencias()">
+                <div id="sugerencias-insumos" style="position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; border-radius:0 0 5px 5px; max-height:200px; overflow-y:auto; z-index:100; display:none; box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div>
+            </div>
+            <div class="form-group">
+                <label>Anaquel *</label>
+                <select id="ing-anaquel">
+                    <option value="">Seleccione anaquel...</option>
+                    ${anaqueles.map(a => `<option value="${a}">${a}</option>`).join('')}
+                </select>
+                ${anaqueles.length === 0 ? '<small style="color:#c0392b;">No hay anaqueles configurados.</small>' : ''}
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Cantidad *</label>
+                    <input type="number" id="ing-cantidad" value="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Unidad de Medida</label>
+                    <select id="ing-unidad">
+                        <option value="">Seleccione...</option>
+                        ${unidades.map(u => `<option value="${u}">${u}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>N° Lote</label><input type="text" id="ing-lote" placeholder="LOTE-2024-001"></div>
+                <div class="form-group"><label>Fecha Vencimiento</label><input type="date" id="ing-vencimiento"></div>
+            </div>
             <div class="form-group"><label>Comentarios</label><textarea id="ing-comentarios" placeholder="Información adicional..."></textarea></div>
-            <div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">Cancelar</button><button class="btn btn-success" onclick="App.procesarIngreso()">${UI.icons.plus} Registrar Ingreso</button></div>`;
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="UI.closeModal()">Cancelar</button>
+                <button class="btn btn-success" onclick="App.procesarIngreso()">${UI.icons.plus} Registrar Ingreso</button>
+            </div>`;
         UI.openModal(html);
+        
+        // Cerrar sugerencias al hacer clic fuera
+        setTimeout(() => {
+            document.addEventListener('click', function cerrarSugerencias(e) {
+                const input = document.getElementById('ing-nombre');
+                const sugerencias = document.getElementById('sugerencias-insumos');
+                if (input && sugerencias && e.target !== input && !sugerencias.contains(e.target)) {
+                    sugerencias.style.display = 'none';
+                }
+            });
+        }, 100);
+    },
+
+    async buscarCoincidencias() {
+        const input = document.getElementById('ing-nombre');
+        const sugerencias = document.getElementById('sugerencias-insumos');
+        if (!input || !sugerencias) return;
+        
+        const busqueda = input.value.trim();
+        
+        if (busqueda.length < 1) {
+            sugerencias.style.display = 'none';
+            return;
+        }
+        
+        try {
+            const resultados = await DB.buscarInsumosNombre(busqueda);
+            
+            if (resultados.length === 0) {
+                sugerencias.style.display = 'none';
+                return;
+            }
+            
+            let html = '';
+            resultados.forEach(item => {
+                html += `<div onclick="App.seleccionarSugerencia('${item.nombre.replace(/'/g, "\\'")}', '${(item.unidad || '').replace(/'/g, "\\'")}')" 
+                    style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #eee; font-size:13px;"
+                    onmouseover="this.style.background='#eef2f7'" onmouseout="this.style.background='white'">
+                    <strong>${item.nombre}</strong>
+                    ${item.unidad ? `<span style="color:#888; font-size:11px;">(${item.unidad})</span>` : ''}
+                </div>`;
+            });
+            
+            sugerencias.innerHTML = html;
+            sugerencias.style.display = 'block';
+        } catch (error) {
+            console.error('Error al buscar coincidencias:', error);
+        }
+    },
+
+    seleccionarSugerencia(nombre, unidad) {
+        document.getElementById('ing-nombre').value = nombre;
+        if (unidad) {
+            const selectUnidad = document.getElementById('ing-unidad');
+            for (let i = 0; i < selectUnidad.options.length; i++) {
+                if (selectUnidad.options[i].value === unidad) {
+                    selectUnidad.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        document.getElementById('sugerencias-insumos').style.display = 'none';
     },
 
     async procesarIngreso() {
         const nombre = document.getElementById('ing-nombre').value.trim();
         const anaquel = document.getElementById('ing-anaquel').value;
         const cantidad = parseInt(document.getElementById('ing-cantidad').value);
-        const unidad = document.getElementById('ing-unidad').value.trim();
+        const unidad = document.getElementById('ing-unidad').value;
         const lote = document.getElementById('ing-lote').value.trim();
         const vencimiento = document.getElementById('ing-vencimiento').value;
         const comentarios = document.getElementById('ing-comentarios').value.trim();
@@ -417,11 +511,48 @@ const App = {
     },
 
     // ============================================
-    // GESTIÓN DE SECCIONES (CON MÚLTIPLES ANAQUELES)
+    // GESTIÓN DE SECCIONES Y UNIDADES (CON PESTAÑAS)
     // ============================================
     showGestionSeccionesModal() {
-        let html = '<h2>Gestionar Secciones y Anaqueles</h2>';
-        html += '<p style="font-size:12px;color:#666;margin-bottom:15px;">Primero cree una <strong>Sección</strong> (categoría con descripción), luego agregue <strong>Anaqueles</strong> (numeración) dentro de ella.</p>';
+        let html = '<h2>Configuración</h2>';
+        
+        html += `
+            <div style="display:flex; gap:0; margin-bottom:20px; border-bottom:2px solid #e0e0e0;">
+                <button class="btn btn-light" onclick="App.mostrarTabConfig('secciones')" id="tab-secciones" 
+                    style="border-radius:5px 5px 0 0; border-bottom:none; margin-bottom:-2px; border:2px solid #e0e0e0; border-bottom:2px solid var(--primary); background:white; font-weight:bold;">
+                    ${UI.icons.settings} Secciones y Anaqueles
+                </button>
+                <button class="btn btn-light" onclick="App.mostrarTabConfig('unidades')" id="tab-unidades"
+                    style="border-radius:5px 5px 0 0; border-bottom:none; margin-bottom:-2px; border:2px solid transparent; background:transparent;">
+                    📏 Unidades de Medida
+                </button>
+            </div>
+            <div id="tab-contenido"></div>`;
+        
+        UI.openModal(html);
+        this.mostrarTabConfig('secciones');
+    },
+
+    mostrarTabConfig(tab) {
+        document.getElementById('tab-secciones').style.borderBottom = tab === 'secciones' ? '2px solid var(--primary)' : '2px solid transparent';
+        document.getElementById('tab-secciones').style.background = tab === 'secciones' ? 'white' : 'transparent';
+        document.getElementById('tab-secciones').style.fontWeight = tab === 'secciones' ? 'bold' : 'normal';
+        document.getElementById('tab-secciones').style.borderColor = tab === 'secciones' ? '#e0e0e0' : 'transparent';
+        
+        document.getElementById('tab-unidades').style.borderBottom = tab === 'unidades' ? '2px solid var(--primary)' : '2px solid transparent';
+        document.getElementById('tab-unidades').style.background = tab === 'unidades' ? 'white' : 'transparent';
+        document.getElementById('tab-unidades').style.fontWeight = tab === 'unidades' ? 'bold' : 'normal';
+        document.getElementById('tab-unidades').style.borderColor = tab === 'unidades' ? '#e0e0e0' : 'transparent';
+        
+        if (tab === 'secciones') {
+            this.mostrarContenidoSecciones();
+        } else {
+            this.mostrarContenidoUnidades();
+        }
+    },
+
+    mostrarContenidoSecciones() {
+        let html = '';
         
         const seccionesAgrupadas = {};
         this.state.secciones.forEach(s => {
@@ -434,51 +565,89 @@ const App = {
         const seccionesKeys = Object.keys(seccionesAgrupadas).sort();
         
         if (seccionesKeys.length === 0) {
-            html += `<div class="empty-state"><div class="icon">${UI.icons.settings}</div><p>No hay secciones ni anaqueles configurados. ¡Cree la primera!</p></div>`;
+            html += `<div class="empty-state"><div class="icon">${UI.icons.settings}</div><p>No hay secciones configuradas.</p></div>`;
         } else {
             html += '<div style="display:grid; gap:15px; margin-bottom:20px;">';
-            
             seccionesKeys.forEach(sec => {
                 const info = seccionesAgrupadas[sec];
                 const anaquelesOrdenados = info.anaqueles.sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
-                
                 html += `<div style="border:2px solid #e0e0e0; border-radius:10px; padding:15px; background:white;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                         <div><span style="font-size:20px; font-weight:bold; color:var(--primary);">Sección ${sec}</span><span style="margin-left:10px; color:#555; font-size:14px;">— ${info.descripcion}</span></div>
-                        <button class="btn btn-danger btn-sm" onclick="App.eliminarSeccionCompleta('${sec}')" title="Eliminar toda la sección">${UI.icons.trash} Eliminar Sección</button></div>
+                        <button class="btn btn-danger btn-sm" onclick="App.eliminarSeccionCompleta('${sec}')">${UI.icons.trash} Eliminar</button></div>
                     <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; min-height:30px;">
-                        ${anaquelesOrdenados.length === 0 ? '<span style="color:#999; font-size:12px;">Sin anaqueles</span>' : ''}
-                        ${anaquelesOrdenados.map(a => `<span style="background:var(--primary); color:white; padding:6px 12px; border-radius:20px; font-size:13px; display:inline-flex; align-items:center; gap:8px;">${sec}${a}<button onclick="event.stopPropagation(); App.eliminarAnaquelIndividual('${sec}', '${a}')" style="background:rgba(255,255,255,0.3); border:none; color:white; cursor:pointer; font-size:14px; padding:2px 6px; border-radius:50%; line-height:1;" title="Eliminar anaquel ${sec}${a}">×</button></span>`).join('')}</div>
-                    <button class="btn btn-info btn-sm" onclick="App.mostrarAgregarAnaquel('${sec}')">${UI.icons.plus} Agregar Anaqueles a Sección ${sec}</button></div>`;
+                        ${anaquelesOrdenados.map(a => `<span style="background:var(--primary); color:white; padding:6px 12px; border-radius:20px; font-size:13px; display:inline-flex; align-items:center; gap:8px;">${sec}${a}<button onclick="event.stopPropagation(); App.eliminarAnaquelIndividual('${sec}', '${a}')" style="background:rgba(255,255,255,0.3); border:none; color:white; cursor:pointer; font-size:14px; padding:2px 6px; border-radius:50%; line-height:1;" title="Eliminar">×</button></span>`).join('')}</div>
+                    <button class="btn btn-info btn-sm" onclick="App.mostrarAgregarAnaquel('${sec}')">${UI.icons.plus} Agregar Anaqueles</button></div>`;
             });
-            
             html += '</div>';
         }
         
-        // FORMULARIO DE CREACIÓN CON CANTIDAD DE ANAQUELES
         html += `<h3 style="margin-top:25px; padding-top:20px; border-top:2px solid #eee;">Crear Nueva Sección</h3>
             <p style="font-size:12px;color:#666;margin-bottom:12px;">Cree una nueva categoría y defina cuántos anaqueles tendrá.</p>
             <div class="form-row">
-                <div class="form-group">
-                    <label>Letra de Sección *</label>
-                    <input type="text" id="nueva-seccion-letra" maxlength="1" placeholder="A, B, C..." style="text-transform:uppercase;">
-                    <small style="color:#888;">Ej: A, B, C...</small>
-                </div>
-                <div class="form-group">
-                    <label>Descripción *</label>
-                    <input type="text" id="nueva-seccion-descripcion" placeholder="Ej: Material Quirúrgico">
-                    <small style="color:#888;">Ej: Material Quirúrgico, Insumos Clínicos, Aseo...</small>
-                </div>
-                <div class="form-group">
-                    <label>Cantidad de Anaqueles</label>
-                    <input type="number" id="nueva-seccion-cantidad" value="1" min="1" max="50">
-                    <small style="color:#888;">Se crearán del 1 al N (Ej: 3 → A1, A2, A3)</small>
-                </div>
+                <div class="form-group"><label>Letra *</label><input type="text" id="nueva-seccion-letra" maxlength="1" placeholder="A" style="text-transform:uppercase;"></div>
+                <div class="form-group"><label>Descripción *</label><input type="text" id="nueva-seccion-descripcion" placeholder="Ej: Material Quirúrgico"></div>
+                <div class="form-group"><label>Cantidad de Anaqueles</label><input type="number" id="nueva-seccion-cantidad" value="1" min="1" max="50"></div>
             </div>
-            <button class="btn btn-success" onclick="App.crearNuevaSeccion()">${UI.icons.plus} Crear Sección</button>
-            <div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">Cerrar</button></div>`;
+            <button class="btn btn-success" onclick="App.crearNuevaSeccion()">${UI.icons.plus} Crear Sección</button>`;
         
-        UI.openModal(html);
+        document.getElementById('tab-contenido').innerHTML = html;
+    },
+
+    mostrarContenidoUnidades() {
+        const unidades = this.state.unidades.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        
+        let html = '<p style="font-size:12px;color:#666;margin-bottom:15px;">Configure las unidades de medida disponibles para los insumos.</p>';
+        
+        if (unidades.length === 0) {
+            html += '<div class="empty-state"><div class="icon">📏</div><p>No hay unidades configuradas.</p></div>';
+        } else {
+            html += '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;">';
+            unidades.forEach(u => {
+                html += `<span style="background:var(--primary-light); color:white; padding:8px 14px; border-radius:20px; font-size:13px; display:inline-flex; align-items:center; gap:8px;">
+                    ${u.nombre}
+                    <button onclick="App.eliminarUnidad(${u.id})" style="background:rgba(255,255,255,0.3); border:none; color:white; cursor:pointer; font-size:14px; padding:2px 6px; border-radius:50%; line-height:1;" title="Eliminar">×</button>
+                </span>`;
+            });
+            html += '</div>';
+        }
+        
+        html += `<h3 style="margin-top:20px; padding-top:15px; border-top:2px solid #eee;">Agregar Unidad de Medida</h3>
+            <div class="form-row">
+                <div class="form-group"><label>Nombre de la Unidad *</label><input type="text" id="nueva-unidad" placeholder="Ej: Caja, Blister, Frasco..."></div>
+            </div>
+            <button class="btn btn-success" onclick="App.agregarUnidad()">${UI.icons.plus} Agregar Unidad</button>`;
+        
+        document.getElementById('tab-contenido').innerHTML = html;
+    },
+
+    async agregarUnidad() {
+        const nombre = document.getElementById('nueva-unidad').value.trim();
+        if (!nombre) { UI.showToast('Ingrese un nombre', 'error'); return; }
+        
+        try {
+            await DB.addUnidadMedida(nombre);
+            await this.loadAllData();
+            this.mostrarContenidoUnidades();
+            UI.showToast('Unidad "' + nombre + '" agregada', 'success');
+        } catch (error) {
+            UI.showToast('Error: ' + error.message, 'error');
+        }
+    },
+
+    async eliminarUnidad(id) {
+        const unidad = this.state.unidades.find(u => u.id === id);
+        if (!unidad) return;
+        if (!confirm('¿Eliminar la unidad "' + unidad.nombre + '"?')) return;
+        
+        try {
+            await DB.deleteUnidadMedida(id);
+            await this.loadAllData();
+            this.mostrarContenidoUnidades();
+            UI.showToast('Unidad eliminada', 'success');
+        } catch (error) {
+            UI.showToast('Error al eliminar', 'error');
+        }
     },
 
     async crearNuevaSeccion() {
@@ -501,14 +670,12 @@ const App = {
             return;
         }
         
-        // Verificar que la letra no exista ya
         const existeLetra = this.state.secciones.some(s => s.seccion === letra);
         if (existeLetra) {
-            UI.showToast('La sección ' + letra + ' ya existe. Puede agregar anaqueles a ella desde la lista.', 'error');
+            UI.showToast('La sección ' + letra + ' ya existe.', 'error');
             return;
         }
         
-        // Verificar que no haya códigos duplicados
         for (let i = 1; i <= cantidad; i++) {
             const codigo = letra + i;
             if (this.state.secciones.find(s => s.seccion + s.anaquel === codigo)) {
@@ -518,19 +685,18 @@ const App = {
         }
         
         try {
-            // Crear todos los anaqueles
             for (let i = 1; i <= cantidad; i++) {
                 await DB.addSeccion(letra, descripcion, String(i));
             }
             
             await this.loadAllData();
-            this.showGestionSeccionesModal();
+            this.mostrarContenidoSecciones();
             this.renderDashboard();
             
             if (cantidad === 1) {
-                UI.showToast('Sección ' + letra + ' creada con 1 anaquel: ' + letra + '1', 'success');
+                UI.showToast('Sección ' + letra + ' creada: ' + letra + '1', 'success');
             } else {
-                UI.showToast('Sección ' + letra + ' creada con ' + cantidad + ' anaqueles: ' + letra + '1 al ' + letra + cantidad, 'success');
+                UI.showToast('Sección ' + letra + ' creada con ' + cantidad + ' anaqueles', 'success');
             }
         } catch (error) {
             UI.showToast('Error: ' + error.message, 'error');
@@ -538,10 +704,6 @@ const App = {
     },
 
     mostrarAgregarAnaquel(seccion) {
-        const info = this.state.secciones.find(s => s.seccion === seccion);
-        const descripcion = info ? info.descripcion : '';
-        
-        // Obtener el número máximo actual de anaqueles en esta sección
         const anaquelesExistentes = this.state.secciones
             .filter(s => s.seccion === seccion)
             .map(s => parseInt(s.anaquel))
@@ -549,6 +711,8 @@ const App = {
         
         const maxActual = anaquelesExistentes.length > 0 ? Math.max(...anaquelesExistentes) : 0;
         const siguienteNumero = maxActual + 1;
+        const info = this.state.secciones.find(s => s.seccion === seccion);
+        const descripcion = info ? info.descripcion : '';
         
         const html = `<h2>Agregar Anaqueles a Sección ${seccion}</h2>
             <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:15px;">
@@ -578,12 +742,10 @@ const App = {
             return;
         }
         
-        // Verificar que no haya códigos duplicados
         for (let i = 0; i < cantidad; i++) {
-            const numero = numeroInicial + i;
-            const codigo = seccion + numero;
+            const codigo = seccion + (numeroInicial + i);
             if (this.state.secciones.find(s => s.seccion + s.anaquel === codigo)) {
-                UI.showToast('El anaquel ' + codigo + ' ya existe en esta sección', 'error');
+                UI.showToast('El anaquel ' + codigo + ' ya existe', 'error');
                 return;
             }
         }
@@ -592,21 +754,18 @@ const App = {
             const seccionExistente = this.state.secciones.find(s => s.seccion === seccion);
             const descripcion = seccionExistente ? seccionExistente.descripcion : '';
             
-            // Crear todos los anaqueles
             for (let i = 0; i < cantidad; i++) {
-                const numero = numeroInicial + i;
-                await DB.addSeccion(seccion, descripcion, String(numero));
+                await DB.addSeccion(seccion, descripcion, String(numeroInicial + i));
             }
             
             await this.loadAllData();
-            this.showGestionSeccionesModal();
+            this.mostrarContenidoSecciones();
             this.renderDashboard();
             
             if (cantidad === 1) {
                 UI.showToast('Anaquel ' + seccion + numeroInicial + ' agregado', 'success');
             } else {
-                const ultimoNumero = numeroInicial + cantidad - 1;
-                UI.showToast(cantidad + ' anaqueles agregados: ' + seccion + numeroInicial + ' al ' + seccion + ultimoNumero, 'success');
+                UI.showToast(cantidad + ' anaqueles agregados', 'success');
             }
         } catch (error) {
             UI.showToast('Error: ' + error.message, 'error');
@@ -621,7 +780,7 @@ const App = {
         try {
             await DB.deleteSeccion(item.id);
             await this.loadAllData();
-            this.showGestionSeccionesModal();
+            this.mostrarContenidoSecciones();
             this.renderDashboard();
             UI.showToast('Anaquel ' + codigo + ' eliminado', 'success');
         } catch (error) {
@@ -630,13 +789,13 @@ const App = {
     },
 
     async eliminarSeccionCompleta(seccion) {
-        if (!confirm('¿Eliminar TODA la sección ' + seccion + ' y todos sus anaqueles?')) return;
+        if (!confirm('¿Eliminar TODA la sección ' + seccion + '?')) return;
         if (!confirm('¿ESTÁ COMPLETAMENTE SEGURO?')) return;
         const items = this.state.secciones.filter(s => s.seccion === seccion);
         try {
             for (const item of items) { await DB.deleteSeccion(item.id); }
             await this.loadAllData();
-            this.showGestionSeccionesModal();
+            this.mostrarContenidoSecciones();
             this.renderDashboard();
             UI.showToast('Sección ' + seccion + ' eliminada', 'success');
         } catch (error) {
@@ -652,11 +811,15 @@ const App = {
         if (!item) return;
         
         const anaqueles = this.state.secciones.map(s => s.seccion + s.anaquel).sort();
+        const unidades = this.state.unidades.map(u => u.nombre).sort();
         
         const html = `<h2>Editar Insumo #${item.id}</h2>
             <div class="form-group"><label>Nombre *</label><input type="text" id="edit-nombre" value="${item.nombre||''}"></div>
             <div class="form-group"><label>Anaquel *</label><select id="edit-anaquel">${anaqueles.map(a => `<option value="${a}" ${a===item.anaquel?'selected':''}>${a}</option>`).join('')}</select></div>
-            <div class="form-row"><div class="form-group"><label>Stock (Actual: ${item.stock})</label><input type="number" id="edit-stock" value="${item.stock}" min="0"></div><div class="form-group"><label>Unidad</label><input type="text" id="edit-unidad" value="${item.unidad||''}"></div></div>
+            <div class="form-row">
+                <div class="form-group"><label>Stock (Actual: ${item.stock})</label><input type="number" id="edit-stock" value="${item.stock}" min="0"></div>
+                <div class="form-group"><label>Unidad</label><select id="edit-unidad"><option value="">Seleccione...</option>${unidades.map(u => `<option value="${u}" ${u===item.unidad?'selected':''}>${u}</option>`).join('')}</select></div>
+            </div>
             <div class="form-row"><div class="form-group"><label>Lote</label><input type="text" id="edit-lote" value="${item.lote||''}"></div><div class="form-group"><label>Vencimiento</label><input type="date" id="edit-vencimiento" value="${item.vencimiento||''}"></div></div>
             <div class="form-group"><label>Comentarios</label><textarea id="edit-comentarios">${item.comentarios||''}</textarea></div>
             <div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">Cancelar</button><button class="btn btn-success" onclick="App.procesarEdicion(${id})">${UI.icons.edit} Guardar Cambios</button></div>`;
@@ -675,7 +838,7 @@ const App = {
         const updates = {
             nombre: document.getElementById('edit-nombre').value.trim(),
             seccion: seccion, anaquel: anaquel, stock: nuevoStock,
-            unidad: document.getElementById('edit-unidad').value.trim(),
+            unidad: document.getElementById('edit-unidad').value,
             lote: document.getElementById('edit-lote').value.trim(),
             vencimiento: document.getElementById('edit-vencimiento').value || null,
             comentarios: document.getElementById('edit-comentarios').value.trim()
