@@ -32,7 +32,6 @@ const DB = {
         
         if (error) {
             console.error('Error al agregar sección:', error);
-            // Error de duplicado
             if (error.code === '23505') {
                 throw new Error('El anaquel ' + seccion + anaquel + ' ya existe');
             }
@@ -188,26 +187,9 @@ const DB = {
         
         if (error) {
             console.error('Error al obtener configuración:', error);
-            // Si no hay configuración, devolver valores por defecto
             return { porcentaje_critico: 20, dias_vencimiento: 30 };
         }
         return data;
-    },
-
-    async updateConfig(updates) {
-        updates.updated_at = new Date().toISOString();
-        
-        const { data, error } = await supabaseClient
-            .from('configuracion')
-            .update(updates)
-            .eq('id', 1)
-            .select();
-        
-        if (error) {
-            console.error('Error al actualizar configuración:', error);
-            throw error;
-        }
-        return data[0];
     },
 
     // ============================================
@@ -215,7 +197,6 @@ const DB = {
     // ============================================
     async procesarIngreso(nombre, seccion, anaquel, cantidad, unidad, lote, vencimiento, comentarios) {
         try {
-            // Buscar si existe el insumo en ese anaquel específico
             const { data: existentes, error: errorBusqueda } = await supabaseClient
                 .from('inventario')
                 .select('*')
@@ -229,7 +210,6 @@ const DB = {
             let stockNuevo = cantidad;
             
             if (existentes && existentes.length > 0) {
-                // Actualizar insumo existente
                 const item = existentes[0];
                 itemId = item.id;
                 stockAnterior = item.stock;
@@ -243,7 +223,6 @@ const DB = {
                 
                 await this.updateInventarioItem(itemId, updates);
             } else {
-                // Crear nuevo insumo
                 const nuevo = await this.addInventarioItem({
                     nombre: nombre,
                     seccion: seccion,
@@ -257,7 +236,6 @@ const DB = {
                 itemId = nuevo.id;
             }
             
-            // Registrar movimiento
             await this.addMovimiento({
                 tipo: 'INGRESO',
                 insumo: nombre,
@@ -280,25 +258,15 @@ const DB = {
         try {
             const item = await this.getInventarioItem(itemId);
             
-            if (!item) {
-                throw new Error('Insumo no encontrado');
-            }
-            
-            if (cantidad > item.stock) {
-                throw new Error('Stock insuficiente. Stock actual: ' + item.stock);
-            }
-            
-            if (cantidad <= 0) {
-                throw new Error('La cantidad debe ser mayor a 0');
-            }
+            if (!item) throw new Error('Insumo no encontrado');
+            if (cantidad > item.stock) throw new Error('Stock insuficiente. Stock actual: ' + item.stock);
+            if (cantidad <= 0) throw new Error('La cantidad debe ser mayor a 0');
             
             const stockAnterior = item.stock;
             const stockNuevo = stockAnterior - cantidad;
             
-            // Actualizar stock
             await this.updateInventarioItem(itemId, { stock: stockNuevo });
             
-            // Registrar movimiento
             await this.addMovimiento({
                 tipo: 'SALIDA',
                 insumo: item.nombre,
@@ -319,62 +287,5 @@ const DB = {
             console.error('Error en procesarSalida:', error);
             throw error;
         }
-    },
-
-    // ============================================
-    // BÚSQUEDAS AVANZADAS
-    // ============================================
-    async buscarPorNombre(busqueda) {
-        const { data, error } = await supabaseClient
-            .from('inventario')
-            .select('*')
-            .ilike('nombre', `%${busqueda}%`)
-            .order('nombre');
-        
-        if (error) throw error;
-        return data || [];
-    },
-
-    async buscarPorAnaquel(anaquel) {
-        const { data, error } = await supabaseClient
-            .from('inventario')
-            .select('*')
-            .eq('anaquel', anaquel)
-            .order('nombre');
-        
-        if (error) throw error;
-        return data || [];
-    },
-
-    async getStockCritico(porcentajeCritico = 20) {
-        const { data, error } = await supabaseClient
-            .from('inventario')
-            .select('*')
-            .order('stock');
-        
-        if (error) throw error;
-        
-        // Filtrar los que tienen stock bajo según el porcentaje
-        return (data || []).filter(item => {
-            if (!item.stock || item.stock === 0) return true;
-            return item.stock <= 5; // Stock mínimo fijo
-        });
-    },
-
-    async getVencimientosProximos(dias = 30) {
-        const hoy = new Date().toISOString().split('T')[0];
-        const limite = new Date();
-        limite.setDate(limite.getDate() + dias);
-        const limiteStr = limite.toISOString().split('T')[0];
-        
-        const { data, error } = await supabaseClient
-            .from('inventario')
-            .select('*')
-            .gte('vencimiento', hoy)
-            .lte('vencimiento', limiteStr)
-            .order('vencimiento');
-        
-        if (error) throw error;
-        return data || [];
     }
 };
