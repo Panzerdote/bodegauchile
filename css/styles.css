@@ -45,10 +45,12 @@ body {
     color: var(--dark);
     z-index: 200;
     line-height: 1;
+    border-radius: 5px;
 }
 
 .hamburger:hover {
     color: var(--primary);
+    background: #f0f0f0;
 }
 
 /* Overlay para cerrar sidebar en móvil */
@@ -767,13 +769,13 @@ tr:hover td {
         font-size: 16px; /* Evita zoom en iOS */
     }
 
-    /* Modal ocupa casi toda la pantalla */
+    /* Modal ocupa casi toda la pantalla en móvil */
     .modal-content {
         width: 95%;
         margin: 10px auto;
         padding: 15px;
         max-height: 90vh;
-        border-radius: 10px 10px 0 0;
+        border-radius: 15px 15px 0 0;
         position: fixed;
         bottom: 0;
         left: 0;
@@ -832,7 +834,7 @@ tr:hover td {
 /* ============================================ */
 @media (max-width: 480px) {
     .dashboard-cards {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
         gap: 6px;
     }
 
@@ -851,10 +853,5 @@ tr:hover td {
     .header-actions .btn {
         padding: 5px 8px;
         font-size: 10px;
-    }
-
-    /* Una sola columna para cards si son muchas */
-    .dashboard-cards {
-        grid-template-columns: 1fr;
     }
 }
