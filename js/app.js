@@ -1216,6 +1216,50 @@ const App = {
         
         UI.showToast('Exportado como CSV (compatible con Excel)', 'success');
     }
+
+    exportarMovimientosExcel() {
+    const filtroTexto = document.getElementById('busqueda-movimientos')?.value?.trim().toLowerCase() || '';
+    const filtroTipo = document.getElementById('filtro-tipo-movimiento')?.value || 'TODOS';
+    
+    let movs = [...this.state.movimientos];
+    
+    if (filtroTipo !== 'TODOS') {
+        movs = movs.filter(m => m.tipo === filtroTipo);
+    }
+    
+    if (filtroTexto) {
+        movs = movs.filter(m => 
+            (m.insumo && m.insumo.toLowerCase().includes(filtroTexto)) ||
+            (m.anaquel && m.anaquel.toLowerCase().includes(filtroTexto)) ||
+            (m.comentarios && m.comentarios.toLowerCase().includes(filtroTexto)) ||
+            (m.tipo && m.tipo.toLowerCase().includes(filtroTexto))
+        );
+    }
+    
+    if (movs.length === 0) {
+        UI.showToast('No hay movimientos para exportar', 'warning');
+        return;
+    }
+    
+    let csv = 'Fecha;Tipo;Insumo;Stock Anterior;Stock Nuevo;Anaquel;Comentarios\n';
+    
+    movs.forEach(mov => {
+        const fecha = new Date(mov.fecha).toLocaleString('es-CL');
+        const tipo = this.formatearTipo(mov.tipo);
+        csv += `"${fecha}";${tipo};"${mov.insumo || ''}";${mov.cantidad || 0};${mov.stock_anterior !== null ? mov.stock_anterior : ''};${mov.stock_nuevo !== null ? mov.stock_nuevo : ''};${mov.anaquel || ''};"${mov.comentarios || ''}"\n`;
+    });
+    
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `movimientos_bodega_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    UI.showToast(`${movs.length} movimientos exportados`, 'success');
+    },
 };
 
 // ============================================
