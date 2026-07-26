@@ -1,4 +1,15 @@
 // ============================================
+// ZONA HORARIA CHILE
+// ============================================
+function ahoraChile() {
+    const ahora = new Date();
+    const offsetChile = -4 * 60;
+    const offsetLocal = ahora.getTimezoneOffset();
+    const diff = (offsetChile - offsetLocal) * 60 * 1000;
+    return new Date(ahora.getTime() + diff);
+}
+
+// ============================================
 // CAPA DE BASE DE DATOS - SUPABASE
 // ============================================
 
@@ -170,6 +181,7 @@ const DB = {
         const { data, error } = await supabaseClient
             .from('movimientos')
             .insert([{
+                fecha: ahoraChile().toISOString(),
                 tipo: movimiento.tipo,
                 insumo: movimiento.insumo,
                 cantidad: movimiento.cantidad || 0,
