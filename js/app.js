@@ -104,8 +104,6 @@ const App = {
         }).length;
 
         this.renderAlertas(criticos);
-        this.renderUltimosMovimientos();
-        this.renderInventarioRapido();
     },
 
     esStockCritico(item) {
