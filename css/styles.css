@@ -41,9 +41,8 @@ body {
     display: none;
     background: none;
     border: none;
-    font-size: 26px;
     cursor: pointer;
-    padding: 5px 10px;
+    padding: 5px 8px;
     color: var(--primary);
     z-index: 200;
     line-height: 1;
@@ -52,6 +51,10 @@ body {
 
 .hamburger:hover {
     background: rgba(26, 58, 107, 0.1);
+}
+
+.hamburger svg {
+    color: var(--primary);
 }
 
 .sidebar-overlay {
@@ -186,12 +189,6 @@ body {
     font-weight: 600;
 }
 
-.sidebar-menu .icon {
-    font-size: 16px;
-    width: 22px;
-    text-align: center;
-}
-
 .sidebar-menu .badge-menu {
     background: var(--accent);
     color: var(--primary-dark);
@@ -211,6 +208,43 @@ body {
     font-size: 10px;
     color: #8892b0;
     text-align: center;
+}
+
+/* ============================================ */
+/* ICONOS SVG */
+/* ============================================ */
+.icon-svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.sidebar-menu a .icon-svg {
+    color: inherit;
+}
+
+.sidebar-menu a.active .icon-svg {
+    color: var(--accent);
+}
+
+.card-icon svg {
+    color: var(--primary);
+}
+
+.card.critical .card-icon svg {
+    color: var(--danger);
+}
+
+.card.warning .card-icon svg {
+    color: var(--warning);
+}
+
+.card.success .card-icon svg {
+    color: var(--success);
+}
+
+.btn svg {
+    flex-shrink: 0;
 }
 
 /* ============================================ */
@@ -367,8 +401,9 @@ body {
 }
 
 .card-icon {
-    font-size: 24px;
     margin-bottom: 5px;
+    display: flex;
+    justify-content: center;
 }
 
 .card.critical { border-top-color: var(--danger); }
