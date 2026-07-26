@@ -491,78 +491,170 @@ const App = {
     },
 
     // ============================================
-    // GESTIÓN DE SECCIONES
+    // GESTIÓN DE SECCIONES (COMPLETAMENTE NUEVA)
     // ============================================
     showGestionSeccionesModal() {
         let html = '<h2>⚙ Gestionar Secciones y Anaqueles</h2>';
-        html += '<p style="font-size:12px;color:#666;margin-bottom:15px;">Configure las secciones (letra) y anaqueles (número). El código se genera automáticamente: <strong>A + 1 = A1</strong></p>';
+        html += '<p style="font-size:12px;color:#666;margin-bottom:15px;">Primero cree una <strong>Sección</strong> (categoría con descripción), luego agregue <strong>Anaqueles</strong> (numeración) dentro de ella.</p>';
         
-        if (this.state.secciones.length === 0) {
-            html += '<div class="empty-state"><div class="icon">⚙</div><p>No hay anaqueles configurados.</p></div>';
+        // Agrupar secciones
+        const seccionesAgrupadas = {};
+        this.state.secciones.forEach(s => {
+            if (!seccionesAgrupadas[s.seccion]) {
+                seccionesAgrupadas[s.seccion] = {
+                    descripcion: s.descripcion || 'Sin descripción',
+                    anaqueles: []
+                };
+            }
+            seccionesAgrupadas[s.seccion].anaqueles.push(s.anaquel);
+        });
+        
+        const seccionesKeys = Object.keys(seccionesAgrupadas).sort();
+        
+        if (seccionesKeys.length === 0) {
+            html += '<div class="empty-state"><div class="icon">⚙</div><p>No hay secciones ni anaqueles configurados. ¡Cree la primera!</p></div>';
         } else {
-            const agrupado = {};
-            this.state.secciones.forEach(s => {
-                if (!agrupado[s.seccion]) agrupado[s.seccion] = [];
-                agrupado[s.seccion].push(s);
+            html += '<div style="display:grid; gap:15px; margin-bottom:20px;">';
+            
+            seccionesKeys.forEach(sec => {
+                const info = seccionesAgrupadas[sec];
+                const anaquelesOrdenados = info.anaqueles.sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+                
+                html += `
+                    <div style="border:2px solid #e0e0e0; border-radius:10px; padding:15px; background:white;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <div>
+                                <span style="font-size:20px; font-weight:bold; color:var(--primary);">Sección ${sec}</span>
+                                <span style="margin-left:10px; color:#555; font-size:14px;">— ${info.descripcion}</span>
+                            </div>
+                            <button class="btn btn-danger btn-sm" onclick="App.eliminarSeccionCompleta('${sec}')" title="Eliminar toda la sección">🗑️ Eliminar Sección</button>
+                        </div>
+                        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; min-height:30px;">
+                            ${anaquelesOrdenados.length === 0 ? '<span style="color:#999; font-size:12px;">Sin anaqueles</span>' : ''}
+                            ${anaquelesOrdenados.map(a => `
+                                <span style="background:var(--primary); color:white; padding:6px 12px; border-radius:20px; font-size:13px; display:inline-flex; align-items:center; gap:8px;">
+                                    ${sec}${a}
+                                    <button onclick="event.stopPropagation(); App.eliminarAnaquelIndividual('${sec}', '${a}')" style="background:rgba(255,255,255,0.3); border:none; color:white; cursor:pointer; font-size:14px; padding:2px 6px; border-radius:50%; line-height:1;" title="Eliminar anaquel ${sec}${a}">×</button>
+                                </span>
+                            `).join('')}
+                        </div>
+                        <button class="btn btn-info btn-sm" onclick="App.mostrarAgregarAnaquel('${sec}')">➕ Agregar Anaquel a Sección ${sec}</button>
+                    </div>`;
             });
             
-            html += '<div class="table-container"><table><thead><tr><th>Sección</th><th>Anaquel</th><th>Código</th><th>Descripción</th><th>Acc.</th></tr></thead><tbody>';
-            Object.keys(agrupado).sort().forEach(sec => {
-                agrupado[sec].sort((a, b) => a.anaquel.localeCompare(b.anaquel)).forEach(s => {
-                    const codigo = s.seccion + s.anaquel;
-                    html += `<tr>
-                        <td><strong>${s.seccion}</strong></td>
-                        <td>${s.anaquel}</td>
-                        <td><span class="badge badge-info">${codigo}</span></td>
-                        <td>${s.descripcion || '-'}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="App.eliminarSeccion(${s.id})">🗑️</button></td></tr>`;
-                });
-            });
-            html += '</tbody></table></div>';
+            html += '</div>';
         }
         
+        // Crear nueva sección
         html += `
-            <h3 style="margin-top:20px;">➕ Agregar Nuevo Anaquel</h3>
+            <h3 style="margin-top:25px; padding-top:20px; border-top:2px solid #eee;">➕ Crear Nueva Sección</h3>
+            <p style="font-size:12px;color:#666;margin-bottom:12px;">Cree una nueva categoría para organizar sus insumos.</p>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Sección (Letra) *</label>
-                    <input type="text" id="nueva-seccion" maxlength="1" placeholder="A, B, C..." style="text-transform:uppercase;">
+                    <label>Letra de Sección *</label>
+                    <input type="text" id="nueva-seccion-letra" maxlength="1" placeholder="A, B, C..." style="text-transform:uppercase;">
+                    <small style="color:#888;">Ej: A, B, C...</small>
                 </div>
                 <div class="form-group">
-                    <label>N° Anaquel *</label>
-                    <input type="text" id="nuevo-anaquel" placeholder="1, 2, 3...">
+                    <label>Descripción *</label>
+                    <input type="text" id="nueva-seccion-descripcion" placeholder="Ej: Material Quirúrgico">
+                    <small style="color:#888;">Ej: Material Quirúrgico, Insumos Clínicos, Aseo...</small>
                 </div>
                 <div class="form-group">
-                    <label>Descripción</label>
-                    <input type="text" id="nueva-descripcion" placeholder="Opcional">
+                    <label>Primer Anaquel (opcional)</label>
+                    <input type="text" id="nueva-seccion-anaquel" placeholder="1">
+                    <small style="color:#888;">Si no ingresa, se creará con anaquel "1"</small>
                 </div>
             </div>
-            <p style="font-size:11px;color:#666;margin-bottom:10px;">
-                Ejemplo: Sección <strong>A</strong> + Anaquel <strong>1</strong> = <span class="badge badge-info">A1</span>
-            </p>
-            <button class="btn btn-success" onclick="App.agregarSeccion()">➕ Agregar Anaquel</button>
+            <button class="btn btn-success" onclick="App.crearNuevaSeccion()">✅ Crear Sección</button>
             <div class="form-actions">
                 <button class="btn btn-secondary" onclick="UI.closeModal()">Cerrar</button>
             </div>`;
+        
         UI.openModal(html);
     },
 
-    async agregarSeccion() {
-        const seccion = document.getElementById('nueva-seccion').value.trim().toUpperCase();
-        const anaquel = document.getElementById('nuevo-anaquel').value.trim();
-        const descripcion = document.getElementById('nueva-descripcion').value.trim();
+    async crearNuevaSeccion() {
+        const letra = document.getElementById('nueva-seccion-letra').value.trim().toUpperCase();
+        const descripcion = document.getElementById('nueva-seccion-descripcion').value.trim();
+        const anaquel = document.getElementById('nueva-seccion-anaquel').value.trim() || '1';
         
-        if (!seccion || !anaquel) { UI.showToast('Complete sección y anaquel', 'error'); return; }
-        if (!/^[A-Z]$/.test(seccion)) { UI.showToast('La sección debe ser una sola letra (A-Z)', 'error'); return; }
+        if (!letra || !descripcion) {
+            UI.showToast('La letra y descripción son obligatorias', 'error');
+            return;
+        }
         
-        const codigo = seccion + anaquel;
+        if (!/^[A-Z]$/.test(letra)) {
+            UI.showToast('La letra debe ser una sola letra (A-Z)', 'error');
+            return;
+        }
+        
+        // Verificar que la letra no exista ya
+        const existeLetra = this.state.secciones.some(s => s.seccion === letra);
+        if (existeLetra) {
+            UI.showToast('La sección ' + letra + ' ya existe. Puede agregar anaqueles a ella desde la lista.', 'error');
+            return;
+        }
+        
+        const codigo = letra + anaquel;
         if (this.state.secciones.find(s => s.seccion + s.anaquel === codigo)) {
             UI.showToast('El código ' + codigo + ' ya existe', 'error');
             return;
         }
         
         try {
-            await DB.addSeccion(seccion, descripcion, anaquel);
+            await DB.addSeccion(letra, descripcion, anaquel);
+            await this.loadAllData();
+            this.showGestionSeccionesModal();
+            this.renderDashboard();
+            UI.showToast('✅ Sección ' + letra + ' creada como ' + codigo + '!', 'success');
+        } catch (error) {
+            UI.showToast('Error: ' + error.message, 'error');
+        }
+    },
+
+    mostrarAgregarAnaquel(seccion) {
+        const info = this.state.secciones.find(s => s.seccion === seccion);
+        const descripcion = info ? info.descripcion : '';
+        
+        const html = `
+            <h2>➕ Agregar Anaquel a Sección ${seccion}</h2>
+            <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:15px;">
+                <p><strong>Sección:</strong> ${seccion}</p>
+                <p><strong>Descripción:</strong> ${descripcion}</p>
+            </div>
+            <div class="form-group">
+                <label>Número de Anaquel *</label>
+                <input type="text" id="agregar-anaquel-numero" placeholder="2, 3, 4..." autofocus>
+                <small style="color:#888;">Se creará: <strong>${seccion} + número</strong></small>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="App.showGestionSeccionesModal()">← Volver</button>
+                <button class="btn btn-success" onclick="App.agregarAnaquelASeccion('${seccion}')">✅ Agregar Anaquel</button>
+            </div>`;
+        
+        UI.openModal(html);
+    },
+
+    async agregarAnaquelASeccion(seccion) {
+        const numero = document.getElementById('agregar-anaquel-numero').value.trim();
+        
+        if (!numero) {
+            UI.showToast('Ingrese un número de anaquel', 'error');
+            return;
+        }
+        
+        const codigo = seccion + numero;
+        if (this.state.secciones.find(s => s.seccion + s.anaquel === codigo)) {
+            UI.showToast('El anaquel ' + codigo + ' ya existe en esta sección', 'error');
+            return;
+        }
+        
+        try {
+            const seccionExistente = this.state.secciones.find(s => s.seccion === seccion);
+            const descripcion = seccionExistente ? seccionExistente.descripcion : '';
+            
+            await DB.addSeccion(seccion, descripcion, numero);
             await this.loadAllData();
             this.showGestionSeccionesModal();
             this.renderDashboard();
@@ -572,13 +664,39 @@ const App = {
         }
     },
 
-    async eliminarSeccion(id) {
-        if (!confirm('¿Eliminar este anaquel? Los insumos en él NO se eliminarán.')) return;
+    async eliminarAnaquelIndividual(seccion, anaquel) {
+        const codigo = seccion + anaquel;
+        
+        if (!confirm('¿Eliminar el anaquel ' + codigo + '? Los insumos en él NO se eliminarán.')) return;
+        
+        const item = this.state.secciones.find(s => s.seccion === seccion && s.anaquel === anaquel);
+        if (!item) return;
+        
         try {
-            await DB.deleteSeccion(id);
+            await DB.deleteSeccion(item.id);
             await this.loadAllData();
             this.showGestionSeccionesModal();
             this.renderDashboard();
+            UI.showToast('✅ Anaquel ' + codigo + ' eliminado!', 'success');
+        } catch (error) {
+            UI.showToast('Error al eliminar', 'error');
+        }
+    },
+
+    async eliminarSeccionCompleta(seccion) {
+        if (!confirm('⚠ ¿Eliminar TODA la sección ' + seccion + ' y todos sus anaqueles? Esta acción no se puede deshacer.')) return;
+        if (!confirm('¿ESTÁ COMPLETAMENTE SEGURO? Se eliminarán todos los anaqueles de la sección ' + seccion + '.')) return;
+        
+        const items = this.state.secciones.filter(s => s.seccion === seccion);
+        
+        try {
+            for (const item of items) {
+                await DB.deleteSeccion(item.id);
+            }
+            await this.loadAllData();
+            this.showGestionSeccionesModal();
+            this.renderDashboard();
+            UI.showToast('✅ Sección ' + seccion + ' eliminada completamente!', 'success');
         } catch (error) {
             UI.showToast('Error al eliminar', 'error');
         }
