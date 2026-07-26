@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 650" width="330" height="650">
+  <g id="humanidades">
+    <path d="M 165,431.00311 L 165,643.81561 C 165.1111,643.63929 165.21358,643.48042 165.3125,643.28436 C 166.79625,640.34351 167.48696,635.39746 184.6875,635.81561 L 312.15625,635.81561 C 312.53494,635.66673 312.89276,635.53754 313.25,635.37811 C 318.60857,632.98669 321.57545,629.36354 322.5,623.06561 L 322.5,431.00311 L 165,431.00311 z" style="fill:#0071bc;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"/>
+    <path d="M 242.57937,515.77382 C 241.49546,508.19877 231.63116,511.25152 233.52719,499.20761 C 234.28076,496.00542 237.79246,491.14161 231.7327,488.65715 C 233.78477,487.86324 236.35507,488.18369 237.57798,492.08912 C 242.7879,486.87697 242.9687,484.32339 239.79442,480.21642 C 243.57299,479.84415 248.16148,482.94642 246.45844,488.71355 C 247.4651,487.88164 250.05978,490.43068 249.9082,493.93391 C 253.73662,499.01379 253.25238,501.70983 249.96891,506.27149 C 248.87501,508.20066 243.37366,510.78994 242.57937,515.77382 z" style="fill:#d40000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.7;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"/>
+    <polygon points="8.649,56.665 239.835,55.516 308.529,0.472 308.529,0.472 85.773,0.108 8.649,56.665" transform="matrix(0.3331081,0,0,0.3276897,191.07575,565.43164)" style="fill:#eac102;fill-opacity:1;stroke:#000000;stroke-width:2.11872244;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"/>
+  </g>
+  <g id="medicina">
+    <path d="M 165,226.94061 L 165,431.00311 L 322.5,431.00311 L 322.5,226.94061 L 165,226.94061 z" style="fill:#eac102;fill-opacity:1;stroke:#000000;stroke-width:0.7;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"/>
+  </g>
+  <g id="derecho">
+    <path d="M 7.5,226.94061 L 7.5,431.00311 L 165,431.00311 L 165,226.94061 L 7.5,226.94061 z" style="fill:#008f4c;fill-opacity:1;stroke:#000000;stroke-width:0.7;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"/>
+  </g>
+  <g id="ingenieria">
+    <path d="M 7.5,431.00311 L 7.5,623.06561 C 8.8057565,629.56875 10.963271,634.24075 17.90625,635.81561 L 145.3125,635.81561 C 163.27161,635.22606 162.77341,641.21767 165,643.81561 L 165,431.00311 L 7.5,431.00311 z" style="fill:#d40000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"/>
+  </g>
+  <g id="teologia">
+    <circle cx="165" cy="431" r="48" style="fill:#ececec;fill-opacity:1;stroke:#000000;stroke-width:0.7;stroke-miterlimit:4;"/>
+    <path d="M 139.72019,452.62443 L 190.31774,452.62443 L 165.01897,397.25393 L 139.72019,452.62443 z" style="fill:#1a3a6b;fill-opacity:1;stroke:#000000;stroke-width:0.5;"/>
+  </g>
+  <path d="M 6.5,225.94061 L 6.5,623.06561 L 323.5,623.06561 L 323.5,225.94061 L 6.5,225.94061 z" style="fill:none;stroke:#000000;stroke-width:2;stroke-miterlimit:4;"/>
+</svg>
