@@ -7,7 +7,7 @@ const DB = {
     // SECCIONES
     // ============================================
     async getSecciones() {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('secciones')
             .select('*')
             .order('anaquel');
@@ -17,7 +17,7 @@ const DB = {
     },
 
     async addSeccion(seccion, descripcion, anaquel) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('secciones')
             .insert([{ seccion, descripcion, anaquel }])
             .select();
@@ -27,7 +27,7 @@ const DB = {
     },
 
     async deleteSeccion(id) {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('secciones')
             .delete()
             .eq('id', id);
@@ -39,7 +39,7 @@ const DB = {
     // INVENTARIO
     // ============================================
     async getInventario() {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('inventario')
             .select('*')
             .order('seccion')
@@ -50,7 +50,7 @@ const DB = {
     },
 
     async getInventarioItem(id) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('inventario')
             .select('*')
             .eq('id', id)
@@ -61,7 +61,7 @@ const DB = {
     },
 
     async addInventarioItem(item) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('inventario')
             .insert([item])
             .select();
@@ -72,7 +72,7 @@ const DB = {
 
     async updateInventarioItem(id, updates) {
         updates.updated_at = new Date().toISOString();
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('inventario')
             .update(updates)
             .eq('id', id)
@@ -83,7 +83,7 @@ const DB = {
     },
 
     async deleteInventarioItem(id) {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('inventario')
             .delete()
             .eq('id', id);
@@ -95,7 +95,7 @@ const DB = {
     // MOVIMIENTOS
     // ============================================
     async getMovimientos(limit = 50) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('movimientos')
             .select('*')
             .order('fecha', { ascending: false })
@@ -106,7 +106,7 @@ const DB = {
     },
 
     async addMovimiento(movimiento) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('movimientos')
             .insert([movimiento])
             .select();
@@ -119,7 +119,7 @@ const DB = {
     // CONFIGURACIÓN
     // ============================================
     async getConfig() {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('configuracion')
             .select('*')
             .order('id')
@@ -135,7 +135,7 @@ const DB = {
     // ============================================
     async procesarIngreso(nombre, seccion, anaquel, cantidad, unidad, lote, vencimiento, comentarios) {
         // Buscar si existe el insumo
-        const { data: existentes } = await supabase
+        const { data: existentes } = await supabaseClient
             .from('inventario')
             .select('*')
             .ilike('nombre', nombre)
