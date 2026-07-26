@@ -14,25 +14,30 @@ const App = {
     // INICIALIZACIÓN
     // ============================================
     async init() {
-        try {
-            UI.setConnectionStatus('🟡', 'Conectando...');
-            
-            // Cargar datos iniciales
-            await this.loadAllData();
-            
-            // Configurar eventos
-            this.setupEventListeners();
-            
-            // Mostrar dashboard
-            this.showDashboard();
-            
-            UI.setConnectionStatus('🟢', 'Conectado');
-        } catch (error) {
-            console.error('Error al inicializar:', error);
-            UI.setConnectionStatus('🔴', 'Error de conexión');
-            UI.showToast('Error al conectar con la base de datos', 'error');
+    try {
+        UI.setConnectionStatus('🟡', 'Conectando...');
+        
+        // Verificar que supabaseClient existe
+        if (typeof supabaseClient === 'undefined') {
+            throw new Error('Cliente de Supabase no inicializado');
         }
-    },
+        
+        // Cargar datos iniciales
+        await this.loadAllData();
+        
+        // Configurar eventos
+        this.setupEventListeners();
+        
+        // Mostrar dashboard
+        this.showDashboard();
+        
+        UI.setConnectionStatus('🟢', 'Conectado');
+    } catch (error) {
+        console.error('Error al inicializar:', error);
+        UI.setConnectionStatus('🔴', 'Error');
+        UI.showToast('Error al conectar: ' + error.message, 'error');
+    }
+},
 
     async loadAllData() {
         const [inventario, secciones, config] = await Promise.all([
