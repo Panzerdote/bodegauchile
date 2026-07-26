@@ -335,7 +335,7 @@ const App = {
             return;
         }
         
-        let html = '<div class="table-container"><table><thead><tr><th>Fecha</th><th class="text-center">Tipo</th><th>Insumo / Detalle</th><th class="text-center">Cant.</th><th class="text-center">Stock Ant.</th><th class="text-center">Stock Nuevo</th><th class="text-center">Anaquel</th><th>Comentarios</th></tr></thead><tbody>';
+        let html = '<div class="table-container"><table><thead><tr><th>Fecha</th><th class="text-center">Tipo</th><th>Info.</th><th class="text-center">Cant.</th><th class="text-center">Stock Ant.</th><th class="text-center">Stock Nuevo</th><th class="text-center">Anaquel</th><th>Comentarios</th></tr></thead><tbody>';
         
         movs.forEach(mov => {
             const fecha = new Date(mov.fecha);
