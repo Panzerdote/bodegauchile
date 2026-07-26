@@ -62,36 +62,40 @@ const UI = {
     // NAVEGACIÓN
     // ============================================
     setActiveSection(sectionName) {
-        document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
-        const section = document.getElementById(`section-${sectionName}`);
-        if (section) section.style.display = 'block';
-        
-        document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
-        const menuLink = document.querySelector(`[data-section="${sectionName}"]`);
-        if (menuLink) menuLink.classList.add('active');
-        
-        const titles = {
-            dashboard: 'Dashboard',
-            inventario: 'Inventario Completo',
-            movimientos: 'Historial de Movimientos'
-        };
-        document.getElementById('page-title').textContent = titles[sectionName] || '';
-        
-        const headerActions = document.getElementById('header-actions');
-        if (sectionName === 'dashboard') {
-            headerActions.innerHTML = `
-                <button class="btn btn-success" id="header-btn-ingreso">${this.icons.plus} Ingreso</button>
-                <button class="btn btn-danger" id="header-btn-salida">${this.icons.minus} Salida</button>
-            `;
-        } else if (sectionName === 'inventario') {
-            headerActions.innerHTML = `
-                <button class="btn btn-success" id="header-btn-ingreso">${this.icons.plus} Ingreso</button>
-                <button class="btn btn-info" id="header-btn-buscar">${this.icons.search} Anaquel</button>
-            `;
-        } else {
-            headerActions.innerHTML = '';
-        }
-    },
+    document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
+    const section = document.getElementById(`section-${sectionName}`);
+    if (section) section.style.display = 'block';
+    
+    document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+    const menuLink = document.querySelector(`[data-section="${sectionName}"]`);
+    if (menuLink) menuLink.classList.add('active');
+    
+    const titles = {
+        dashboard: 'Dashboard',
+        inventario: 'Inventario Completo',
+        movimientos: 'Historial de Movimientos'
+    };
+    document.getElementById('page-title').textContent = titles[sectionName] || '';
+    
+    const headerActions = document.getElementById('header-actions');
+    if (sectionName === 'dashboard') {
+        headerActions.innerHTML = `
+            <button class="btn btn-success" id="header-btn-ingreso">${UI.icons.plus} Ingreso</button>
+            <button class="btn btn-danger" id="header-btn-salida">${UI.icons.minus} Salida</button>
+        `;
+    } else if (sectionName === 'inventario') {
+        headerActions.innerHTML = `
+            <button class="btn btn-success" id="header-btn-ingreso">${UI.icons.plus} Ingreso</button>
+            <button class="btn btn-info" id="header-btn-buscar">${UI.icons.search} Anaquel</button>
+        `;
+    } else if (sectionName === 'movimientos') {
+        headerActions.innerHTML = `
+            <button class="btn btn-success" onclick="App.exportarMovimientosExcel()">${UI.icons.download} Exportar Excel</button>
+        `;
+    } else {
+        headerActions.innerHTML = '';
+    }
+},
 
     // ============================================
     // TOAST
