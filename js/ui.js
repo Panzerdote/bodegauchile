@@ -6,6 +6,42 @@ const UI = {
     toastTimeout: null,
 
     // ============================================
+    // SIDEBAR MÓVIL
+    // ============================================
+    toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        
+        if (sidebar.classList.contains('active')) {
+            this.closeSidebar();
+        } else {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    },
+
+    closeSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    },
+
+    // Cerrar sidebar al hacer clic en un enlace (móvil)
+    setupMobileMenu() {
+        document.querySelectorAll('.sidebar-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    this.closeSidebar();
+                }
+            });
+        });
+    },
+
+    // ============================================
     // NAVEGACIÓN
     // ============================================
     setActiveSection(sectionName) {
@@ -65,10 +101,12 @@ const UI = {
         `;
         document.getElementById('modal-content').innerHTML = contentWithClose;
         document.getElementById('modal').classList.add('active');
+        document.body.style.overflow = 'hidden';
     },
 
     closeModal() {
         document.getElementById('modal').classList.remove('active');
+        document.body.style.overflow = '';
     },
 
     // ============================================
@@ -93,3 +131,12 @@ const UI = {
         }
     }
 };
+
+// Funciones globales para el onclick del HTML
+function toggleSidebar() {
+    UI.toggleSidebar();
+}
+
+function closeSidebar() {
+    UI.closeSidebar();
+}
