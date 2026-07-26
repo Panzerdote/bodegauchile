@@ -47,24 +47,25 @@
 
         <div class="sidebar-footer">
             <span id="connection-status">🟡 Conectando...</span>
-            <br>v3.2 | Supabase
+            <br>v3.3 | Supabase
         </div>
     </aside>
+
+    <!-- OVERLAY PARA CERRAR SIDEBAR EN MÓVIL -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
         <header class="header">
             <div class="header-left">
-        <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()" title="Menú">
-            ☰
-        </button>
-        <h1 id="page-title">📊 Dashboard</h1>
+                <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()" title="Menú">☰</button>
+                <h1 id="page-title">📊 Dashboard</h1>
             </div>
             <div class="header-actions" id="header-actions">
-            <button class="btn btn-success" id="header-btn-ingreso">➕ Ingreso</button>
-        <button class="btn btn-danger" id="header-btn-salida">➖ Salida</button>
-    </div>
-</header>
+                <button class="btn btn-success" id="header-btn-ingreso">➕ Ingreso</button>
+                <button class="btn btn-danger" id="header-btn-salida">➖ Salida</button>
+            </div>
+        </header>
 
         <div class="container">
             <!-- DASHBOARD -->
@@ -117,7 +118,9 @@
             <section id="section-inventario" style="display:none;">
                 <div class="section">
                     <input type="text" class="search-box" id="busqueda-inventario" placeholder="🔍 Buscar por nombre, anaquel, sección, lote...">
-                    <div class="table-container" id="tabla-inventario"></div>
+                    <div class="table-responsive">
+                        <div class="table-container" id="tabla-inventario"></div>
+                    </div>
                 </div>
             </section>
             
@@ -125,7 +128,9 @@
             <section id="section-movimientos" style="display:none;">
                 <div class="section">
                     <input type="text" class="search-box" id="busqueda-movimientos" placeholder="🔍 Filtrar por insumo, tipo, anaquel...">
-                    <div class="table-container" id="tabla-movimientos"></div>
+                    <div class="table-responsive">
+                        <div class="table-container" id="tabla-movimientos"></div>
+                    </div>
                 </div>
             </section>
         </div>
