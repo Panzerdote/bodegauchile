@@ -178,27 +178,27 @@
 
             <!-- INVENTARIO -->
             <section id="section-inventario" style="display:none;">
-    <div class="section">
-        <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap:wrap; align-items:center;">
-            <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px; white-space:nowrap;">
-                <input type="checkbox" id="filtro-stock-total" onchange="App.renderInventario()" checked> Stock Total
-            </label>
-            <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px; white-space:nowrap;">
-                <input type="checkbox" id="filtro-stock-critico" onchange="App.renderInventario()"> Stock Crítico
-            </label>
-            <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px; white-space:nowrap;">
-                <input type="checkbox" id="filtro-por-vencer" onchange="App.renderInventario()"> Por Vencer
-            </label>
-            <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px; white-space:nowrap;">
-                <input type="checkbox" id="filtro-vencidos" onchange="App.renderInventario()"> Vencidos
-            </label>
-            <span style="font-size:11px; color:#888; margin-left:auto;">Mostrando: <strong id="contador-inventario">0</strong> insumos</span>
-        </div>
-        <div class="table-responsive">
-            <div class="table-container" id="tabla-inventario"></div>
-        </div>
-    </div>
-</section>
+                <div class="section">
+                    <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap:wrap; align-items:center;">
+                        <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px; white-space:nowrap;">
+                            <input type="checkbox" id="filtro-stock-total" onchange="App.renderInventario()" checked> Stock Total
+                        </label>
+                        <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px; white-space:nowrap;">
+                            <input type="checkbox" id="filtro-stock-critico" onchange="App.renderInventario()"> Stock Crítico
+                        </label>
+                        <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px; white-space:nowrap;">
+                            <input type="checkbox" id="filtro-por-vencer" onchange="App.renderInventario()"> Por Vencer
+                        </label>
+                        <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px; white-space:nowrap;">
+                            <input type="checkbox" id="filtro-vencidos" onchange="App.renderInventario()"> Vencidos
+                        </label>
+                        <span style="font-size:11px; color:#888; margin-left:auto;">Mostrando: <strong id="contador-inventario">0</strong> insumos</span>
+                    </div>
+                    <div class="table-responsive">
+                        <div class="table-container" id="tabla-inventario"></div>
+                    </div>
+                </div>
+            </section>
             
             <!-- MOVIMIENTOS -->
             <section id="section-movimientos" style="display:none;">
