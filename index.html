@@ -189,7 +189,20 @@
             <!-- MOVIMIENTOS -->
             <section id="section-movimientos" style="display:none;">
                 <div class="section">
-                    <input type="text" class="search-box" id="busqueda-movimientos" placeholder="Filtrar por insumo, tipo, anaquel...">
+                    <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
+                        <select id="filtro-tipo-movimiento" onchange="App.renderMovimientos()" style="padding:10px 12px; border:2px solid #e0e0e0; border-radius:5px; font-size:13px; font-family:inherit; min-width:180px;">
+                            <option value="TODOS">Todos los movimientos</option>
+                            <option value="INGRESO">Ingresos</option>
+                            <option value="SALIDA">Salidas</option>
+                            <option value="EDICION">Ediciones</option>
+                            <option value="ELIMINACION">Eliminaciones</option>
+                            <option value="CREACION_SECCION">Creación Secciones</option>
+                            <option value="ELIMINACION_SECCION">Eliminación Secciones</option>
+                            <option value="CREACION_UNIDAD">Creación Unidades</option>
+                            <option value="ELIMINACION_UNIDAD">Eliminación Unidades</option>
+                        </select>
+                        <input type="text" class="search-box" id="busqueda-movimientos" placeholder="Filtrar por insumo, anaquel..." style="flex:1; margin-bottom:0;">
+                    </div>
                     <div class="table-responsive">
                         <div class="table-container" id="tabla-movimientos"></div>
                     </div>
