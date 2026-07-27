@@ -63,6 +63,9 @@ const App = {
         const filtroTipo = document.getElementById('filtro-tipo-movimiento');
         if (filtroTipo) filtroTipo.addEventListener('change', () => this.renderMovimientos());
         
+        const filtroUsuario = document.getElementById('filtro-usuario-movimiento');
+        if (filtroUsuario) filtroUsuario.addEventListener('change', () => this.renderMovimientos());
+        
         const busquedaMov = document.getElementById('busqueda-movimientos');
         if (busquedaMov) busquedaMov.addEventListener('input', () => this.renderMovimientos());
 
@@ -164,18 +167,38 @@ const App = {
     },
 
     // ============================================
-    // MOVIMIENTOS
+    // MOVIMIENTOS (CON FILTRO POR USUARIO)
     // ============================================
-    async showMovimientos() { UI.setActiveSection('movimientos'); UI.showLoading('tabla-movimientos'); try { await this.loadAllData(); this.renderMovimientos(); } catch (e) { document.getElementById('tabla-movimientos').innerHTML = '<div class="empty-state"><p>Error al cargar.</p></div>'; } },
+    async showMovimientos() { 
+        UI.setActiveSection('movimientos'); 
+        UI.showLoading('tabla-movimientos'); 
+        try { 
+            await this.loadAllData(); 
+            this.cargarFiltroUsuarios(); 
+            this.renderMovimientos(); 
+        } catch (e) { 
+            document.getElementById('tabla-movimientos').innerHTML = '<div class="empty-state"><p>Error al cargar.</p></div>'; 
+        } 
+    },
+
+    cargarFiltroUsuarios() {
+        const select = document.getElementById('filtro-usuario-movimiento');
+        if (!select) return;
+        const usuarios = [...new Set(this.state.movimientos.map(m => m.usuario).filter(Boolean))].sort();
+        select.innerHTML = '<option value="TODOS">Todos los usuarios</option>';
+        usuarios.forEach(u => { select.innerHTML += `<option value="${u}">${u}</option>`; });
+    },
 
     renderMovimientos() {
         const filtroTexto = document.getElementById('busqueda-movimientos')?.value?.trim().toLowerCase() || '';
         const filtroTipo = document.getElementById('filtro-tipo-movimiento')?.value || 'TODOS';
+        const filtroUsuario = document.getElementById('filtro-usuario-movimiento')?.value || 'TODOS';
         let movs = [...this.state.movimientos];
         if (filtroTipo !== 'TODOS') movs = movs.filter(m => m.tipo === filtroTipo);
+        if (filtroUsuario !== 'TODOS') movs = movs.filter(m => (m.usuario || 'sistema') === filtroUsuario);
         if (filtroTexto) movs = movs.filter(m => (m.insumo && m.insumo.toLowerCase().includes(filtroTexto)) || (m.anaquel && m.anaquel.toLowerCase().includes(filtroTexto)) || (m.comentarios && m.comentarios.toLowerCase().includes(filtroTexto)) || (m.tipo && m.tipo.toLowerCase().includes(filtroTexto)));
         const container = document.getElementById('tabla-movimientos');
-        if (movs.length === 0) { container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.list}</div><p>Sin movimientos.</p></div>`; return; }
+        if (movs.length === 0) { container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.list}</div><p>Sin movimientos que coincidan con el filtro.</p></div>`; return; }
         let html = '<div class="table-container"><table><thead><tr><th>Usuario / Fecha</th><th class="text-center">Tipo</th><th>Info.</th><th class="text-center">Cant.</th><th class="text-center">Stock Ant.</th><th class="text-center">Stock Nuevo</th><th class="text-center">Anaquel</th><th>Comentarios</th></tr></thead><tbody>';
         movs.forEach(mov => {
             const fecha = new Date(mov.fecha); const color = this.getColorTipo(mov.tipo); const tipoFormateado = this.formatearTipo(mov.tipo);
@@ -341,17 +364,8 @@ const App = {
         try { const info = this.state.secciones.find(s => s.seccion === seccion); for (let i = 0; i < c; i++) await DB.addSeccion(seccion, info?info.descripcion:'', String(inicio + i)); await DB.addMovimiento({ tipo: 'CREACION_SECCION', insumo: `Sección ${seccion}`, cantidad: c, anaquel: `${seccion}${inicio}${c>1?' al '+seccion+(inicio+c-1):''}`, comentarios: `${c} anaquel(es) agregado(s)` }); await this.loadAllData(); this.mostrarContenidoSecciones(); this.renderDashboard(); UI.showToast(c === 1 ? 'Anaquel agregado' : c + ' anaqueles agregados', 'success'); } catch (e) { UI.showToast('Error: ' + e.message, 'error'); }
     },
 
-    async eliminarAnaquelIndividual(seccion, anaquel) {
-        if (!confirm('¿Eliminar ' + (seccion + anaquel) + '?')) return;
-        const item = this.state.secciones.find(s => s.seccion === seccion && s.anaquel === anaquel); if (!item) return;
-        try { await DB.addMovimiento({ tipo: 'ELIMINACION_SECCION', insumo: `Anaquel ${seccion+anaquel}`, cantidad: 0, anaquel: seccion+anaquel, comentarios: `Eliminado de Sección ${seccion}` }); await DB.deleteSeccion(item.id); await this.loadAllData(); this.mostrarContenidoSecciones(); this.renderDashboard(); UI.showToast('Anaquel eliminado', 'success'); } catch (e) { UI.showToast('Error', 'error'); }
-    },
-
-    async eliminarSeccionCompleta(seccion) {
-        if (!confirm('¿Eliminar TODA la sección ' + seccion + '?') || !confirm('¿SEGURO?')) return;
-        const items = this.state.secciones.filter(s => s.seccion === seccion);
-        try { await DB.addMovimiento({ tipo: 'ELIMINACION_SECCION', insumo: `Sección ${seccion}`, cantidad: items.length, anaquel: seccion, comentarios: `${items.length} anaquel(es) eliminados` }); for (const item of items) await DB.deleteSeccion(item.id); await this.loadAllData(); this.mostrarContenidoSecciones(); this.renderDashboard(); UI.showToast('Sección eliminada', 'success'); } catch (e) { UI.showToast('Error', 'error'); }
-    },
+    async eliminarAnaquelIndividual(seccion, anaquel) { if (!confirm('¿Eliminar ' + (seccion + anaquel) + '?')) return; const item = this.state.secciones.find(s => s.seccion === seccion && s.anaquel === anaquel); if (!item) return; try { await DB.addMovimiento({ tipo: 'ELIMINACION_SECCION', insumo: `Anaquel ${seccion+anaquel}`, cantidad: 0, anaquel: seccion+anaquel, comentarios: `Eliminado de Sección ${seccion}` }); await DB.deleteSeccion(item.id); await this.loadAllData(); this.mostrarContenidoSecciones(); this.renderDashboard(); UI.showToast('Anaquel eliminado', 'success'); } catch (e) { UI.showToast('Error', 'error'); } },
+    async eliminarSeccionCompleta(seccion) { if (!confirm('¿Eliminar TODA la sección ' + seccion + '?') || !confirm('¿SEGURO?')) return; const items = this.state.secciones.filter(s => s.seccion === seccion); try { await DB.addMovimiento({ tipo: 'ELIMINACION_SECCION', insumo: `Sección ${seccion}`, cantidad: items.length, anaquel: seccion, comentarios: `${items.length} anaquel(es) eliminados` }); for (const item of items) await DB.deleteSeccion(item.id); await this.loadAllData(); this.mostrarContenidoSecciones(); this.renderDashboard(); UI.showToast('Sección eliminada', 'success'); } catch (e) { UI.showToast('Error', 'error'); } },
 
     editarInsumo(id) {
         const item = this.state.inventario.find(i => i.id === id); if (!item) return;
@@ -365,20 +379,11 @@ const App = {
         const anaquel = document.getElementById('edit-anaquel').value; const nuevoStock = parseInt(document.getElementById('edit-stock').value);
         const updates = { nombre: document.getElementById('edit-nombre').value.trim(), seccion: anaquel.charAt(0), anaquel, stock: nuevoStock, unidad: document.getElementById('edit-unidad').value, lote: document.getElementById('edit-lote').value.trim(), vencimiento: document.getElementById('edit-vencimiento').value || null, comentarios: document.getElementById('edit-comentarios').value.trim() };
         if (!updates.nombre || !anaquel || isNaN(nuevoStock) || nuevoStock < 0) { UI.showToast('Complete los campos', 'error'); return; }
-        const cambios = [];
-        if (updates.nombre !== item.nombre) cambios.push(`Nombre: "${item.nombre}" → "${updates.nombre}"`);
-        if (updates.anaquel !== item.anaquel) cambios.push(`Anaquel: ${item.anaquel} → ${updates.anaquel}`);
-        if (nuevoStock !== item.stock) cambios.push(`Stock: ${item.stock} → ${nuevoStock}`);
-        if (updates.unidad !== item.unidad) cambios.push(`Unidad: "${item.unidad||'N/A'}" → "${updates.unidad||'N/A'}"`);
-        if (updates.lote !== item.lote) cambios.push(`Lote: "${item.lote||'N/A'}" → "${updates.lote||'N/A'}"`);
-        if (updates.vencimiento !== item.vencimiento) cambios.push(`Venc.: "${item.vencimiento||'N/A'}" → "${updates.vencimiento||'N/A'}"`);
+        const cambios = []; if (updates.nombre !== item.nombre) cambios.push(`Nombre: "${item.nombre}" → "${updates.nombre}"`); if (updates.anaquel !== item.anaquel) cambios.push(`Anaquel: ${item.anaquel} → ${updates.anaquel}`); if (nuevoStock !== item.stock) cambios.push(`Stock: ${item.stock} → ${nuevoStock}`); if (updates.unidad !== item.unidad) cambios.push(`Unidad: "${item.unidad||'N/A'}" → "${updates.unidad||'N/A'}"`); if (updates.lote !== item.lote) cambios.push(`Lote: "${item.lote||'N/A'}" → "${updates.lote||'N/A'}"`); if (updates.vencimiento !== item.vencimiento) cambios.push(`Venc.: "${item.vencimiento||'N/A'}" → "${updates.vencimiento||'N/A'}"`);
         try { await DB.updateInventarioItem(id, updates); await DB.addMovimiento({ tipo: 'EDICION', insumo: updates.nombre, cantidad: nuevoStock !== item.stock ? Math.abs(nuevoStock - item.stock) : 0, stock_anterior: item.stock, stock_nuevo: nuevoStock, anaquel, comentarios: cambios.length > 0 ? 'Cambios: ' + cambios.join(' | ') : 'Sin cambios' }); UI.closeModal(); UI.showToast('Insumo actualizado', 'success'); await this.loadAllData(); this.renderDashboard(); this.renderInventario(); } catch (e) { UI.showToast('Error: ' + e.message, 'error'); }
     },
 
-    async eliminarInsumo(id) {
-        const item = this.state.inventario.find(i => i.id === id); if (!item || !confirm(`¿Eliminar "${item.nombre}"?`)) return;
-        try { await DB.addMovimiento({ tipo: 'ELIMINACION', insumo: item.nombre, cantidad: 0, stock_anterior: item.stock, stock_nuevo: 0, anaquel: item.anaquel, comentarios: `Stock final: ${item.stock} ${item.unidad||''}` }); await DB.deleteInventarioItem(id); UI.showToast('Insumo eliminado', 'success'); await this.loadAllData(); this.renderDashboard(); this.renderInventario(); } catch (e) { UI.showToast('Error', 'error'); }
-    },
+    async eliminarInsumo(id) { const item = this.state.inventario.find(i => i.id === id); if (!item || !confirm(`¿Eliminar "${item.nombre}"?`)) return; try { await DB.addMovimiento({ tipo: 'ELIMINACION', insumo: item.nombre, cantidad: 0, stock_anterior: item.stock, stock_nuevo: 0, anaquel: item.anaquel, comentarios: `Stock final: ${item.stock} ${item.unidad||''}` }); await DB.deleteInventarioItem(id); UI.showToast('Insumo eliminado', 'success'); await this.loadAllData(); this.renderDashboard(); this.renderInventario(); } catch (e) { UI.showToast('Error', 'error'); } },
 
     // ============================================
     // GESTIÓN DE USUARIOS
@@ -387,17 +392,10 @@ const App = {
         if (!window.currentUser || window.currentUser.rol !== 'admin') { UI.showToast('Acceso denegado', 'error'); return; }
         const { data: usuarios } = await supabaseClient.from('usuarios').select('*').order('created_at', { ascending: false });
         let html = '<h2>Gestionar Usuarios</h2>';
-        if (usuarios && usuarios.length > 0) {
-            html += '<div class="table-container"><table><thead><tr><th>Usuario</th><th>Nombre</th><th class="text-center">Rol</th><th class="text-center">Estado</th><th class="text-center">Acción</th></tr></thead><tbody>';
-            usuarios.forEach(u => {
-                const eb = u.activo ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-warning">Pendiente</span>';
-                const rb = u.rol === 'admin' ? '<span class="badge badge-danger">Admin</span>' : (u.rol === 'usuario' ? '<span class="badge badge-info">Usuario</span>' : '<span class="badge badge-warning">Pendiente</span>');
-                html += `<tr><td><strong>${u.usuario}</strong></td><td>${u.nombre||'-'}</td><td class="text-center">${rb}</td><td class="text-center">${eb}</td><td class="text-center">${!u.activo ? `<button class="btn btn-success btn-sm" onclick="App.activarUsuario(${u.id})">${UI.icons.check} Activar</button>` : ''}${u.rol!=='admin'&&u.activo ? `<button class="btn btn-danger btn-sm" onclick="App.desactivarUsuario(${u.id})">${UI.icons.close} Desactivar</button>` : ''}</td></tr>`;
-            });
-            html += '</tbody></table></div>';
-        } else { html += '<p>No hay usuarios registrados.</p>'; }
-        html += '<div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">Cerrar</button></div>';
-        UI.openModal(html);
+        if (usuarios && usuarios.length > 0) { html += '<div class="table-container"><table><thead><tr><th>Usuario</th><th>Nombre</th><th class="text-center">Rol</th><th class="text-center">Estado</th><th class="text-center">Acción</th></tr></thead><tbody>';
+            usuarios.forEach(u => { const eb = u.activo ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-warning">Pendiente</span>'; const rb = u.rol === 'admin' ? '<span class="badge badge-danger">Admin</span>' : (u.rol === 'usuario' ? '<span class="badge badge-info">Usuario</span>' : '<span class="badge badge-warning">Pendiente</span>'); html += `<tr><td><strong>${u.usuario}</strong></td><td>${u.nombre||'-'}</td><td class="text-center">${rb}</td><td class="text-center">${eb}</td><td class="text-center">${!u.activo ? `<button class="btn btn-success btn-sm" onclick="App.activarUsuario(${u.id})">${UI.icons.check} Activar</button>` : ''}${u.rol!=='admin'&&u.activo ? `<button class="btn btn-danger btn-sm" onclick="App.desactivarUsuario(${u.id})">${UI.icons.close} Desactivar</button>` : ''}</td></tr>`; });
+            html += '</tbody></table></div>'; } else { html += '<p>No hay usuarios registrados.</p>'; }
+        html += '<div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">Cerrar</button></div>'; UI.openModal(html);
     },
 
     async activarUsuario(id) { await supabaseClient.from('usuarios').update({ activo: true, rol: 'usuario' }).eq('id', id); UI.showToast('Usuario activado', 'success'); this.showGestionUsuariosModal(); },
@@ -405,15 +403,15 @@ const App = {
 
     exportarExcel() {
         const { inventario } = this.state; if (inventario.length === 0) { UI.showToast('No hay datos', 'warning'); return; }
-        let csv = 'ID;Nombre;Anaquel;Stock;Unidad;Lote;Vencimiento;Comentarios\n';
-        inventario.forEach(item => { csv += `${item.id};"${item.nombre}";${item.anaquel};${item.stock};${item.unidad||''};${item.lote||''};${item.vencimiento||''};"${item.comentarios||''}"\n`; });
+        let csv = 'ID;Nombre;Anaquel;Stock;Unidad;Lote;Vencimiento;Comentarios\n'; inventario.forEach(item => { csv += `${item.id};"${item.nombre}";${item.anaquel};${item.stock};${item.unidad||''};${item.lote||''};${item.vencimiento||''};"${item.comentarios||''}"\n`; });
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `inventario_bodega_${new Date().toISOString().split('T')[0]}.csv`; a.click(); URL.revokeObjectURL(url); UI.showToast('Exportado como CSV', 'success');
     },
 
     exportarMovimientosExcel() {
         const ft = document.getElementById('busqueda-movimientos')?.value?.trim().toLowerCase() || '';
         const fTipo = document.getElementById('filtro-tipo-movimiento')?.value || 'TODOS';
-        let movs = [...this.state.movimientos]; if (fTipo !== 'TODOS') movs = movs.filter(m => m.tipo === fTipo);
+        const fUsuario = document.getElementById('filtro-usuario-movimiento')?.value || 'TODOS';
+        let movs = [...this.state.movimientos]; if (fTipo !== 'TODOS') movs = movs.filter(m => m.tipo === fTipo); if (fUsuario !== 'TODOS') movs = movs.filter(m => (m.usuario || 'sistema') === fUsuario);
         if (ft) movs = movs.filter(m => (m.insumo&&m.insumo.toLowerCase().includes(ft))||(m.anaquel&&m.anaquel.toLowerCase().includes(ft))||(m.comentarios&&m.comentarios.toLowerCase().includes(ft)));
         if (movs.length === 0) { UI.showToast('No hay movimientos', 'warning'); return; }
         let csv = 'Usuario;Fecha;Tipo;Info.;Cantidad;Stock Ant.;Stock Nuevo;Anaquel;Comentarios\n';
