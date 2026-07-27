@@ -53,6 +53,12 @@ const App = {
         document.getElementById('btn-gestionar').addEventListener('click', (e) => { e.preventDefault(); this.showGestionSeccionesModal(); });
         document.getElementById('btn-exportar').addEventListener('click', (e) => { e.preventDefault(); this.exportarExcel(); });
 
+        // Botón de gestión de usuarios (solo admin)
+        const btnAdminUsuarios = document.getElementById('btn-admin-usuarios');
+        if (btnAdminUsuarios) {
+            btnAdminUsuarios.addEventListener('click', (e) => { e.preventDefault(); this.showGestionUsuariosModal(); });
+        }
+
         document.getElementById('header-actions').addEventListener('click', (e) => {
             if (e.target.closest('#header-btn-ingreso')) this.showIngresoModal();
             else if (e.target.closest('#header-btn-salida')) this.showSalidaModal();
@@ -193,58 +199,6 @@ const App = {
         container.innerHTML = html;
     },
 
-    async renderUltimosMovimientos() {
-        const container = document.getElementById('ultimos-movimientos');
-        UI.showLoading('ultimos-movimientos');
-        try {
-            const movimientos = await DB.getMovimientos(5);
-            if (movimientos.length === 0) {
-                container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.list}</div><p>Sin movimientos registrados.</p></div>`;
-                return;
-            }
-            let html = '<div class="table-container"><table><thead><tr><th>Fecha</th><th class="text-center">Tipo</th><th>Insumo</th><th class="text-center">Cant.</th><th class="text-center">Stock Ant.</th><th class="text-center">Stock Nuevo</th><th class="text-center">Anaquel</th></tr></thead><tbody>';
-            movimientos.forEach(mov => {
-                const fecha = new Date(mov.fecha);
-                const color = this.getColorTipo(mov.tipo);
-                const tipoFormateado = this.formatearTipo(mov.tipo);
-                html += `<tr>
-                    <td>${fecha.toLocaleString('es-CL')}</td>
-                    <td class="text-center"><span class="badge" style="background:${color};">${tipoFormateado}</span></td>
-                    <td>${mov.insumo || '-'}</td>
-                    <td class="text-center">${mov.cantidad || '-'}</td>
-                    <td class="text-center">${mov.stock_anterior !== null && mov.stock_anterior !== undefined ? mov.stock_anterior : '-'}</td>
-                    <td class="text-center">${mov.stock_nuevo !== null && mov.stock_nuevo !== undefined ? mov.stock_nuevo : '-'}</td>
-                    <td class="text-center">${mov.anaquel || '-'}</td></tr>`;
-            });
-            html += '</tbody></table></div>';
-            container.innerHTML = html;
-        } catch (e) {
-            container.innerHTML = '<div class="empty-state"><p>Error al cargar movimientos</p></div>';
-        }
-    },
-
-    renderInventarioRapido() {
-        const container = document.getElementById('inventario-rapido');
-        const items = this.state.inventario.slice(0, 8);
-        if (items.length === 0) {
-            container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.box}</div><p>Sin insumos registrados.</p></div>`;
-            return;
-        }
-        let html = '<div class="table-container"><table><thead><tr><th>Insumo</th><th class="text-center">Anaquel</th><th class="text-center">Stock</th><th class="text-center">Und.</th><th class="text-center">Lote</th><th class="text-center">Venc.</th></tr></thead><tbody>';
-        items.forEach(item => {
-            const clase = this.esStockCritico(item) ? 'stock-critical' : '';
-            html += `<tr class="${clase}">
-                <td><strong>${item.nombre}</strong></td>
-                <td class="text-center">${item.anaquel}</td>
-                <td class="text-center">${item.stock}</td>
-                <td class="text-center">${item.unidad || ''}</td>
-                <td class="text-center">${item.lote || '-'}</td>
-                <td class="text-center">${item.vencimiento || '-'}</td></tr>`;
-        });
-        html += '</tbody></table></div>';
-        container.innerHTML = html;
-    },
-
     // ============================================
     // INVENTARIO (SIN COLUMNA ID)
     // ============================================
@@ -301,7 +255,6 @@ const App = {
             return;
         }
         
-        // SIN COLUMNA ID
         let html = '<table><thead><tr><th>Nombre</th><th class="text-center">Anaquel</th><th class="text-center">Stock</th><th class="text-center">Und.</th><th class="text-center">Lote</th><th class="text-center">Venc.</th><th class="text-center">Acc.</th></tr></thead><tbody>';
         
         filtrados.forEach(item => {
@@ -315,7 +268,6 @@ const App = {
             else if (critico) clase = 'stock-critical';
             else if (vencePronto) clase = 'stock-warning';
             
-            // SIN columna ID
             html += `<tr class="${clase}">
                 <td><strong>${item.nombre}</strong></td>
                 <td class="text-center">${item.anaquel}</td>
@@ -896,6 +848,63 @@ const App = {
             this.renderDashboard();
             this.renderInventario();
         } catch (error) { UI.showToast('Error al eliminar', 'error'); }
+    },
+
+    // ============================================
+    // GESTIÓN DE USUARIOS (SOLO ADMIN)
+    // ============================================
+    async showGestionUsuariosModal() {
+        if (!window.currentUser || window.currentUser.rol !== 'admin') {
+            UI.showToast('Acceso denegado. Solo administradores.', 'error');
+            return;
+        }
+        
+        const { data: perfiles, error } = await supabaseClient
+            .from('perfiles')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        let html = '<h2>Gestionar Usuarios</h2>';
+        
+        if (perfiles && perfiles.length > 0) {
+            html += '<div class="table-container"><table><thead><tr><th>Nombre</th><th>Email</th><th class="text-center">Rol</th><th class="text-center">Estado</th><th class="text-center">Acción</th></tr></thead><tbody>';
+            
+            perfiles.forEach(p => {
+                const estadoBadge = p.activo ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-warning">Pendiente</span>';
+                const rolBadge = p.rol === 'admin' ? '<span class="badge badge-danger">Admin</span>' : (p.rol === 'usuario' ? '<span class="badge badge-info">Usuario</span>' : '<span class="badge badge-warning">Pendiente</span>');
+                
+                html += `<tr>
+                    <td>${p.nombre || '-'}</td>
+                    <td>${p.email}</td>
+                    <td class="text-center">${rolBadge}</td>
+                    <td class="text-center">${estadoBadge}</td>
+                    <td class="text-center">
+                        ${!p.activo ? `<button class="btn btn-success btn-sm" onclick="App.activarUsuario('${p.id}')">${UI.icons.check} Activar</button>` : ''}
+                        ${p.rol !== 'admin' && p.activo ? `<button class="btn btn-danger btn-sm" onclick="App.desactivarUsuario('${p.id}')">${UI.icons.close} Desactivar</button>` : ''}
+                    </td></tr>`;
+            });
+            html += '</tbody></table></div>';
+        } else {
+            html += '<p>No hay usuarios registrados.</p>';
+        }
+        
+        html += '<div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">Cerrar</button></div>';
+        UI.openModal(html);
+    },
+
+    async activarUsuario(id) {
+        const { error } = await supabaseClient.from('perfiles').update({ activo: true, rol: 'usuario' }).eq('id', id);
+        if (error) { UI.showToast('Error al activar', 'error'); return; }
+        UI.showToast('Usuario activado correctamente', 'success');
+        this.showGestionUsuariosModal();
+    },
+
+    async desactivarUsuario(id) {
+        if (!confirm('¿Desactivar este usuario? No podrá acceder al sistema.')) return;
+        const { error } = await supabaseClient.from('perfiles').update({ activo: false }).eq('id', id);
+        if (error) { UI.showToast('Error al desactivar', 'error'); return; }
+        UI.showToast('Usuario desactivado', 'success');
+        this.showGestionUsuariosModal();
     },
 
     exportarExcel() {
