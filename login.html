@@ -51,141 +51,46 @@
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
         }
 
-        .login-header h1 {
-            font-size: 20px;
-            margin-bottom: 5px;
-        }
+        .login-header h1 { font-size: 20px; margin-bottom: 5px; }
+        .login-header p { font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
 
-        .login-header p {
-            font-size: 12px;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        .login-body { padding: 30px; }
 
-        .login-body {
-            padding: 30px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            font-size: 13px;
-            color: #555;
-        }
-
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: #555; }
         .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s;
+            width: 100%; padding: 12px; border: 2px solid #e0e0e0;
+            border-radius: 8px; font-size: 14px; transition: border-color 0.3s;
         }
-
-        .form-group input:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(26, 58, 107, 0.1);
-        }
+        .form-group input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(26, 58, 107, 0.1); }
 
         .btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
+            width: 100%; padding: 12px; border: none; border-radius: 8px;
+            font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
         }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #0f2447;
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background: #f0f0f0;
-            color: #333;
-            margin-top: 10px;
-        }
-
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #0f2447; transform: translateY(-1px); }
 
         .alert {
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 13px;
-            display: none;
+            padding: 12px; border-radius: 8px; margin-bottom: 15px;
+            font-size: 13px; display: none;
         }
+        .alert-error { background: #fde8e8; color: var(--danger); border: 1px solid #f5c6cb; }
+        .alert-success { background: #d4edda; color: var(--success); border: 1px solid #c3e6cb; }
+        .alert-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
 
-        .alert-error {
-            background: #fde8e8;
-            color: var(--danger);
-            border: 1px solid #f5c6cb;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: var(--success);
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-
-        .link {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 13px;
-        }
-
-        .link a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .link a:hover {
-            text-decoration: underline;
-        }
-
-        .hidden {
-            display: none;
-        }
+        .link { text-align: center; margin-top: 15px; font-size: 13px; }
+        .link a { color: var(--primary); text-decoration: none; font-weight: 600; }
+        .link a:hover { text-decoration: underline; }
+        .hidden { display: none; }
 
         .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
+            display: inline-block; width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
+            border-top-color: white; animation: spin 0.8s linear infinite;
+            margin-right: 8px; vertical-align: middle;
         }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -197,16 +102,15 @@
             <p>Sistema de Bodega</p>
         </div>
         <div class="login-body">
-            <!-- ALERTAS -->
             <div class="alert alert-error" id="alert-error"></div>
             <div class="alert alert-success" id="alert-success"></div>
             <div class="alert alert-warning" id="alert-warning"></div>
 
-            <!-- FORMULARIO LOGIN -->
+            <!-- LOGIN -->
             <div id="form-login">
                 <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="login-email" placeholder="correo@ejemplo.com" autocomplete="email">
+                    <label>Usuario</label>
+                    <input type="text" id="login-usuario" placeholder="Nombre de usuario" autocomplete="username">
                 </div>
                 <div class="form-group">
                     <label>Contraseña</label>
@@ -216,23 +120,23 @@
                     <span id="login-text">Iniciar Sesión</span>
                 </button>
                 <div class="link">
-                    ¿No tienes cuenta? <a href="#" onclick="mostrarRegistro()">Crear cuenta</a>
+                    ¿No tienes cuenta? <a href="#" onclick="mostrarRegistro()">Solicitar acceso</a>
                 </div>
             </div>
 
-            <!-- FORMULARIO REGISTRO -->
+            <!-- REGISTRO -->
             <div id="form-registro" class="hidden">
                 <div class="form-group">
                     <label>Nombre completo</label>
                     <input type="text" id="reg-nombre" placeholder="Tu nombre">
                 </div>
                 <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="reg-email" placeholder="correo@ejemplo.com">
+                    <label>Usuario deseado</label>
+                    <input type="text" id="reg-usuario" placeholder="Nombre de usuario">
                 </div>
                 <div class="form-group">
                     <label>Contraseña</label>
-                    <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres">
+                    <input type="password" id="reg-password" placeholder="Mínimo 4 caracteres">
                 </div>
                 <button class="btn btn-primary" onclick="registrarUsuario()">
                     <span id="reg-text">Solicitar Acceso</span>
@@ -244,18 +148,19 @@
         </div>
     </div>
 
-    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
     <script>
-        // ============================================
-        // CONFIGURACIÓN
-        // ============================================
-        const supabaseAuth = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ============================================
-        // MOSTRAR/OCULTAR FORMULARIOS
-        // ============================================
+        // Encriptar contraseña (SHA-256)
+        async function encriptar(texto) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(texto);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
         function mostrarRegistro() {
             document.getElementById('form-login').classList.add('hidden');
             document.getElementById('form-registro').classList.remove('hidden');
@@ -275,132 +180,91 @@
         function mostrarAlerta(tipo, mensaje) {
             ocultarAlertas();
             const alerta = document.getElementById('alert-' + tipo);
-            if (alerta) {
-                alerta.textContent = mensaje;
-                alerta.style.display = 'block';
-            }
+            if (alerta) { alerta.textContent = mensaje; alerta.style.display = 'block'; }
         }
 
-        // ============================================
-        // INICIAR SESIÓN
-        // ============================================
         async function iniciarSesion() {
-            const email = document.getElementById('login-email').value.trim();
+            const usuario = document.getElementById('login-usuario').value.trim();
             const password = document.getElementById('login-password').value;
             
-            if (!email || !password) {
-                mostrarAlerta('error', 'Complete todos los campos.');
-                return;
-            }
+            if (!usuario || !password) { mostrarAlerta('error', 'Complete todos los campos.'); return; }
 
             const btnText = document.getElementById('login-text');
             btnText.innerHTML = '<span class="spinner"></span> Iniciando...';
-            
-            const { data, error } = await supabaseAuth.auth.signInWithPassword({ email, password });
-            
-            if (error) {
-                btnText.textContent = 'Iniciar Sesión';
-                if (error.message.includes('Invalid login')) {
-                    mostrarAlerta('error', 'Email o contraseña incorrectos.');
-                } else {
-                    mostrarAlerta('error', error.message);
-                }
-                return;
-            }
 
-            // Verificar perfil
-            const { data: perfil, error: perfilError } = await supabaseAuth
-                .from('perfiles')
+            const passwordHash = await encriptar(password);
+
+            const { data, error } = await db
+                .from('usuarios')
                 .select('*')
-                .eq('id', data.user.id)
+                .eq('usuario', usuario)
+                .eq('password', passwordHash)
                 .single();
 
-            if (perfilError || !perfil) {
-                await supabaseAuth.auth.signOut();
+            if (error || !data) {
                 btnText.textContent = 'Iniciar Sesión';
-                mostrarAlerta('error', 'Error al cargar perfil.');
+                mostrarAlerta('error', 'Usuario o contraseña incorrectos.');
                 return;
             }
 
-            if (!perfil.activo) {
-                await supabaseAuth.auth.signOut();
+            if (!data.activo) {
                 btnText.textContent = 'Iniciar Sesión';
                 mostrarAlerta('warning', 'Tu cuenta está pendiente de activación. Contacta al administrador.');
                 return;
             }
 
-            // Guardar sesión y redirigir
-            localStorage.setItem('cehaq_user', JSON.stringify(perfil));
+            // Guardar sesión
+            const sesion = {
+                id: data.id,
+                usuario: data.usuario,
+                nombre: data.nombre,
+                rol: data.rol,
+                activo: data.activo
+            };
+            localStorage.setItem('cehaq_user', JSON.stringify(sesion));
             window.location.href = 'index.html';
         }
 
-        // ============================================
-        // REGISTRAR USUARIO
-        // ============================================
         async function registrarUsuario() {
             const nombre = document.getElementById('reg-nombre').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
+            const usuario = document.getElementById('reg-usuario').value.trim().toLowerCase();
             const password = document.getElementById('reg-password').value;
             
-            if (!nombre || !email || !password) {
-                mostrarAlerta('error', 'Complete todos los campos.');
-                return;
-            }
-
-            if (password.length < 6) {
-                mostrarAlerta('error', 'La contraseña debe tener al menos 6 caracteres.');
-                return;
-            }
+            if (!nombre || !usuario || !password) { mostrarAlerta('error', 'Complete todos los campos.'); return; }
+            if (password.length < 4) { mostrarAlerta('error', 'La contraseña debe tener al menos 4 caracteres.'); return; }
+            if (usuario.length < 3) { mostrarAlerta('error', 'El usuario debe tener al menos 3 caracteres.'); return; }
 
             const btnText = document.getElementById('reg-text');
             btnText.innerHTML = '<span class="spinner"></span> Registrando...';
-            
-            const { data, error } = await supabaseAuth.auth.signUp({ email, password });
-            
-            if (error) {
+
+            // Verificar si el usuario ya existe
+            const { data: existente } = await db.from('usuarios').select('id').eq('usuario', usuario).single();
+            if (existente) {
                 btnText.textContent = 'Solicitar Acceso';
-                if (error.message.includes('already registered')) {
-                    mostrarAlerta('error', 'Este email ya está registrado.');
-                } else {
-                    mostrarAlerta('error', error.message);
-                }
+                mostrarAlerta('error', 'Este nombre de usuario ya está en uso.');
                 return;
             }
 
-            // Actualizar nombre en perfil
-            if (data.user) {
-                await supabaseAuth
-                    .from('perfiles')
-                    .update({ nombre: nombre })
-                    .eq('id', data.user.id);
+            const passwordHash = await encriptar(password);
+
+            const { error } = await db.from('usuarios').insert([{
+                usuario: usuario,
+                password: passwordHash,
+                nombre: nombre,
+                rol: 'pendiente',
+                activo: false
+            }]);
+
+            if (error) {
+                btnText.textContent = 'Solicitar Acceso';
+                mostrarAlerta('error', 'Error al registrar. Intente nuevamente.');
+                return;
             }
 
             btnText.textContent = 'Solicitar Acceso';
             mostrarAlerta('success', '¡Solicitud enviada! Espera a que el administrador active tu cuenta.');
             mostrarLogin();
         }
-
-        // ============================================
-        // VERIFICAR SESIÓN AL CARGAR
-        // ============================================
-        async function verificarSesion() {
-            const { data: { session } } = await supabaseAuth.auth.getSession();
-            
-            if (session) {
-                const { data: perfil } = await supabaseAuth
-                    .from('perfiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-
-                if (perfil && perfil.activo) {
-                    localStorage.setItem('cehaq_user', JSON.stringify(perfil));
-                    window.location.href = 'index.html';
-                }
-            }
-        }
-
-        verificarSesion();
 
         // Enter para enviar
         document.addEventListener('keydown', (e) => {
