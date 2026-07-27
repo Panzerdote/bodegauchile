@@ -11,9 +11,7 @@ const App = {
         try {
             UI.setConnectionStatus('warning', 'Conectando...');
             if (typeof supabaseClient === 'undefined') throw new Error('Cliente de Supabase no inicializado');
-            
             UI.setupMobileMenu();
-            
             await this.loadAllData();
             this.setupEventListeners();
             this.showDashboard();
@@ -54,9 +52,7 @@ const App = {
         document.getElementById('btn-exportar').addEventListener('click', (e) => { e.preventDefault(); this.exportarExcel(); });
 
         const btnAdminUsuarios = document.getElementById('btn-admin-usuarios');
-        if (btnAdminUsuarios) {
-            btnAdminUsuarios.addEventListener('click', (e) => { e.preventDefault(); this.showGestionUsuariosModal(); });
-        }
+        if (btnAdminUsuarios) btnAdminUsuarios.addEventListener('click', (e) => { e.preventDefault(); this.showGestionUsuariosModal(); });
 
         document.getElementById('header-actions').addEventListener('click', (e) => {
             if (e.target.closest('#header-btn-ingreso')) this.showIngresoModal();
@@ -65,10 +61,10 @@ const App = {
         });
 
         const filtroTipo = document.getElementById('filtro-tipo-movimiento');
-        if (filtroTipo) { filtroTipo.addEventListener('change', () => this.renderMovimientos()); }
+        if (filtroTipo) filtroTipo.addEventListener('change', () => this.renderMovimientos());
         
         const busquedaMov = document.getElementById('busqueda-movimientos');
-        if (busquedaMov) { busquedaMov.addEventListener('input', () => this.renderMovimientos()); }
+        if (busquedaMov) busquedaMov.addEventListener('input', () => this.renderMovimientos());
 
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') UI.closeModal(); });
     },
@@ -86,8 +82,7 @@ const App = {
         document.getElementById('secciones-activas').textContent = [...new Set(secciones.map(s => s.seccion))].length;
         const criticos = inventario.filter(item => this.esStockCritico(item));
         document.getElementById('stock-critico').textContent = criticos.length;
-        const hoy = new Date();
-        const limite = new Date(hoy); limite.setDate(limite.getDate() + (config.dias_vencimiento || 30));
+        const hoy = new Date(); const limite = new Date(hoy); limite.setDate(limite.getDate() + (config.dias_vencimiento || 30));
         document.getElementById('vencimientos-proximos').textContent = inventario.filter(item => { if (!item.vencimiento) return false; const v = new Date(item.vencimiento + 'T00:00:00'); return v >= hoy && v <= limite; }).length;
         this.renderAlertas(criticos);
     },
@@ -110,7 +105,7 @@ const App = {
         const criticosIds = new Set(criticos.map(i => i.id));
         const porVencerFiltrados = porVencer.filter(i => !criticosIds.has(i.id));
         const totalAlertas = criticos.length + porVencerFiltrados.length;
-        if (totalAlertas === 0) { container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.check}</div><p>No hay alertas. Todos los insumos están al día.</p></div>`; return; }
+        if (totalAlertas === 0) { container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.check}</div><p>No hay alertas.</p></div>`; return; }
         let html = '<div class="table-container"><table><thead><tr><th>Insumo</th><th class="text-center">Stock</th><th class="text-center">Anaquel</th><th class="text-center">Vencimiento</th><th class="text-center">Tipo Alerta</th></tr></thead><tbody>';
         criticos.forEach(item => {
             const venc = item.vencimiento ? new Date(item.vencimiento + 'T00:00:00') : null;
@@ -156,7 +151,7 @@ const App = {
         }
         document.getElementById('contador-inventario').textContent = filtrados.length;
         const container = document.getElementById('tabla-inventario');
-        if (filtrados.length === 0) { container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.box}</div><p>Sin insumos que coincidan con los filtros seleccionados.</p></div>`; return; }
+        if (filtrados.length === 0) { container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.box}</div><p>Sin insumos que coincidan con los filtros.</p></div>`; return; }
         let html = '<table><thead><tr><th>Nombre</th><th class="text-center">Anaquel</th><th class="text-center">Stock</th><th class="text-center">Und.</th><th class="text-center">Lote</th><th class="text-center">Venc.</th><th class="text-center">Acc.</th></tr></thead><tbody>';
         filtrados.forEach(item => {
             const critico = this.esStockCritico(item);
@@ -180,11 +175,12 @@ const App = {
         if (filtroTipo !== 'TODOS') movs = movs.filter(m => m.tipo === filtroTipo);
         if (filtroTexto) movs = movs.filter(m => (m.insumo && m.insumo.toLowerCase().includes(filtroTexto)) || (m.anaquel && m.anaquel.toLowerCase().includes(filtroTexto)) || (m.comentarios && m.comentarios.toLowerCase().includes(filtroTexto)) || (m.tipo && m.tipo.toLowerCase().includes(filtroTexto)));
         const container = document.getElementById('tabla-movimientos');
-        if (movs.length === 0) { container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.list}</div><p>Sin movimientos que coincidan con el filtro.</p></div>`; return; }
-        let html = '<div class="table-container"><table><thead><tr><th>Fecha</th><th class="text-center">Tipo</th><th>Info.</th><th class="text-center">Cant.</th><th class="text-center">Stock Ant.</th><th class="text-center">Stock Nuevo</th><th class="text-center">Anaquel</th><th>Comentarios</th></tr></thead><tbody>';
+        if (movs.length === 0) { container.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.list}</div><p>Sin movimientos.</p></div>`; return; }
+        let html = '<div class="table-container"><table><thead><tr><th>Usuario / Fecha</th><th class="text-center">Tipo</th><th>Info.</th><th class="text-center">Cant.</th><th class="text-center">Stock Ant.</th><th class="text-center">Stock Nuevo</th><th class="text-center">Anaquel</th><th>Comentarios</th></tr></thead><tbody>';
         movs.forEach(mov => {
             const fecha = new Date(mov.fecha); const color = this.getColorTipo(mov.tipo); const tipoFormateado = this.formatearTipo(mov.tipo);
-            html += `<tr><td>${fecha.toLocaleString('es-CL')}</td><td class="text-center"><span class="badge" style="background:${color};">${tipoFormateado}</span></td><td>${mov.insumo || '-'}</td><td class="text-center">${mov.cantidad || '-'}</td><td class="text-center">${mov.stock_anterior !== null && mov.stock_anterior !== undefined ? mov.stock_anterior : '-'}</td><td class="text-center">${mov.stock_nuevo !== null && mov.stock_nuevo !== undefined ? mov.stock_nuevo : '-'}</td><td class="text-center">${mov.anaquel || '-'}</td><td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${mov.comentarios || ''}">${mov.comentarios || ''}</td></tr>`;
+            const usuario = mov.usuario || 'sistema';
+            html += `<tr><td>${usuario} - ${fecha.toLocaleString('es-CL')}</td><td class="text-center"><span class="badge" style="background:${color};">${tipoFormateado}</span></td><td>${mov.insumo || '-'}</td><td class="text-center">${mov.cantidad || '-'}</td><td class="text-center">${mov.stock_anterior !== null && mov.stock_anterior !== undefined ? mov.stock_anterior : '-'}</td><td class="text-center">${mov.stock_nuevo !== null && mov.stock_nuevo !== undefined ? mov.stock_nuevo : '-'}</td><td class="text-center">${mov.anaquel || '-'}</td><td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${mov.comentarios || ''}">${mov.comentarios || ''}</td></tr>`;
         });
         html += '</tbody></table></div>'; container.innerHTML = html;
     },
@@ -317,8 +313,8 @@ const App = {
         document.getElementById('tab-contenido').innerHTML = html;
     },
 
-    async agregarUnidad() { const n = document.getElementById('nueva-unidad').value.trim(); if (!n) { UI.showToast('Ingrese un nombre', 'error'); return; } try { await DB.addUnidadMedida(n); await DB.addMovimiento({ tipo: 'CREACION_UNIDAD', insumo: `Unidad: ${n}`, cantidad: 0, comentarios: `Unidad "${n}" creada`, usuario: 'web' }); await this.loadAllData(); this.mostrarContenidoUnidades(); UI.showToast('Unidad "' + n + '" agregada', 'success'); } catch (e) { UI.showToast('Error: ' + e.message, 'error'); } },
-    async eliminarUnidad(id) { const u = this.state.unidades.find(x => x.id === id); if (!u || !confirm('¿Eliminar "' + u.nombre + '"?')) return; try { await DB.addMovimiento({ tipo: 'ELIMINACION_UNIDAD', insumo: `Unidad: ${u.nombre}`, cantidad: 0, comentarios: `Unidad "${u.nombre}" eliminada`, usuario: 'web' }); await DB.deleteUnidadMedida(id); await this.loadAllData(); this.mostrarContenidoUnidades(); UI.showToast('Unidad eliminada', 'success'); } catch (e) { UI.showToast('Error', 'error'); } },
+    async agregarUnidad() { const n = document.getElementById('nueva-unidad').value.trim(); if (!n) { UI.showToast('Ingrese un nombre', 'error'); return; } try { await DB.addUnidadMedida(n); await DB.addMovimiento({ tipo: 'CREACION_UNIDAD', insumo: `Unidad: ${n}`, cantidad: 0, comentarios: `Unidad "${n}" creada` }); await this.loadAllData(); this.mostrarContenidoUnidades(); UI.showToast('Unidad "' + n + '" agregada', 'success'); } catch (e) { UI.showToast('Error: ' + e.message, 'error'); } },
+    async eliminarUnidad(id) { const u = this.state.unidades.find(x => x.id === id); if (!u || !confirm('¿Eliminar "' + u.nombre + '"?')) return; try { await DB.addMovimiento({ tipo: 'ELIMINACION_UNIDAD', insumo: `Unidad: ${u.nombre}`, cantidad: 0, comentarios: `Unidad "${u.nombre}" eliminada` }); await DB.deleteUnidadMedida(id); await this.loadAllData(); this.mostrarContenidoUnidades(); UI.showToast('Unidad eliminada', 'success'); } catch (e) { UI.showToast('Error', 'error'); } },
 
     async crearNuevaSeccion() {
         const l = document.getElementById('nueva-seccion-letra').value.trim().toUpperCase();
@@ -328,7 +324,7 @@ const App = {
         if (!/^[A-Z]$/.test(l)) { UI.showToast('Letra inválida', 'error'); return; }
         if (c < 1 || c > 50) { UI.showToast('Cantidad entre 1 y 50', 'error'); return; }
         if (this.state.secciones.some(s => s.seccion === l)) { UI.showToast('Sección ' + l + ' ya existe', 'error'); return; }
-        try { for (let i = 1; i <= c; i++) await DB.addSeccion(l, d, String(i)); await DB.addMovimiento({ tipo: 'CREACION_SECCION', insumo: `Sección ${l}`, cantidad: c, anaquel: `${l}1${c>1?' al '+l+c:''}`, comentarios: `Sección ${l} - ${d}. ${c} anaquel(es)`, usuario: 'web' }); await this.loadAllData(); this.mostrarContenidoSecciones(); this.renderDashboard(); UI.showToast('Sección ' + l + ' creada', 'success'); } catch (e) { UI.showToast('Error: ' + e.message, 'error'); }
+        try { for (let i = 1; i <= c; i++) await DB.addSeccion(l, d, String(i)); await DB.addMovimiento({ tipo: 'CREACION_SECCION', insumo: `Sección ${l}`, cantidad: c, anaquel: `${l}1${c>1?' al '+l+c:''}`, comentarios: `Sección ${l} - ${d}. ${c} anaquel(es)` }); await this.loadAllData(); this.mostrarContenidoSecciones(); this.renderDashboard(); UI.showToast('Sección ' + l + ' creada', 'success'); } catch (e) { UI.showToast('Error: ' + e.message, 'error'); }
     },
 
     mostrarAgregarAnaquel(seccion) {
@@ -342,19 +338,19 @@ const App = {
         const c = parseInt(document.getElementById('agregar-anaquel-cantidad').value) || 1;
         if (c < 1 || c > 50) { UI.showToast('Cantidad entre 1 y 50', 'error'); return; }
         for (let i = 0; i < c; i++) { if (this.state.secciones.find(s => s.seccion + s.anaquel === seccion + (inicio + i))) { UI.showToast('Anaquel ' + (seccion + (inicio + i)) + ' ya existe', 'error'); return; } }
-        try { const info = this.state.secciones.find(s => s.seccion === seccion); for (let i = 0; i < c; i++) await DB.addSeccion(seccion, info?info.descripcion:'', String(inicio + i)); await DB.addMovimiento({ tipo: 'CREACION_SECCION', insumo: `Sección ${seccion}`, cantidad: c, anaquel: `${seccion}${inicio}${c>1?' al '+seccion+(inicio+c-1):''}`, comentarios: `${c} anaquel(es) agregado(s)`, usuario: 'web' }); await this.loadAllData(); this.mostrarContenidoSecciones(); this.renderDashboard(); UI.showToast(c === 1 ? 'Anaquel agregado' : c + ' anaqueles agregados', 'success'); } catch (e) { UI.showToast('Error: ' + e.message, 'error'); }
+        try { const info = this.state.secciones.find(s => s.seccion === seccion); for (let i = 0; i < c; i++) await DB.addSeccion(seccion, info?info.descripcion:'', String(inicio + i)); await DB.addMovimiento({ tipo: 'CREACION_SECCION', insumo: `Sección ${seccion}`, cantidad: c, anaquel: `${seccion}${inicio}${c>1?' al '+seccion+(inicio+c-1):''}`, comentarios: `${c} anaquel(es) agregado(s)` }); await this.loadAllData(); this.mostrarContenidoSecciones(); this.renderDashboard(); UI.showToast(c === 1 ? 'Anaquel agregado' : c + ' anaqueles agregados', 'success'); } catch (e) { UI.showToast('Error: ' + e.message, 'error'); }
     },
 
     async eliminarAnaquelIndividual(seccion, anaquel) {
         if (!confirm('¿Eliminar ' + (seccion + anaquel) + '?')) return;
         const item = this.state.secciones.find(s => s.seccion === seccion && s.anaquel === anaquel); if (!item) return;
-        try { await DB.addMovimiento({ tipo: 'ELIMINACION_SECCION', insumo: `Anaquel ${seccion+anaquel}`, cantidad: 0, anaquel: seccion+anaquel, comentarios: `Eliminado de Sección ${seccion}`, usuario: 'web' }); await DB.deleteSeccion(item.id); await this.loadAllData(); this.mostrarContenidoSecciones(); this.renderDashboard(); UI.showToast('Anaquel eliminado', 'success'); } catch (e) { UI.showToast('Error', 'error'); }
+        try { await DB.addMovimiento({ tipo: 'ELIMINACION_SECCION', insumo: `Anaquel ${seccion+anaquel}`, cantidad: 0, anaquel: seccion+anaquel, comentarios: `Eliminado de Sección ${seccion}` }); await DB.deleteSeccion(item.id); await this.loadAllData(); this.mostrarContenidoSecciones(); this.renderDashboard(); UI.showToast('Anaquel eliminado', 'success'); } catch (e) { UI.showToast('Error', 'error'); }
     },
 
     async eliminarSeccionCompleta(seccion) {
         if (!confirm('¿Eliminar TODA la sección ' + seccion + '?') || !confirm('¿SEGURO?')) return;
         const items = this.state.secciones.filter(s => s.seccion === seccion);
-        try { await DB.addMovimiento({ tipo: 'ELIMINACION_SECCION', insumo: `Sección ${seccion}`, cantidad: items.length, anaquel: seccion, comentarios: `${items.length} anaquel(es) eliminados`, usuario: 'web' }); for (const item of items) await DB.deleteSeccion(item.id); await this.loadAllData(); this.mostrarContenidoSecciones(); this.renderDashboard(); UI.showToast('Sección eliminada', 'success'); } catch (e) { UI.showToast('Error', 'error'); }
+        try { await DB.addMovimiento({ tipo: 'ELIMINACION_SECCION', insumo: `Sección ${seccion}`, cantidad: items.length, anaquel: seccion, comentarios: `${items.length} anaquel(es) eliminados` }); for (const item of items) await DB.deleteSeccion(item.id); await this.loadAllData(); this.mostrarContenidoSecciones(); this.renderDashboard(); UI.showToast('Sección eliminada', 'success'); } catch (e) { UI.showToast('Error', 'error'); }
     },
 
     editarInsumo(id) {
@@ -376,16 +372,16 @@ const App = {
         if (updates.unidad !== item.unidad) cambios.push(`Unidad: "${item.unidad||'N/A'}" → "${updates.unidad||'N/A'}"`);
         if (updates.lote !== item.lote) cambios.push(`Lote: "${item.lote||'N/A'}" → "${updates.lote||'N/A'}"`);
         if (updates.vencimiento !== item.vencimiento) cambios.push(`Venc.: "${item.vencimiento||'N/A'}" → "${updates.vencimiento||'N/A'}"`);
-        try { await DB.updateInventarioItem(id, updates); await DB.addMovimiento({ tipo: 'EDICION', insumo: updates.nombre, cantidad: nuevoStock !== item.stock ? Math.abs(nuevoStock - item.stock) : 0, stock_anterior: item.stock, stock_nuevo: nuevoStock, anaquel, comentarios: cambios.length > 0 ? 'Cambios: ' + cambios.join(' | ') : 'Sin cambios', usuario: 'web' }); UI.closeModal(); UI.showToast('Insumo actualizado', 'success'); await this.loadAllData(); this.renderDashboard(); this.renderInventario(); } catch (e) { UI.showToast('Error: ' + e.message, 'error'); }
+        try { await DB.updateInventarioItem(id, updates); await DB.addMovimiento({ tipo: 'EDICION', insumo: updates.nombre, cantidad: nuevoStock !== item.stock ? Math.abs(nuevoStock - item.stock) : 0, stock_anterior: item.stock, stock_nuevo: nuevoStock, anaquel, comentarios: cambios.length > 0 ? 'Cambios: ' + cambios.join(' | ') : 'Sin cambios' }); UI.closeModal(); UI.showToast('Insumo actualizado', 'success'); await this.loadAllData(); this.renderDashboard(); this.renderInventario(); } catch (e) { UI.showToast('Error: ' + e.message, 'error'); }
     },
 
     async eliminarInsumo(id) {
         const item = this.state.inventario.find(i => i.id === id); if (!item || !confirm(`¿Eliminar "${item.nombre}"?`)) return;
-        try { await DB.addMovimiento({ tipo: 'ELIMINACION', insumo: item.nombre, cantidad: 0, stock_anterior: item.stock, stock_nuevo: 0, anaquel: item.anaquel, comentarios: `Stock final: ${item.stock} ${item.unidad||''}`, usuario: 'web' }); await DB.deleteInventarioItem(id); UI.showToast('Insumo eliminado', 'success'); await this.loadAllData(); this.renderDashboard(); this.renderInventario(); } catch (e) { UI.showToast('Error', 'error'); }
+        try { await DB.addMovimiento({ tipo: 'ELIMINACION', insumo: item.nombre, cantidad: 0, stock_anterior: item.stock, stock_nuevo: 0, anaquel: item.anaquel, comentarios: `Stock final: ${item.stock} ${item.unidad||''}` }); await DB.deleteInventarioItem(id); UI.showToast('Insumo eliminado', 'success'); await this.loadAllData(); this.renderDashboard(); this.renderInventario(); } catch (e) { UI.showToast('Error', 'error'); }
     },
 
     // ============================================
-    // GESTIÓN DE USUARIOS (SOLO ADMIN)
+    // GESTIÓN DE USUARIOS
     // ============================================
     async showGestionUsuariosModal() {
         if (!window.currentUser || window.currentUser.rol !== 'admin') { UI.showToast('Acceso denegado', 'error'); return; }
@@ -420,8 +416,8 @@ const App = {
         let movs = [...this.state.movimientos]; if (fTipo !== 'TODOS') movs = movs.filter(m => m.tipo === fTipo);
         if (ft) movs = movs.filter(m => (m.insumo&&m.insumo.toLowerCase().includes(ft))||(m.anaquel&&m.anaquel.toLowerCase().includes(ft))||(m.comentarios&&m.comentarios.toLowerCase().includes(ft)));
         if (movs.length === 0) { UI.showToast('No hay movimientos', 'warning'); return; }
-        let csv = 'Fecha;Tipo;Info.;Cantidad;Stock Ant.;Stock Nuevo;Anaquel;Comentarios\n';
-        movs.forEach(mov => { csv += `"${new Date(mov.fecha).toLocaleString('es-CL')}";${this.formatearTipo(mov.tipo)};"${mov.insumo||''}";${mov.cantidad||0};${mov.stock_anterior!==null&&mov.stock_anterior!==undefined?mov.stock_anterior:''};${mov.stock_nuevo!==null&&mov.stock_nuevo!==undefined?mov.stock_nuevo:''};${mov.anaquel||''};"${mov.comentarios||''}"\n`; });
+        let csv = 'Usuario;Fecha;Tipo;Info.;Cantidad;Stock Ant.;Stock Nuevo;Anaquel;Comentarios\n';
+        movs.forEach(mov => { csv += `"${mov.usuario||'sistema'}";"${new Date(mov.fecha).toLocaleString('es-CL')}";${this.formatearTipo(mov.tipo)};"${mov.insumo||''}";${mov.cantidad||0};${mov.stock_anterior!==null&&mov.stock_anterior!==undefined?mov.stock_anterior:''};${mov.stock_nuevo!==null&&mov.stock_nuevo!==undefined?mov.stock_nuevo:''};${mov.anaquel||''};"${mov.comentarios||''}"\n`; });
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `movimientos_bodega_${new Date().toISOString().split('T')[0]}.csv`; a.click(); URL.revokeObjectURL(url); UI.showToast(`${movs.length} movimientos exportados`, 'success');
     }
 };
