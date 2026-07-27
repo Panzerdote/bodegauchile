@@ -5,9 +5,6 @@
 const UI = {
     toastTimeout: null,
 
-    // ============================================
-    // ICONOS SVG
-    // ============================================
     icons: {
         check: '<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#27ae60" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
         alert: '<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#c0392b" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
@@ -23,149 +20,73 @@ const UI = {
         close: '✕'
     },
 
-    // ============================================
-    // SIDEBAR MÓVIL
-    // ============================================
     toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
-        
-        if (sidebar.classList.contains('active')) {
-            this.closeSidebar();
-        } else {
-            sidebar.classList.add('active');
-            overlay.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
+        if (sidebar.classList.contains('active')) { this.closeSidebar(); }
+        else { sidebar.classList.add('active'); overlay.classList.add('active'); document.body.style.overflow = 'hidden'; }
     },
 
     closeSidebar() {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
-        
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
-        document.body.style.overflow = '';
+        sidebar.classList.remove('active'); overlay.classList.remove('active'); document.body.style.overflow = '';
     },
 
     setupMobileMenu() {
         document.querySelectorAll('.sidebar-menu a').forEach(link => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth <= 768) {
-                    this.closeSidebar();
-                }
-            });
+            link.addEventListener('click', () => { if (window.innerWidth <= 768) this.closeSidebar(); });
         });
     },
 
-    // ============================================
-    // NAVEGACIÓN
-    // ============================================
     setActiveSection(sectionName) {
-    document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
-    const section = document.getElementById(`section-${sectionName}`);
-    if (section) section.style.display = 'block';
-    
-    document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
-    const menuLink = document.querySelector(`[data-section="${sectionName}"]`);
-    if (menuLink) menuLink.classList.add('active');
-    
-    const titles = {
-        dashboard: 'Dashboard',
-        inventario: 'Inventario Completo',
-        movimientos: 'Historial de Movimientos'
-    };
-    document.getElementById('page-title').textContent = titles[sectionName] || '';
-    
-    const headerActions = document.getElementById('header-actions');
-    if (sectionName === 'dashboard') {
-        headerActions.innerHTML = `
-            <button class="btn btn-success" id="header-btn-ingreso">${UI.icons.plus} Ingreso</button>
-            <button class="btn btn-danger" id="header-btn-salida">${UI.icons.minus} Salida</button>
-        `;
-    } else if (sectionName === 'inventario') {
-        headerActions.innerHTML = `
-            <button class="btn btn-success" id="header-btn-ingreso">${UI.icons.plus} Ingreso</button>
-            <button class="btn btn-info" id="header-btn-buscar">${UI.icons.search} Anaquel</button>
-        `;
-    } else if (sectionName === 'movimientos') {
-        headerActions.innerHTML = `
-            <button class="btn btn-success" onclick="App.exportarMovimientosExcel()">${UI.icons.download} Exportar Excel</button>
-        `;
-    } else {
-        headerActions.innerHTML = '';
-    }
-},
+        document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
+        const section = document.getElementById(`section-${sectionName}`);
+        if (section) section.style.display = 'block';
+        document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+        const menuLink = document.querySelector(`[data-section="${sectionName}"]`);
+        if (menuLink) menuLink.classList.add('active');
+        const titles = { dashboard: 'Dashboard', inventario: 'Inventario Completo', movimientos: 'Historial de Movimientos' };
+        document.getElementById('page-title').textContent = titles[sectionName] || '';
+        const headerActions = document.getElementById('header-actions');
+        if (sectionName === 'dashboard') {
+            headerActions.innerHTML = `<button class="btn btn-success" id="header-btn-ingreso">${this.icons.plus} Ingreso</button><button class="btn btn-danger" id="header-btn-salida">${this.icons.minus} Salida</button>`;
+        } else if (sectionName === 'inventario') {
+            headerActions.innerHTML = `<button class="btn btn-success" id="header-btn-ingreso">${this.icons.plus} Ingreso</button><button class="btn btn-info" id="header-btn-buscar">${this.icons.search} Anaquel</button>`;
+        } else if (sectionName === 'movimientos') {
+            headerActions.innerHTML = `<button class="btn btn-success" onclick="App.exportarMovimientosExcel()">${this.icons.download} Exportar Excel</button>`;
+        } else {
+            headerActions.innerHTML = '';
+        }
+    },
 
-    // ============================================
-    // TOAST
-    // ============================================
     showToast(mensaje, tipo = '') {
         const toast = document.getElementById('toast');
-        toast.textContent = mensaje;
-        toast.className = `toast ${tipo}`;
-        toast.style.display = 'block';
-        
-        clearTimeout(this.toastTimeout);
-        this.toastTimeout = setTimeout(() => {
-            toast.style.display = 'none';
-        }, 3000);
+        toast.textContent = mensaje; toast.className = `toast ${tipo}`; toast.style.display = 'block';
+        clearTimeout(this.toastTimeout); this.toastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 3000);
     },
 
-    // ============================================
-    // MODAL CON BOTÓN X
-    // ============================================
     openModal(content) {
-        const contentWithClose = `
-            <button class="modal-close" onclick="UI.closeModal()" title="Cerrar">${this.icons.close}</button>
-            ${content}
-        `;
+        const contentWithClose = `<button class="modal-close" onclick="UI.closeModal()" title="Cerrar">${this.icons.close}</button>${content}`;
         document.getElementById('modal-content').innerHTML = contentWithClose;
-        document.getElementById('modal').classList.add('active');
-        document.body.style.overflow = 'hidden';
+        document.getElementById('modal').classList.add('active'); document.body.style.overflow = 'hidden';
     },
 
-    closeModal() {
-        document.getElementById('modal').classList.remove('active');
-        document.body.style.overflow = '';
-    },
+    closeModal() { document.getElementById('modal').classList.remove('active'); document.body.style.overflow = ''; },
 
-    // ============================================
-    // ESTADO DE CONEXIÓN
-    // ============================================
     setConnectionStatus(estado, text) {
         const el = document.getElementById('connection-status');
         if (el) {
-            const colores = {
-                success: '#27ae60',
-                warning: '#f39c12',
-                error: '#c0392b'
-            };
-            const color = colores[estado] || '#f39c12';
-            el.innerHTML = `<svg viewBox="0 0 24 24" width="10" height="10" fill="${color}" style="vertical-align:middle;"><circle cx="12" cy="12" r="6"/></svg> ${text}`;
+            const colores = { success: '#27ae60', warning: '#f39c12', error: '#c0392b' };
+            el.innerHTML = `<svg viewBox="0 0 24 24" width="10" height="10" fill="${colores[estado] || '#f39c12'}" style="vertical-align:middle;"><circle cx="12" cy="12" r="6"/></svg> ${text}`;
         }
     },
 
-    // ============================================
-    // LOADING
-    // ============================================
     showLoading(containerId) {
         const container = document.getElementById(containerId);
-        if (container) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="spinner" style="margin:0 auto 15px;"></div>
-                    <p>Cargando...</p>
-                </div>`;
-        }
+        if (container) { container.innerHTML = `<div class="empty-state"><div class="spinner" style="margin:0 auto 15px;"></div><p>Cargando...</p></div>`; }
     }
 };
 
-// Funciones globales
-function toggleSidebar() {
-    UI.toggleSidebar();
-}
-
-function closeSidebar() {
-    UI.closeSidebar();
-}
+function toggleSidebar() { UI.toggleSidebar(); }
+function closeSidebar() { UI.closeSidebar(); }
