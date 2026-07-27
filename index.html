@@ -183,37 +183,32 @@
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
 
-    <!-- VERIFICACIÓN DE SESIÓN -->
     <script>
-        (async () => {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            const userData = localStorage.getItem('cehaq_user');
-            
-            if (!session || !userData) {
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            const user = JSON.parse(userData);
-            if (!user.activo) {
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            window.currentUser = user;
-            
-            // Mostrar nombre de usuario y menú admin
-            document.getElementById('user-name-display').textContent = user.nombre || user.email;
-            if (user.rol === 'admin') {
-                document.getElementById('menu-admin-usuarios').style.display = 'block';
-            }
-        })();
-
-        async function cerrarSesion() {
-            await supabaseClient.auth.signOut();
-            localStorage.removeItem('cehaq_user');
+    // Verificar sesión activa
+    (() => {
+        const userData = localStorage.getItem('cehaq_user');
+        if (!userData) {
             window.location.href = 'login.html';
+            return;
         }
+        const user = JSON.parse(userData);
+        if (!user.activo) {
+            window.location.href = 'login.html';
+            return;
+        }
+        window.currentUser = user;
+        
+        // Mostrar nombre y menú admin
+        document.getElementById('user-name-display').textContent = user.nombre || user.usuario;
+        if (user.rol === 'admin') {
+            document.getElementById('menu-admin-usuarios').style.display = 'block';
+        }
+    })();
+
+    async function cerrarSesion() {
+        localStorage.removeItem('cehaq_user');
+        window.location.href = 'login.html';
+    }
     </script>
 </body>
 </html>
