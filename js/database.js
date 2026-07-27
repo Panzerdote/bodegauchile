@@ -21,7 +21,7 @@ const DB = {
     },
 
     async addSeccion(seccion, descripcion, anaquel) {
-        const { data, error } = await supabaseClient.from('secciones').insert([{ seccion, descripcion: descripcion || null, anaquel }]).select();
+        const { data, error } = await supabaseClient.from('secciones').insert([{ seccion, descripcion: descripcion ? descripcion.toUpperCase() : null, anaquel }]).select();
         if (error) { if (error.code === '23505') throw new Error('El anaquel ' + seccion + anaquel + ' ya existe'); throw error; }
         return data[0];
     },
@@ -46,15 +46,24 @@ const DB = {
 
     async addInventarioItem(item) {
         const { data, error } = await supabaseClient.from('inventario').insert([{
-            nombre: item.nombre, seccion: item.seccion, anaquel: item.anaquel,
-            stock: item.stock || 0, unidad: item.unidad || null,
-            lote: item.lote || null, vencimiento: item.vencimiento || null, comentarios: item.comentarios || null
+            nombre: item.nombre ? item.nombre.toUpperCase() : null,
+            seccion: item.seccion,
+            anaquel: item.anaquel,
+            stock: item.stock || 0,
+            unidad: item.unidad ? item.unidad.toUpperCase() : null,
+            lote: item.lote ? item.lote.toUpperCase() : null,
+            vencimiento: item.vencimiento || null,
+            comentarios: item.comentarios ? item.comentarios.toUpperCase() : null
         }]).select();
         if (error) throw error;
         return data[0];
     },
 
     async updateInventarioItem(id, updates) {
+        if (updates.nombre) updates.nombre = updates.nombre.toUpperCase();
+        if (updates.unidad) updates.unidad = updates.unidad.toUpperCase();
+        if (updates.lote) updates.lote = updates.lote.toUpperCase();
+        if (updates.comentarios) updates.comentarios = updates.comentarios.toUpperCase();
         updates.updated_at = new Date().toISOString();
         const { data, error } = await supabaseClient.from('inventario').update(updates).eq('id', id).select();
         if (error) throw error;
@@ -80,16 +89,16 @@ const DB = {
     },
 
     async addMovimiento(movimiento) {
-        const usuario = movimiento.usuario || (typeof window !== 'undefined' && window.currentUser ? window.currentUser.usuario : 'sistema');
+        const usuario = movimiento.usuario || (typeof window !== 'undefined' && window.currentUser ? window.currentUser.usuario.toUpperCase() : 'SISTEMA');
         const { data, error } = await supabaseClient.from('movimientos').insert([{
             fecha: ahoraChile().toISOString(),
             tipo: movimiento.tipo,
-            insumo: movimiento.insumo,
+            insumo: movimiento.insumo ? movimiento.insumo.toUpperCase() : null,
             cantidad: movimiento.cantidad || 0,
             stock_anterior: movimiento.stock_anterior !== undefined ? movimiento.stock_anterior : null,
             stock_nuevo: movimiento.stock_nuevo !== undefined ? movimiento.stock_nuevo : null,
-            anaquel: movimiento.anaquel || null,
-            comentarios: movimiento.comentarios || null,
+            anaquel: movimiento.anaquel ? movimiento.anaquel.toUpperCase() : null,
+            comentarios: movimiento.comentarios ? movimiento.comentarios.toUpperCase() : null,
             usuario: usuario
         }]).select();
         if (error) throw error;
@@ -109,8 +118,8 @@ const DB = {
     },
 
     async addUnidadMedida(nombre) {
-        const { data, error } = await supabaseClient.from('unidades_medida').insert([{ nombre }]).select();
-        if (error) { if (error.code === '23505') throw new Error('La unidad "' + nombre + '" ya existe'); throw error; }
+        const { data, error } = await supabaseClient.from('unidades_medida').insert([{ nombre: nombre.toUpperCase() }]).select();
+        if (error) { if (error.code === '23505') throw new Error('La unidad "' + nombre.toUpperCase() + '" ya existe'); throw error; }
         return data[0];
     },
 
@@ -130,17 +139,28 @@ const DB = {
 
     async procesarIngreso(nombre, seccion, anaquel, cantidad, unidad, lote, vencimiento, comentarios) {
         try {
-            const { data: existentes } = await supabaseClient.from('inventario').select('*').ilike('nombre', nombre).eq('anaquel', anaquel);
+            const nombreUpper = nombre.toUpperCase();
+            const { data: existentes } = await supabaseClient.from('inventario').select('*').ilike('nombre', nombreUpper).eq('anaquel', anaquel);
             let itemId, stockAnterior = 0, stockNuevo = cantidad;
             if (existentes && existentes.length > 0) {
                 const item = existentes[0]; itemId = item.id; stockAnterior = item.stock; stockNuevo = stockAnterior + cantidad;
-                const updates = { stock: stockNuevo }; if (lote) updates.lote = lote; if (vencimiento) updates.vencimiento = vencimiento; if (comentarios) updates.comentarios = comentarios; if (unidad) updates.unidad = unidad;
+                const updates = { stock: stockNuevo };
+                if (lote) updates.lote = lote.toUpperCase();
+                if (vencimiento) updates.vencimiento = vencimiento;
+                if (comentarios) updates.comentarios = comentarios.toUpperCase();
+                if (unidad) updates.unidad = unidad.toUpperCase();
                 await this.updateInventarioItem(itemId, updates);
             } else {
-                const nuevo = await this.addInventarioItem({ nombre, seccion, anaquel, stock: cantidad, unidad: unidad || null, lote: lote || null, vencimiento: vencimiento || null, comentarios: comentarios || null });
+                const nuevo = await this.addInventarioItem({
+                    nombre: nombreUpper, seccion, anaquel, stock: cantidad,
+                    unidad: unidad ? unidad.toUpperCase() : null,
+                    lote: lote ? lote.toUpperCase() : null,
+                    vencimiento: vencimiento || null,
+                    comentarios: comentarios ? comentarios.toUpperCase() : null
+                });
                 itemId = nuevo.id;
             }
-            await this.addMovimiento({ tipo: 'INGRESO', insumo: nombre, cantidad, stock_anterior: stockAnterior, stock_nuevo: stockNuevo, anaquel, comentarios: comentarios || null });
+            await this.addMovimiento({ tipo: 'INGRESO', insumo: nombreUpper, cantidad, stock_anterior: stockAnterior, stock_nuevo: stockNuevo, anaquel, comentarios: comentarios ? comentarios.toUpperCase() : null });
             return { itemId, stockNuevo };
         } catch (error) { console.error('Error en procesarIngreso:', error); throw error; }
     },
@@ -153,7 +173,7 @@ const DB = {
             if (cantidad <= 0) throw new Error('La cantidad debe ser mayor a 0');
             const stockAnterior = item.stock, stockNuevo = stockAnterior - cantidad;
             await this.updateInventarioItem(itemId, { stock: stockNuevo });
-            await this.addMovimiento({ tipo: 'SALIDA', insumo: item.nombre, cantidad, stock_anterior: stockAnterior, stock_nuevo: stockNuevo, anaquel: item.anaquel, comentarios: comentarios || null });
+            await this.addMovimiento({ tipo: 'SALIDA', insumo: item.nombre, cantidad, stock_anterior: stockAnterior, stock_nuevo: stockNuevo, anaquel: item.anaquel, comentarios: comentarios ? comentarios.toUpperCase() : null });
             return { stockNuevo, nombre: item.nombre, anaquel: item.anaquel };
         } catch (error) { console.error('Error en procesarSalida:', error); throw error; }
     }
