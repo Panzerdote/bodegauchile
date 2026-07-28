@@ -52,12 +52,38 @@ const App = {
         this.renderAlertas(criticos);
     },
 
+    // ============================================
+    // STOCK CRÍTICO - CORREGIDO
+    // ============================================
     esStockCritico(item) {
+        // Stock en 0 siempre es crítico
         if (!item.stock || item.stock === 0) return true;
-        const movs = this.state.movimientos.filter(m => m.insumo && item.nombre && m.insumo.toLowerCase() === item.nombre.toLowerCase() && m.anaquel === item.anaquel);
-        let sm = item.stock; if (movs.length > 0) { const maxs = movs.map(m => m.stock_nuevo || 0); sm = Math.max(...maxs, item.stock); }
-        if (movs.length === 0 && item.stock <= 5) return true; if (sm === 0) return false;
-        return (item.stock / sm) * 100 <= this.state.config.porcentaje_critico;
+        
+        // Buscar movimientos de este insumo específico
+        const movs = this.state.movimientos.filter(m => 
+            m.insumo && item.nombre && 
+            m.insumo.toLowerCase() === item.nombre.toLowerCase() && 
+            m.anaquel === item.anaquel
+        );
+        
+        // Si no hay movimientos (primer ingreso), NO es crítico
+        if (movs.length === 0) return false;
+        
+        // Verificar si hay al menos una SALIDA registrada
+        const haySalidas = movs.some(m => m.tipo === 'SALIDA');
+        
+        // Si nunca se ha retirado nada, no es crítico (es stock inicial)
+        if (!haySalidas) return false;
+        
+        // Calcular el máximo stock histórico alcanzado
+        const maximos = movs.map(m => m.stock_nuevo || 0);
+        const stockMax = Math.max(...maximos, item.stock);
+        
+        if (stockMax === 0) return false;
+        
+        // Calcular porcentaje respecto al máximo
+        const porcentaje = (item.stock / stockMax) * 100;
+        return porcentaje <= this.state.config.porcentaje_critico;
     },
 
     renderAlertas(criticos) {
@@ -128,7 +154,7 @@ const App = {
         try {
             const resultados = await DB.buscarInsumosNombre(busqueda);
             if (resultados.length === 0) { sugerencias.style.display = 'none'; return; }
-            let html = ''; resultados.forEach(item => { const ne = item.nombre.replace(/'/g, "\\'"); const ue = (item.unidad || '').replace(/'/g, "\\'"); html += `<div onclick="App.seleccionarSugerencia('${tipo}', '${ne}', '${ue}')" style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #eee; font-size:13px;" onmouseover="this.style.background='#eef2f7'" onmouseout="this.style.background='white'"><strong>${item.nombre}</strong>${item.unidad ? `<span style="color:#888; font-size:11px;">(${item.unidad})</span>` : ''}</div>`; });
+            let html = ''; resultados.forEach(item => { const ne = item.nombre.replace(/'/g, "\\'"); const ue = (item.unidad || '').replace(/'/g, "\\'"); html += `<div onclick="App.seleccionarSugerencia('${tipo}', '${ne}', '${ue}')" style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #eee; font-size:13px;" onmouseover="this.style.background='#eef2f7'" onmouseout="this.style.background='white'"><strong>${item.nombre}</strong>${item.unidad ? `<span style="color:#888; font-size:11px;">(${item.unidad})</span>` : ''}${item.lote ? ` <small style="color:#888;">LOTE: ${item.lote}</small>` : ''}</div>`; });
             sugerencias.innerHTML = html; sugerencias.style.display = 'block';
         } catch (error) { console.error('Error al buscar coincidencias:', error); }
     },
@@ -168,13 +194,13 @@ const App = {
         if (anaquelFiltro) resultados = resultados.filter(item => item.anaquel === anaquelFiltro);
         const unicos = []; const nombres = new Set(); resultados.forEach(item => { if (!nombres.has(item.nombre.toLowerCase())) { nombres.add(item.nombre.toLowerCase()); unicos.push(item); } });
         if (unicos.length === 0) { sugerencias.style.display = 'none'; return; }
-        let html = ''; unicos.slice(0, 10).forEach(item => { html += `<div onclick="App.seleccionarSugerenciaSalida('${item.nombre.replace(/'/g, "\\'")}')" style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #eee; font-size:13px;" onmouseover="this.style.background='#eef2f7'" onmouseout="this.style.background='white'"><strong>${item.nombre}</strong><span style="color:#888; font-size:11px;">STOCK: ${item.stock} | ${item.anaquel}</span></div>`; });
+        let html = ''; unicos.slice(0, 10).forEach(item => { html += `<div onclick="App.seleccionarSugerenciaSalida('${item.nombre.replace(/'/g, "\\'")}')" style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #eee; font-size:13px;" onmouseover="this.style.background='#eef2f7'" onmouseout="this.style.background='white'"><strong>${item.nombre}</strong><span style="color:#888; font-size:11px;">STOCK: ${item.stock} | ${item.anaquel}${item.lote ? ` | LOTE: ${item.lote}` : ''}</span></div>`; });
         sugerencias.innerHTML = html; sugerencias.style.display = 'block';
     },
     seleccionarSugerenciaSalida(nombre) { document.getElementById('sal-busqueda').value = nombre; document.getElementById('sugerencias-sal').style.display = 'none'; this.buscarInsumoSalida(); },
 
-    buscarInsumoSalida() { const af = document.getElementById('sal-anaquel-filtro')?.value; const b = document.getElementById('sal-busqueda').value.trim().toLowerCase(); let r = this.state.inventario.filter(i => i.stock > 0); if (af) r = r.filter(i => i.anaquel === af); if (b) r = r.filter(i => i.nombre.toLowerCase().includes(b)); const c = document.getElementById('resultados-busqueda'); if (r.length === 0) { c.innerHTML = '<p style="padding:15px;">NO SE ENCONTRARON INSUMOS.</p>'; return; } let h = '<div style="max-height:400px;overflow-y:auto;">'; r.forEach(i => { h += `<div style="border:1px solid #ddd;padding:12px;margin:5px 0;border-radius:5px;display:flex;justify-content:space-between;"><div><strong>${i.nombre}</strong><br><small>STOCK: ${i.stock} ${i.unidad||''} | ${i.anaquel}</small></div><button class="btn btn-danger btn-sm" onclick="App.prepararSalida(${i.id})">RETIRAR</button></div>`; }); h += '</div>'; c.innerHTML = h; },
-    prepararSalida(id) { const i = this.state.inventario.find(x => x.id === id); if (!i) return; UI.openModal(`<h2>RETIRAR INSUMO</h2><div style="background:#f8f9fa;padding:15px;border-radius:8px;margin-bottom:15px;"><p><strong>INSUMO:</strong> ${i.nombre}</p><p><strong>STOCK:</strong> ${i.stock} ${i.unidad||'UNIDADES'}</p></div><div class="form-group"><label>CANTIDAD *</label><input type="number" id="sal-cantidad" value="1" min="1" max="${i.stock}" autofocus></div><div class="form-group"><label>MOTIVO</label><textarea id="sal-comentarios" style="text-transform:uppercase;"></textarea></div><div class="form-actions"><button class="btn btn-secondary" onclick="App.showSalidaModal()">VOLVER</button><button class="btn btn-danger" onclick="App.procesarSalida(${id})">${UI.icons.minus} CONFIRMAR</button></div>`); },
+    buscarInsumoSalida() { const af = document.getElementById('sal-anaquel-filtro')?.value; const b = document.getElementById('sal-busqueda').value.trim().toLowerCase(); let r = this.state.inventario.filter(i => i.stock > 0); if (af) r = r.filter(i => i.anaquel === af); if (b) r = r.filter(i => i.nombre.toLowerCase().includes(b)); const c = document.getElementById('resultados-busqueda'); if (r.length === 0) { c.innerHTML = '<p style="padding:15px;">NO SE ENCONTRARON INSUMOS.</p>'; return; } let h = '<div style="max-height:400px;overflow-y:auto;">'; r.forEach(i => { h += `<div style="border:1px solid #ddd;padding:12px;margin:5px 0;border-radius:5px;display:flex;justify-content:space-between;"><div><strong>${i.nombre}</strong><br><small>STOCK: ${i.stock} ${i.unidad||''} | ${i.anaquel}${i.lote ? ` | LOTE: ${i.lote}` : ''}${i.vencimiento ? ` | VENC: ${i.vencimiento}` : ''}</small></div><button class="btn btn-danger btn-sm" onclick="App.prepararSalida(${i.id})">RETIRAR</button></div>`; }); h += '</div>'; c.innerHTML = h; },
+    prepararSalida(id) { const i = this.state.inventario.find(x => x.id === id); if (!i) return; UI.openModal(`<h2>RETIRAR INSUMO</h2><div style="background:#f8f9fa;padding:15px;border-radius:8px;margin-bottom:15px;"><p><strong>INSUMO:</strong> ${i.nombre}</p><p><strong>ANAQUEL:</strong> ${i.anaquel}</p><p><strong>STOCK:</strong> ${i.stock} ${i.unidad||'UNIDADES'}</p>${i.lote?`<p><strong>LOTE:</strong> ${i.lote}</p>`:''}${i.vencimiento?`<p><strong>VENCIMIENTO:</strong> ${i.vencimiento}</p>`:''}</div><div class="form-group"><label>CANTIDAD *</label><input type="number" id="sal-cantidad" value="1" min="1" max="${i.stock}" autofocus></div><div class="form-group"><label>MOTIVO</label><textarea id="sal-comentarios" style="text-transform:uppercase;"></textarea></div><div class="form-actions"><button class="btn btn-secondary" onclick="App.showSalidaModal()">VOLVER</button><button class="btn btn-danger" onclick="App.procesarSalida(${id})">${UI.icons.minus} CONFIRMAR</button></div>`); },
     async procesarSalida(id) { const c = parseInt(document.getElementById('sal-cantidad').value); const co = document.getElementById('sal-comentarios').value.trim().toUpperCase(); if (!c || c <= 0) { UI.showToast('CANTIDAD INVÁLIDA', 'error'); return; } try { const r = await DB.procesarSalida(id, c, co); UI.closeModal(); UI.showToast('SALIDA REGISTRADA' + (r.stockNuevo <= 5 ? ' - STOCK BAJO' : ''), r.stockNuevo <= 5 ? 'warning' : 'success'); await this.loadAllData(); this.renderDashboard(); } catch (e) { UI.showToast('ERROR: ' + e.message, 'error'); } },
 
     showBusquedaAnaquelModal() { if (window.currentBodega === 'BOTIQUIN') return; UI.openModal(`<h2>BUSCAR ANAQUEL</h2><div class="form-group"><label>ANAQUEL</label><select id="bus-anaquel" onchange="App.buscarAnaquel()"><option value="">SELECCIONE...</option>${this.state.secciones.map(s => s.seccion+s.anaquel).sort().map(a => `<option value="${a}">${a}</option>`).join('')}</select></div><div id="resultado-anaquel"></div><div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">CERRAR</button></div>`); },
