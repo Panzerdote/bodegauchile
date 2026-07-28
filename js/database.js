@@ -2,7 +2,7 @@ function ahoraChile() {
     const ahora = new Date();
     const offsetChile = -4 * 60;
     const offsetLocal = ahora.getTimezoneOffset();
-    const diff = (offsetChile - offsetLocal) * 60 * 1000;
+    const diff = (offsetLocal - offsetChile) * 60 * 1000;
     return new Date(ahora.getTime() + diff);
 }
 
