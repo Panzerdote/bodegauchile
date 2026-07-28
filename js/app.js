@@ -36,6 +36,7 @@ const App = {
     },
 
     async showDashboard() { UI.setActiveSection('dashboard'); await this.loadAllData(); this.renderDashboard(); },
+
     renderDashboard() {
         const { inventario, secciones, config } = this.state;
         document.getElementById('total-insumos').textContent = inventario.length;
@@ -45,7 +46,9 @@ const App = {
         const criticos = inventario.filter(i => this.esStockCritico(i));
         document.getElementById('stock-critico').textContent = criticos.length;
         const hoy = new Date(); const lim = new Date(hoy); lim.setDate(lim.getDate() + (config.dias_vencimiento || 30));
-        document.getElementById('vencimientos-proximos').textContent = inventario.filter(i => { if (!i.vencimiento) return false; const v = new Date(i.vencimiento + 'T00:00:00'); return v >= hoy && v <= lim; }).length;
+        const vencidosCount = inventario.filter(i => { if (!i.vencimiento) return false; return new Date(i.vencimiento + 'T00:00:00') < hoy; }).length;
+        const porVencerCount = inventario.filter(i => { if (!i.vencimiento) return false; const v = new Date(i.vencimiento + 'T00:00:00'); return v >= hoy && v <= lim; }).length;
+        document.getElementById('vencimientos-proximos').textContent = vencidosCount + porVencerCount;
         this.renderAlertas(criticos);
     },
 
@@ -62,18 +65,59 @@ const App = {
     },
 
     renderAlertas(criticos) {
-        const c = document.getElementById('alertas-stock'); const { inventario, config } = this.state;
+        const c = document.getElementById('alertas-stock');
+        const { inventario, config } = this.state;
         const hoy = new Date(); const lim = new Date(hoy); lim.setDate(lim.getDate() + (config.dias_vencimiento || 30));
-        const pv = inventario.filter(i => { if (!i.vencimiento) return false; const v = new Date(i.vencimiento + 'T00:00:00'); return v >= hoy && v <= lim; });
-        const ids = new Set(criticos.map(i => i.id)); const pvf = pv.filter(i => !ids.has(i.id)); const total = criticos.length + pvf.length;
-        if (total === 0) { c.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.check}</div><p>NO HAY ALERTAS.</p></div>`; return; }
+        
+        const porVencer = inventario.filter(i => {
+            if (!i.vencimiento) return false;
+            const v = new Date(i.vencimiento + 'T00:00:00');
+            return v >= hoy && v <= lim && !this.esStockCritico(i);
+        });
+        
+        const vencidos = inventario.filter(i => {
+            if (!i.vencimiento) return false;
+            const v = new Date(i.vencimiento + 'T00:00:00');
+            return v < hoy && !this.esStockCritico(i);
+        });
+        
+        const criticosIds = new Set(criticos.map(i => i.id));
+        const porVencerFiltrados = porVencer.filter(i => !criticosIds.has(i.id));
+        const vencidosFiltrados = vencidos.filter(i => !criticosIds.has(i.id));
+        const totalAlertas = criticos.length + porVencerFiltrados.length + vencidosFiltrados.length;
+        
+        if (totalAlertas === 0) { c.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.check}</div><p>NO HAY ALERTAS.</p></div>`; return; }
+        
         let h = '<div class="table-container"><table><thead><tr><th>INSUMO</th><th class="text-center">STOCK</th><th class="text-center">ANAQUEL</th><th class="text-center">VENC.</th><th class="text-center">ALERTA</th></tr></thead><tbody>';
-        criticos.forEach(item => { const v = item.vencimiento ? new Date(item.vencimiento + 'T00:00:00') : null; const venc = v && v < hoy; const vp = v && !venc && v <= lim; let ta = ''; if (venc) ta = '<span class="badge badge-danger">VENCIDO</span> <span class="badge badge-danger">CRÍTICO</span>'; else if (vp) ta = '<span class="badge badge-danger">CRÍTICO</span> <span class="badge badge-warning">POR VENCER</span>'; else ta = '<span class="badge badge-danger">CRÍTICO</span>'; h += `<tr class="stock-critical"><td><strong>${item.nombre}</strong></td><td class="text-center">${item.stock} ${item.unidad||''}</td><td class="text-center">${item.anaquel}</td><td class="text-center">${item.vencimiento||'N/A'}</td><td class="text-center">${ta}</td></tr>`; });
-        pvf.forEach(item => { const dr = Math.ceil((new Date(item.vencimiento + 'T00:00:00') - hoy) / 86400000); h += `<tr class="stock-warning"><td><strong>${item.nombre}</strong></td><td class="text-center">${item.stock} ${item.unidad||''}</td><td class="text-center">${item.anaquel}</td><td class="text-center">${item.vencimiento||'N/A'} <small>(${dr} DÍAS)</small></td><td class="text-center"><span class="badge badge-warning">POR VENCER</span></td></tr>`; });
+        
+        criticos.forEach(item => {
+            const v = item.vencimiento ? new Date(item.vencimiento + 'T00:00:00') : null;
+            const venc = v && v < hoy; const vp = v && !venc && v <= lim;
+            let ta = '';
+            if (venc) ta = '<span class="badge badge-danger">VENCIDO</span> <span class="badge badge-danger">STOCK CRÍTICO</span>';
+            else if (vp) ta = '<span class="badge badge-danger">STOCK CRÍTICO</span> <span class="badge badge-warning">POR VENCER</span>';
+            else ta = '<span class="badge badge-danger">STOCK CRÍTICO</span>';
+            h += `<tr class="stock-critical"><td><strong>${item.nombre}</strong></td><td class="text-center">${item.stock} ${item.unidad||''}</td><td class="text-center">${item.anaquel}</td><td class="text-center">${item.vencimiento||'N/A'}</td><td class="text-center">${ta}</td></tr>`;
+        });
+        
+        vencidosFiltrados.forEach(item => {
+            h += `<tr class="stock-critical"><td><strong>${item.nombre}</strong></td><td class="text-center">${item.stock} ${item.unidad||''}</td><td class="text-center">${item.anaquel}</td><td class="text-center">${item.vencimiento||'N/A'}</td><td class="text-center"><span class="badge badge-danger">VENCIDO</span></td></tr>`;
+        });
+        
+        porVencerFiltrados.forEach(item => {
+            const dr = Math.ceil((new Date(item.vencimiento + 'T00:00:00') - hoy) / 86400000);
+            h += `<tr class="stock-warning"><td><strong>${item.nombre}</strong></td><td class="text-center">${item.stock} ${item.unidad||''}</td><td class="text-center">${item.anaquel}</td><td class="text-center">${item.vencimiento||'N/A'} <small style="color:#856404;">(${dr} DÍAS)</small></td><td class="text-center"><span class="badge badge-warning">POR VENCER</span></td></tr>`;
+        });
+        
         h += '</tbody></table></div>'; c.innerHTML = h;
+        
+        if (totalAlertas > 10) {
+            c.innerHTML += `<p style="margin-top:10px;font-size:11px;color:#888;text-align:center;">MOSTRANDO LAS PRIMERAS 10 DE ${totalAlertas} ALERTAS. <a href="#" onclick="App.showInventario();return false;" style="color:var(--primary);">VER TODAS EN INVENTARIO →</a></p>`;
+        }
     },
 
     async showInventario() { UI.setActiveSection('inventario'); await this.loadAllData(); this.renderInventario(); },
+
     renderInventario() {
         const sc = document.getElementById('filtro-stock-critico')?.checked ?? false; const pv = document.getElementById('filtro-por-vencer')?.checked ?? false;
         const vc = document.getElementById('filtro-vencidos')?.checked ?? false; const ninguno = !sc && !pv && !vc;
@@ -90,7 +134,9 @@ const App = {
     },
 
     async showMovimientos() { UI.setActiveSection('movimientos'); UI.showLoading('tabla-movimientos'); try { await this.loadAllData(); this.cargarFiltroUsuarios(); this.renderMovimientos(); } catch (e) { document.getElementById('tabla-movimientos').innerHTML = '<div class="empty-state"><p>ERROR AL CARGAR.</p></div>'; } },
+
     cargarFiltroUsuarios() { const s = document.getElementById('filtro-usuario-movimiento'); if (!s) return; const us = [...new Set(this.state.movimientos.map(m => m.usuario).filter(Boolean))].sort(); s.innerHTML = '<option value="TODOS">TODOS LOS USUARIOS</option>'; us.forEach(u => { s.innerHTML += `<option value="${u}">${u}</option>`; }); },
+
     renderMovimientos() {
         const ft = document.getElementById('busqueda-movimientos')?.value?.trim().toLowerCase() || ''; const fTipo = document.getElementById('filtro-tipo-movimiento')?.value || 'TODOS'; const fUsr = document.getElementById('filtro-usuario-movimiento')?.value || 'TODOS';
         let movs = [...this.state.movimientos]; if (fTipo !== 'TODOS') movs = movs.filter(m => m.tipo === fTipo); if (fUsr !== 'TODOS') movs = movs.filter(m => (m.usuario || 'SISTEMA') === fUsr);
@@ -100,6 +146,7 @@ const App = {
         movs.forEach(mov => { const f = new Date(mov.fecha); const co = this.getColorTipo(mov.tipo); const tf = this.formatearTipo(mov.tipo); const usr = mov.usuario || 'SISTEMA'; h += `<tr><td>${usr} - ${f.toLocaleString('es-CL')}</td><td class="text-center"><span class="badge" style="background:${co};">${tf}</span></td><td>${mov.insumo||'-'}</td><td class="text-center">${mov.cantidad||'-'}</td><td class="text-center">${mov.stock_anterior!=null?mov.stock_anterior:'-'}</td><td class="text-center">${mov.stock_nuevo!=null?mov.stock_nuevo:'-'}</td><td class="text-center">${mov.anaquel||'-'}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${mov.comentarios||''}">${mov.comentarios||''}</td></tr>`; });
         h += '</tbody></table></div>'; c.innerHTML = h;
     },
+
     getColorTipo(t) { const c = {'INGRESO':'#27ae60','SALIDA':'#c0392b','EDICION':'#2980b9','ELIMINACION':'#e74c3c','CREACION_SECCION':'#8e44ad','ELIMINACION_SECCION':'#c0392b','CREACION_UNIDAD':'#16a085','ELIMINACION_UNIDAD':'#e67e22'}; return c[t]||'#6c757d'; },
     formatearTipo(t) { const tf = {'INGRESO':'INGRESO','SALIDA':'SALIDA','EDICION':'EDICIÓN','ELIMINACION':'ELIMINACIÓN','CREACION_SECCION':'CREACIÓN SECCIÓN','ELIMINACION_SECCION':'ELIMINACIÓN SECCIÓN','CREACION_UNIDAD':'CREACIÓN UNIDAD','ELIMINACION_UNIDAD':'ELIMINACIÓN UNIDAD'}; return tf[t]||t; },
 
@@ -161,11 +208,7 @@ const App = {
         if (resultados.length === 0) { sugerencias.style.display = 'none'; return; }
         let html = '';
         resultados.slice(0, 10).forEach(item => {
-            const nombreEscapado = item.nombre.replace(/'/g, "\\'");
-            html += `<div onclick="App.seleccionarSugerenciaSalida('${nombreEscapado}')" style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #eee; font-size:13px;" onmouseover="this.style.background='#eef2f7'" onmouseout="this.style.background='white'">
-                <strong>${item.nombre}</strong>
-                <span style="color:#888; font-size:11px;">STOCK: ${item.stock} | ${item.anaquel}${item.lote ? ` | LOTE: ${item.lote}` : ''}${item.vencimiento ? ` | VENC: ${item.vencimiento}` : ''}</span>
-            </div>`;
+            html += `<div onclick="App.seleccionarSugerenciaSalida('${item.nombre.replace(/'/g, "\\'")}')" style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #eee; font-size:13px;" onmouseover="this.style.background='#eef2f7'" onmouseout="this.style.background='white'"><strong>${item.nombre}</strong><span style="color:#888; font-size:11px;">STOCK: ${item.stock} | ${item.anaquel}${item.lote ? ` | LOTE: ${item.lote}` : ''}${item.vencimiento ? ` | VENC: ${item.vencimiento}` : ''}</span></div>`;
         });
         sugerencias.innerHTML = html; sugerencias.style.display = 'block';
     },
@@ -179,10 +222,13 @@ const App = {
         r.forEach(i => { h += `<div style="border:1px solid #ddd;padding:12px;margin:5px 0;border-radius:5px;display:flex;justify-content:space-between;"><div><strong>${i.nombre}</strong><br><small>STOCK: ${i.stock} ${i.unidad||''} | ANAQUEL: ${i.anaquel}${i.lote ? ` | LOTE: <span class="badge badge-info">${i.lote}</span>` : ''}${i.vencimiento ? ` | VENC: ${i.vencimiento}` : ''}</small></div><button class="btn btn-danger btn-sm" onclick="App.prepararSalida(${i.id})">RETIRAR</button></div>`; });
         h += '</div>'; c.innerHTML = h;
     },
+
     prepararSalida(id) { const i = this.state.inventario.find(x => x.id === id); if (!i) return; UI.openModal(`<h2>RETIRAR INSUMO</h2><div style="background:#f8f9fa;padding:15px;border-radius:8px;margin-bottom:15px;"><p><strong>INSUMO:</strong> ${i.nombre}</p><p><strong>ANAQUEL:</strong> ${i.anaquel}</p><p><strong>STOCK:</strong> ${i.stock} ${i.unidad||'UNIDADES'}</p>${i.lote?`<p><strong>LOTE:</strong> ${i.lote}</p>`:''}${i.vencimiento?`<p><strong>VENCIMIENTO:</strong> ${i.vencimiento}</p>`:''}</div><div class="form-group"><label>CANTIDAD *</label><input type="number" id="sal-cantidad" value="1" min="1" max="${i.stock}" autofocus></div><div class="form-group"><label>MOTIVO</label><textarea id="sal-comentarios" style="text-transform:uppercase;"></textarea></div><div class="form-actions"><button class="btn btn-secondary" onclick="App.showSalidaModal()">VOLVER</button><button class="btn btn-danger" onclick="App.procesarSalida(${id})">${UI.icons.minus} CONFIRMAR</button></div>`); },
+
     async procesarSalida(id) { const c = parseInt(document.getElementById('sal-cantidad').value); const co = document.getElementById('sal-comentarios').value.trim().toUpperCase(); if (!c || c <= 0) { UI.showToast('CANTIDAD INVÁLIDA', 'error'); return; } try { const r = await DB.procesarSalida(id, c, co); UI.closeModal(); UI.showToast('SALIDA REGISTRADA' + (r.stockNuevo <= 5 ? ' - STOCK BAJO' : ''), r.stockNuevo <= 5 ? 'warning' : 'success'); await this.loadAllData(); this.renderDashboard(); } catch (e) { UI.showToast('ERROR: ' + e.message, 'error'); } },
 
     showBusquedaAnaquelModal() { if (window.currentBodega === 'BOTIQUIN') return; UI.openModal(`<h2>BUSCAR ANAQUEL</h2><div class="form-group"><label>ANAQUEL</label><select id="bus-anaquel" onchange="App.buscarAnaquel()"><option value="">SELECCIONE...</option>${this.state.secciones.map(s => s.seccion+s.anaquel).sort().map(a => `<option value="${a}">${a}</option>`).join('')}</select></div><div id="resultado-anaquel"></div><div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">CERRAR</button></div>`); },
+
     buscarAnaquel() { const a = document.getElementById('bus-anaquel').value; if (!a) return; const items = this.state.inventario.filter(i => i.anaquel === a); const c = document.getElementById('resultado-anaquel'); let h = `<h3>ANAQUEL: <span class="badge badge-info">${a}</span></h3>`; if (items.length === 0) h += '<p>VACÍO.</p>'; else { h += '<div class="table-container"><table><thead><tr><th>INSUMO</th><th class="text-center">STOCK</th><th class="text-center">UND.</th><th class="text-center">LOTE</th><th class="text-center">VENC.</th></tr></thead><tbody>'; items.forEach(i => { h += `<tr><td><strong>${i.nombre}</strong></td><td class="text-center">${i.stock}</td><td class="text-center">${i.unidad||''}</td><td class="text-center">${i.lote||'-'}</td><td class="text-center">${i.vencimiento||'-'}</td></tr>`; }); h += '</tbody></table></div>'; } c.innerHTML = h; },
 
     showGestionSeccionesModal() {
@@ -192,8 +238,11 @@ const App = {
         else { h += `<div style="display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid #e0e0e0;"><button class="btn btn-light" onclick="App.mostrarTabConfig('secciones')" id="tab-secciones" style="border-radius:5px 5px 0 0;border:2px solid #e0e0e0;border-bottom:2px solid var(--primary);background:white;font-weight:bold;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> SECCIONES</button><button class="btn btn-light" onclick="App.mostrarTabConfig('unidades')" id="tab-unidades" style="border-radius:5px 5px 0 0;border:2px solid transparent;background:transparent;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> UNIDADES</button></div><div id="tab-contenido"></div>`; }
         UI.openModal(h); if (esBotiquin) { this.mostrarContenidoUnidades(); } else { this.mostrarTabConfig('secciones'); }
     },
+
     mostrarTabConfig(tab) { if (window.currentBodega === 'BOTIQUIN') { this.mostrarContenidoUnidades(); return; } document.getElementById('tab-secciones').style.borderBottom = tab === 'secciones' ? '2px solid var(--primary)' : '2px solid transparent'; document.getElementById('tab-secciones').style.background = tab === 'secciones' ? 'white' : 'transparent'; document.getElementById('tab-secciones').style.fontWeight = tab === 'secciones' ? 'bold' : 'normal'; document.getElementById('tab-unidades').style.borderBottom = tab === 'unidades' ? '2px solid var(--primary)' : '2px solid transparent'; document.getElementById('tab-unidades').style.background = tab === 'unidades' ? 'white' : 'transparent'; document.getElementById('tab-unidades').style.fontWeight = tab === 'unidades' ? 'bold' : 'normal'; if (tab === 'secciones') this.mostrarContenidoSecciones(); else this.mostrarContenidoUnidades(); },
+
     mostrarContenidoSecciones() { let html = ''; const ag = {}; this.state.secciones.forEach(s => { if (!ag[s.seccion]) ag[s.seccion] = { d: s.descripcion || 'SIN DESCRIPCIÓN', a: [] }; ag[s.seccion].a.push(s.anaquel); }); const keys = Object.keys(ag).sort(); if (keys.length === 0) html += `<div class="empty-state"><p>NO HAY SECCIONES.</p></div>`; else { html += '<div style="display:grid;gap:15px;margin-bottom:20px;">'; keys.forEach(sec => { const info = ag[sec]; const ao = info.a.sort((a,b) => a.localeCompare(b,undefined,{numeric:true})); html += `<div style="border:2px solid #e0e0e0;border-radius:10px;padding:15px;"><div style="display:flex;justify-content:space-between;margin-bottom:12px;"><div><span style="font-size:20px;font-weight:bold;color:var(--primary);">SECCIÓN ${sec}</span><span style="margin-left:10px;">— ${info.d}</span></div><button class="btn btn-danger btn-sm" onclick="App.eliminarSeccionCompleta('${sec}')">${UI.icons.trash} ELIMINAR</button></div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">${ao.map(a => `<span style="background:var(--primary);color:white;padding:6px 12px;border-radius:20px;font-size:13px;">${sec}${a}<button onclick="event.stopPropagation();App.eliminarAnaquelIndividual('${sec}','${a}')" style="background:rgba(255,255,255,0.3);border:none;color:white;cursor:pointer;padding:2px 6px;border-radius:50%;">×</button></span>`).join('')}</div><button class="btn btn-info btn-sm" onclick="App.mostrarAgregarAnaquel('${sec}')">${UI.icons.plus} AGREGAR</button></div>`; }); html += '</div>'; } html += `<h3 style="margin-top:25px;padding-top:20px;border-top:2px solid #eee;">CREAR SECCIÓN</h3><div class="form-row"><div class="form-group"><label>LETRA *</label><input type="text" id="nueva-seccion-letra" maxlength="1" placeholder="A" style="text-transform:uppercase;"></div><div class="form-group"><label>DESCRIPCIÓN *</label><input type="text" id="nueva-seccion-descripcion" placeholder="EJ: MATERIAL QUIRÚRGICO" style="text-transform:uppercase;"></div><div class="form-group"><label>CANTIDAD</label><input type="number" id="nueva-seccion-cantidad" value="1" min="1" max="50"></div></div><button class="btn btn-success" onclick="App.crearNuevaSeccion()">${UI.icons.plus} CREAR</button>`; document.getElementById('tab-contenido').innerHTML = html; },
+
     mostrarContenidoUnidades() { const unidades = this.state.unidades.sort((a,b) => a.nombre.localeCompare(b.nombre)); let html = '<p style="font-size:12px;color:#666;margin-bottom:15px;">CONFIGURE LAS UNIDADES DE MEDIDA DISPONIBLES.</p>'; if (unidades.length === 0) html += '<div class="empty-state"><p>NO HAY UNIDADES.</p></div>'; else { html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">'; unidades.forEach(u => { html += `<span style="background:var(--primary-light);color:white;padding:8px 14px;border-radius:20px;font-size:13px;">${u.nombre}<button onclick="App.eliminarUnidad(${u.id})" style="background:rgba(255,255,255,0.3);border:none;color:white;cursor:pointer;padding:2px 6px;border-radius:50%;">×</button></span>`; }); html += '</div>'; } html += `<h3 style="margin-top:20px;padding-top:15px;border-top:2px solid #eee;">AGREGAR UNIDAD</h3><div class="form-group"><label>NOMBRE *</label><input type="text" id="nueva-unidad" placeholder="EJ: CAJA" style="text-transform:uppercase;"></div><button class="btn btn-success" onclick="App.agregarUnidad()">${UI.icons.plus} AGREGAR</button>`; document.getElementById('tab-contenido').innerHTML = html; },
 
     async agregarUnidad() { const n = document.getElementById('nueva-unidad').value.trim().toUpperCase(); if (!n) { UI.showToast('INGRESE UN NOMBRE', 'error'); return; } try { await DB.addUnidadMedida(n); await DB.addMovimiento({ tipo: 'CREACION_UNIDAD', insumo: `UNIDAD: ${n}`, cantidad: 0, comentarios: `UNIDAD CREADA` }); await this.loadAllData(); this.mostrarContenidoUnidades(); UI.showToast('UNIDAD AGREGADA', 'success'); } catch (e) { UI.showToast('ERROR', 'error'); } },
