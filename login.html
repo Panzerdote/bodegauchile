@@ -5,145 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CEHAQ - Iniciar Sesión</title>
     <style>
-        :root {
-            --primary: #1a3a6b;
-            --primary-dark: #0f2447;
-            --accent: #c9a84c;
-            --danger: #c0392b;
-            --success: #27ae60;
-            --bg: #e8ecf1;
-        }
-
+        :root { --primary: #1a3a6b; --primary-dark: #0f2447; --accent: #c9a84c; --danger: #c0392b; --success: #27ae60; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .login-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            width: 100%;
-            max-width: 420px;
-            overflow: hidden;
-        }
-
-        .login-header {
-            background: var(--primary);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            border-bottom: 3px solid var(--accent);
-        }
-
-        .login-header .logo {
-            width: 60px;
-            height: 80px;
-            margin: 0 auto 15px;
-            display: block;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-        }
-
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-container { background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); width: 100%; max-width: 420px; overflow: hidden; }
+        .login-header { background: var(--primary); color: white; padding: 30px; text-align: center; border-bottom: 3px solid var(--accent); }
+        .login-header img { width: 60px; height: 80px; margin: 0 auto 15px; display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
         .login-header h1 { font-size: 20px; margin-bottom: 5px; }
         .login-header p { font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
-
         .login-body { padding: 30px; }
-
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: #555; }
-        .form-group input {
-            width: 100%; padding: 12px; border: 2px solid #e0e0e0;
-            border-radius: 8px; font-size: 14px; transition: border-color 0.3s;
-        }
+        .form-group input { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; }
         .form-group input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(26, 58, 107, 0.1); }
-
-        .btn {
-            width: 100%; padding: 12px; border: none; border-radius: 8px;
-            font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
-        }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover { background: #0f2447; transform: translateY(-1px); }
-
-        .alert {
-            padding: 12px; border-radius: 8px; margin-bottom: 15px;
-            font-size: 13px; display: none;
-        }
+        .alert { padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; display: none; }
         .alert-error { background: #fde8e8; color: var(--danger); border: 1px solid #f5c6cb; }
         .alert-success { background: #d4edda; color: var(--success); border: 1px solid #c3e6cb; }
         .alert-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
-
         .link { text-align: center; margin-top: 15px; font-size: 13px; }
         .link a { color: var(--primary); text-decoration: none; font-weight: 600; }
         .link a:hover { text-decoration: underline; }
         .hidden { display: none; }
-
-        .spinner {
-            display: inline-block; width: 16px; height: 16px;
-            border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
-            border-top-color: white; animation: spin 0.8s linear infinite;
-            margin-right: 8px; vertical-align: middle;
-        }
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-
     <div class="login-container">
         <div class="login-header">
-            <img src="img/escudo.svg" alt="CEHAQ" class="logo">
+            <img src="img/escudo.svg" alt="CEHAQ">
             <h1>CEHAQ</h1>
-            <p>Sistema de Bodega</p>
+            <p>SISTEMA DE BODEGA</p>
         </div>
         <div class="login-body">
             <div class="alert alert-error" id="alert-error"></div>
             <div class="alert alert-success" id="alert-success"></div>
             <div class="alert alert-warning" id="alert-warning"></div>
 
-            <!-- LOGIN -->
             <div id="form-login">
-                <div class="form-group">
-                    <label>Usuario</label>
-                    <input type="text" id="login-usuario" placeholder="Nombre de usuario" autocomplete="username">
-                </div>
-                <div class="form-group">
-                    <label>Contraseña</label>
-                    <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
-                </div>
-                <button class="btn btn-primary" onclick="iniciarSesion()">
-                    <span id="login-text">Iniciar Sesión</span>
-                </button>
-                <div class="link">
-                    ¿No tienes cuenta? <a href="#" onclick="mostrarRegistro()">Solicitar acceso</a>
-                </div>
+                <div class="form-group"><label>USUARIO</label><input type="text" id="login-usuario" placeholder="NOMBRE DE USUARIO" autocomplete="username" style="text-transform:uppercase;"></div>
+                <div class="form-group"><label>CONTRASEÑA</label><input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"></div>
+                <button class="btn btn-primary" onclick="iniciarSesion()"><span id="login-text">INICIAR SESIÓN</span></button>
+                <div class="link">¿NO TIENES CUENTA? <a href="#" onclick="mostrarRegistro()">SOLICITAR ACCESO</a></div>
             </div>
 
-            <!-- REGISTRO -->
             <div id="form-registro" class="hidden">
-                <div class="form-group">
-                    <label>Nombre completo</label>
-                    <input type="text" id="reg-nombre" placeholder="Tu nombre">
-                </div>
-                <div class="form-group">
-                    <label>Usuario deseado</label>
-                    <input type="text" id="reg-usuario" placeholder="Nombre de usuario">
-                </div>
-                <div class="form-group">
-                    <label>Contraseña</label>
-                    <input type="password" id="reg-password" placeholder="Mínimo 4 caracteres">
-                </div>
-                <button class="btn btn-primary" onclick="registrarUsuario()">
-                    <span id="reg-text">Solicitar Acceso</span>
-                </button>
-                <div class="link">
-                    ¿Ya tienes cuenta? <a href="#" onclick="mostrarLogin()">Iniciar sesión</a>
-                </div>
+                <div class="form-group"><label>NOMBRE COMPLETO</label><input type="text" id="reg-nombre" placeholder="TU NOMBRE" style="text-transform:uppercase;"></div>
+                <div class="form-group"><label>USUARIO DESEADO</label><input type="text" id="reg-usuario" placeholder="NOMBRE DE USUARIO" style="text-transform:uppercase;"></div>
+                <div class="form-group"><label>CONTRASEÑA</label><input type="password" id="reg-password" placeholder="MÍNIMO 4 CARACTERES"></div>
+                <button class="btn btn-primary" onclick="registrarUsuario()"><span id="reg-text">SOLICITAR ACCESO</span></button>
+                <div class="link">¿YA TIENES CUENTA? <a href="#" onclick="mostrarLogin()">INICIAR SESIÓN</a></div>
             </div>
         </div>
     </div>
@@ -153,129 +67,40 @@
     <script>
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Encriptar contraseña (SHA-256)
-        async function encriptar(texto) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(texto);
-            const hash = await crypto.subtle.digest('SHA-256', data);
-            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-        }
+        async function encriptar(texto) { const e = new TextEncoder(); const d = await crypto.subtle.digest('SHA-256', e.encode(texto)); return Array.from(new Uint8Array(d)).map(b => b.toString(16).padStart(2, '0')).join(''); }
 
-        function mostrarRegistro() {
-            document.getElementById('form-login').classList.add('hidden');
-            document.getElementById('form-registro').classList.remove('hidden');
-            ocultarAlertas();
-        }
-
-        function mostrarLogin() {
-            document.getElementById('form-registro').classList.add('hidden');
-            document.getElementById('form-login').classList.remove('hidden');
-            ocultarAlertas();
-        }
-
-        function ocultarAlertas() {
-            document.querySelectorAll('.alert').forEach(a => a.style.display = 'none');
-        }
-
-        function mostrarAlerta(tipo, mensaje) {
-            ocultarAlertas();
-            const alerta = document.getElementById('alert-' + tipo);
-            if (alerta) { alerta.textContent = mensaje; alerta.style.display = 'block'; }
-        }
+        function mostrarRegistro() { document.getElementById('form-login').classList.add('hidden'); document.getElementById('form-registro').classList.remove('hidden'); ocultarAlertas(); }
+        function mostrarLogin() { document.getElementById('form-registro').classList.add('hidden'); document.getElementById('form-login').classList.remove('hidden'); ocultarAlertas(); }
+        function ocultarAlertas() { document.querySelectorAll('.alert').forEach(a => a.style.display = 'none'); }
+        function mostrarAlerta(tipo, mensaje) { ocultarAlertas(); const a = document.getElementById('alert-' + tipo); if (a) { a.textContent = mensaje; a.style.display = 'block'; } }
 
         async function iniciarSesion() {
-            const usuario = document.getElementById('login-usuario').value.trim();
-            const password = document.getElementById('login-password').value;
-            
-            if (!usuario || !password) { mostrarAlerta('error', 'Complete todos los campos.'); return; }
-
-            const btnText = document.getElementById('login-text');
-            btnText.innerHTML = '<span class="spinner"></span> Iniciando...';
-
+            const usuario = document.getElementById('login-usuario').value.trim(); const password = document.getElementById('login-password').value;
+            if (!usuario || !password) { mostrarAlerta('error', 'COMPLETE TODOS LOS CAMPOS.'); return; }
+            const btnText = document.getElementById('login-text'); btnText.innerHTML = '<span class="spinner"></span> INICIANDO...';
             const passwordHash = await encriptar(password);
-
-            const { data, error } = await db
-                .from('usuarios')
-                .select('*')
-                .eq('usuario', usuario)
-                .eq('password', passwordHash)
-                .single();
-
-            if (error || !data) {
-                btnText.textContent = 'Iniciar Sesión';
-                mostrarAlerta('error', 'Usuario o contraseña incorrectos.');
-                return;
-            }
-
-            if (!data.activo) {
-                btnText.textContent = 'Iniciar Sesión';
-                mostrarAlerta('warning', 'Tu cuenta está pendiente de activación. Contacta al administrador.');
-                return;
-            }
-
-            // Guardar sesión
-            const sesion = {
-                id: data.id,
-                usuario: data.usuario,
-                nombre: data.nombre,
-                rol: data.rol,
-                activo: data.activo
-            };
-            localStorage.setItem('cehaq_user', JSON.stringify(sesion));
-            window.location.href = 'index.html';
+            const { data, error } = await db.from('usuarios').select('*').eq('usuario', usuario).eq('password', passwordHash).single();
+            if (error || !data) { btnText.textContent = 'INICIAR SESIÓN'; mostrarAlerta('error', 'USUARIO O CONTRASEÑA INCORRECTOS.'); return; }
+            if (!data.activo) { btnText.textContent = 'INICIAR SESIÓN'; mostrarAlerta('warning', 'TU CUENTA ESTÁ PENDIENTE DE ACTIVACIÓN.'); return; }
+            localStorage.setItem('cehaq_user', JSON.stringify({ id: data.id, usuario: data.usuario, nombre: data.nombre, rol: data.rol, activo: data.activo }));
+            window.location.href = 'seleccionar.html';
         }
 
         async function registrarUsuario() {
-            const nombre = document.getElementById('reg-nombre').value.trim();
-            const usuario = document.getElementById('reg-usuario').value.trim().toLowerCase();
-            const password = document.getElementById('reg-password').value;
-            
-            if (!nombre || !usuario || !password) { mostrarAlerta('error', 'Complete todos los campos.'); return; }
-            if (password.length < 4) { mostrarAlerta('error', 'La contraseña debe tener al menos 4 caracteres.'); return; }
-            if (usuario.length < 3) { mostrarAlerta('error', 'El usuario debe tener al menos 3 caracteres.'); return; }
-
-            const btnText = document.getElementById('reg-text');
-            btnText.innerHTML = '<span class="spinner"></span> Registrando...';
-
-            // Verificar si el usuario ya existe
+            const nombre = document.getElementById('reg-nombre').value.trim(); const usuario = document.getElementById('reg-usuario').value.trim().toLowerCase(); const password = document.getElementById('reg-password').value;
+            if (!nombre || !usuario || !password) { mostrarAlerta('error', 'COMPLETE TODOS LOS CAMPOS.'); return; }
+            if (password.length < 4) { mostrarAlerta('error', 'LA CONTRASEÑA DEBE TENER AL MENOS 4 CARACTERES.'); return; }
+            if (usuario.length < 3) { mostrarAlerta('error', 'EL USUARIO DEBE TENER AL MENOS 3 CARACTERES.'); return; }
+            const btnText = document.getElementById('reg-text'); btnText.innerHTML = '<span class="spinner"></span> REGISTRANDO...';
             const { data: existente } = await db.from('usuarios').select('id').eq('usuario', usuario).single();
-            if (existente) {
-                btnText.textContent = 'Solicitar Acceso';
-                mostrarAlerta('error', 'Este nombre de usuario ya está en uso.');
-                return;
-            }
-
+            if (existente) { btnText.textContent = 'SOLICITAR ACCESO'; mostrarAlerta('error', 'ESTE NOMBRE DE USUARIO YA ESTÁ EN USO.'); return; }
             const passwordHash = await encriptar(password);
-
-            const { error } = await db.from('usuarios').insert([{
-                usuario: usuario,
-                password: passwordHash,
-                nombre: nombre,
-                rol: 'pendiente',
-                activo: false
-            }]);
-
-            if (error) {
-                btnText.textContent = 'Solicitar Acceso';
-                mostrarAlerta('error', 'Error al registrar. Intente nuevamente.');
-                return;
-            }
-
-            btnText.textContent = 'Solicitar Acceso';
-            mostrarAlerta('success', '¡Solicitud enviada! Espera a que el administrador active tu cuenta.');
-            mostrarLogin();
+            const { error } = await db.from('usuarios').insert([{ usuario, password: passwordHash, nombre, rol: 'pendiente', activo: false }]);
+            if (error) { btnText.textContent = 'SOLICITAR ACCESO'; mostrarAlerta('error', 'ERROR AL REGISTRAR.'); return; }
+            btnText.textContent = 'SOLICITAR ACCESO'; mostrarAlerta('success', '¡SOLICITUD ENVIADA! ESPERA LA ACTIVACIÓN.'); mostrarLogin();
         }
 
-        // Enter para enviar
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                if (!document.getElementById('form-login').classList.contains('hidden')) {
-                    iniciarSesion();
-                } else if (!document.getElementById('form-registro').classList.contains('hidden')) {
-                    registrarUsuario();
-                }
-            }
-        });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Enter') { if (!document.getElementById('form-login').classList.contains('hidden')) iniciarSesion(); else if (!document.getElementById('form-registro').classList.contains('hidden')) registrarUsuario(); } });
     </script>
 </body>
 </html>
