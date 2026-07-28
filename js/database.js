@@ -24,11 +24,18 @@ const DB = {
             .from('secciones')
             .insert([{ seccion, descripcion: descripcion ? descripcion.toUpperCase() : null, anaquel, bodega }])
             .select();
-        if (error) { if (error.code === '23505') throw new Error('EL ANAQUEL ' + seccion + anaquel + ' YA EXISTE'); throw error; }
+        if (error) {
+            if (error.code === '23505') throw new Error('EL ANAQUEL ' + seccion + anaquel + ' YA EXISTE');
+            throw error;
+        }
         return data[0];
     },
 
-    async deleteSeccion(id) { const { error } = await supabaseClient.from('secciones').delete().eq('id', id); if (error) throw error; return true; },
+    async deleteSeccion(id) {
+        const { error } = await supabaseClient.from('secciones').delete().eq('id', id);
+        if (error) throw error;
+        return true;
+    },
 
     async getInventario(bodega) {
         const { data, error } = await supabaseClient
@@ -41,17 +48,27 @@ const DB = {
         return data || [];
     },
 
-    async getInventarioItem(id) { const { data, error } = await supabaseClient.from('inventario').select('*').eq('id', id).single(); if (error) throw error; return data; },
+    async getInventarioItem(id) {
+        const { data, error } = await supabaseClient.from('inventario').select('*').eq('id', id).single();
+        if (error) throw error;
+        return data;
+    },
 
     async addInventarioItem(item) {
         const bodega = window.currentBodega || 'BODEGA';
         const { data, error } = await supabaseClient.from('inventario').insert([{
-            nombre: item.nombre ? item.nombre.toUpperCase() : null, seccion: item.seccion, anaquel: item.anaquel,
-            stock: item.stock || 0, unidad: item.unidad ? item.unidad.toUpperCase() : null,
-            lote: item.lote ? item.lote.toUpperCase() : null, vencimiento: item.vencimiento || null,
-            comentarios: item.comentarios ? item.comentarios.toUpperCase() : null, bodega
+            nombre: item.nombre ? item.nombre.toUpperCase() : null,
+            seccion: item.seccion,
+            anaquel: item.anaquel,
+            stock: item.stock || 0,
+            unidad: item.unidad ? item.unidad.toUpperCase() : null,
+            lote: item.lote ? item.lote.toUpperCase() : null,
+            vencimiento: item.vencimiento || null,
+            comentarios: item.comentarios ? item.comentarios.toUpperCase() : null,
+            bodega
         }]).select();
-        if (error) throw error; return data[0];
+        if (error) throw error;
+        return data[0];
     },
 
     async updateInventarioItem(id, updates) {
@@ -61,54 +78,91 @@ const DB = {
         if (updates.comentarios) updates.comentarios = updates.comentarios.toUpperCase();
         updates.updated_at = new Date().toISOString();
         const { data, error } = await supabaseClient.from('inventario').update(updates).eq('id', id).select();
-        if (error) throw error; return data[0];
+        if (error) throw error;
+        return data[0];
     },
 
-    async deleteInventarioItem(id) { const { error } = await supabaseClient.from('inventario').delete().eq('id', id); if (error) throw error; return true; },
+    async deleteInventarioItem(id) {
+        const { error } = await supabaseClient.from('inventario').delete().eq('id', id);
+        if (error) throw error;
+        return true;
+    },
 
     async getMovimientos(limit = 50, bodega) {
-        const { data, error } = await supabaseClient.from('movimientos').select('*').eq('bodega', bodega || window.currentBodega || 'BODEGA').order('fecha', { ascending: false }).limit(limit);
-        if (error) throw error; return data || [];
+        const { data, error } = await supabaseClient
+            .from('movimientos')
+            .select('*')
+            .eq('bodega', bodega || window.currentBodega || 'BODEGA')
+            .order('fecha', { ascending: false })
+            .limit(limit);
+        if (error) throw error;
+        return data || [];
     },
 
     async getTodosMovimientos(bodega) {
-        const { data, error } = await supabaseClient.from('movimientos').select('*').eq('bodega', bodega || window.currentBodega || 'BODEGA').order('fecha', { ascending: false }).limit(1000);
-        if (error) throw error; return data || [];
+        const { data, error } = await supabaseClient
+            .from('movimientos')
+            .select('*')
+            .eq('bodega', bodega || window.currentBodega || 'BODEGA')
+            .order('fecha', { ascending: false })
+            .limit(1000);
+        if (error) throw error;
+        return data || [];
     },
 
     async addMovimiento(movimiento) {
         const bodega = window.currentBodega || 'BODEGA';
         const usuario = movimiento.usuario || (window.currentUser ? window.currentUser.usuario.toUpperCase() : 'SISTEMA');
         const { data, error } = await supabaseClient.from('movimientos').insert([{
-            fecha: ahoraChile().toISOString(), tipo: movimiento.tipo,
+            fecha: ahoraChile().toISOString(),
+            tipo: movimiento.tipo,
             insumo: movimiento.insumo ? movimiento.insumo.toUpperCase() : null,
             cantidad: movimiento.cantidad || 0,
             stock_anterior: movimiento.stock_anterior !== undefined ? movimiento.stock_anterior : null,
             stock_nuevo: movimiento.stock_nuevo !== undefined ? movimiento.stock_nuevo : null,
             anaquel: movimiento.anaquel ? movimiento.anaquel.toUpperCase() : null,
             comentarios: movimiento.comentarios ? movimiento.comentarios.toUpperCase() : null,
-            usuario, bodega
+            usuario,
+            bodega
         }]).select();
-        if (error) throw error; return data[0];
+        if (error) throw error;
+        return data[0];
     },
 
     async getConfig(bodega) {
-        const { data, error } = await supabaseClient.from('configuracion').select('*').eq('bodega', bodega || window.currentBodega || 'BODEGA').order('id').limit(1).single();
-        if (error) return { porcentaje_critico: 20, dias_vencimiento: 30 }; return data;
+        const { data, error } = await supabaseClient
+            .from('configuracion')
+            .select('*')
+            .eq('bodega', bodega || window.currentBodega || 'BODEGA')
+            .order('id')
+            .limit(1)
+            .single();
+        if (error) return { porcentaje_critico: 20, dias_vencimiento: 30 };
+        return data;
     },
 
     async getUnidadesMedida(bodega) {
-        const { data, error } = await supabaseClient.from('unidades_medida').select('*').eq('bodega', bodega || window.currentBodega || 'BODEGA').order('nombre');
-        if (error) throw error; return data || [];
+        const { data, error } = await supabaseClient
+            .from('unidades_medida')
+            .select('*')
+            .eq('bodega', bodega || window.currentBodega || 'BODEGA')
+            .order('nombre');
+        if (error) throw error;
+        return data || [];
     },
 
     async addUnidadMedida(nombre) {
         const bodega = window.currentBodega || 'BODEGA';
         const { data, error } = await supabaseClient.from('unidades_medida').insert([{ nombre: nombre.toUpperCase(), bodega }]).select();
-        if (error) { if (error.code === '23505') throw new Error('LA UNIDAD YA EXISTE'); throw error; } return data[0];
+        if (error) { if (error.code === '23505') throw new Error('LA UNIDAD YA EXISTE'); throw error; }
+        return data[0];
     },
 
-    async deleteUnidadMedida(id) { const { error } = await supabaseClient.from('unidades_medida').delete().eq('id', id); if (error) throw error; return true; },
+    async deleteUnidadMedida(id) {
+        const { error } = await supabaseClient.from('unidades_medida').delete().eq('id', id);
+        if (error) throw error;
+        return true;
+    },
 
     async buscarInsumosNombre(busqueda) {
         const bodega = window.currentBodega || 'BODEGA';
@@ -120,15 +174,11 @@ const DB = {
             .order('nombre')
             .limit(20);
         if (error) throw error;
-        
         const unicos = [];
         const nombres = new Set();
         (data || []).forEach(item => {
             const nombreLower = item.nombre.toLowerCase();
-            if (!nombres.has(nombreLower)) {
-                nombres.add(nombreLower);
-                unicos.push(item);
-            }
+            if (!nombres.has(nombreLower)) { nombres.add(nombreLower); unicos.push(item); }
         });
         return unicos.slice(0, 10);
     },
@@ -138,7 +188,6 @@ const DB = {
             const bodega = window.currentBodega || 'BODEGA';
             const nombreUpper = nombre.toUpperCase();
             const loteUpper = lote ? lote.toUpperCase() : '';
-            
             const { data: existentes } = await supabaseClient
                 .from('inventario')
                 .select('*')
@@ -147,12 +196,10 @@ const DB = {
                 .eq('bodega', bodega)
                 .eq('lote', loteUpper)
                 .eq('vencimiento', vencimiento || null);
-            
-            let itemId, stockAnterior = 0, stockNuevo = cantidad;
-            
+            let itemId, sa = 0, sn = cantidad;
             if (existentes && existentes.length > 0) {
-                const item = existentes[0]; itemId = item.id; stockAnterior = item.stock; stockNuevo = stockAnterior + cantidad;
-                const updates = { stock: stockNuevo };
+                const item = existentes[0]; itemId = item.id; sa = item.stock; sn = sa + cantidad;
+                const updates = { stock: sn };
                 if (comentarios) updates.comentarios = comentarios.toUpperCase();
                 if (unidad) updates.unidad = unidad.toUpperCase();
                 await this.updateInventarioItem(itemId, updates);
@@ -165,9 +212,8 @@ const DB = {
                 });
                 itemId = nuevo.id;
             }
-            
-            await this.addMovimiento({ tipo: 'INGRESO', insumo: nombreUpper, cantidad, stock_anterior: stockAnterior, stock_nuevo: stockNuevo, anaquel, comentarios: comentarios ? comentarios.toUpperCase() : null });
-            return { itemId, stockNuevo };
+            await this.addMovimiento({ tipo: 'INGRESO', insumo: nombreUpper, cantidad, stock_anterior: sa, stock_nuevo: sn, anaquel, comentarios: comentarios ? comentarios.toUpperCase() : null });
+            return { itemId, stockNuevo: sn };
         } catch (e) { console.error('Error procesarIngreso:', e); throw e; }
     },
 
