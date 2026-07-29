@@ -2,16 +2,38 @@ const App = {
     state: { inventario: [], secciones: [], unidades: [], movimientos: [], config: { porcentaje_critico: 20, dias_vencimiento: 30 } },
 
     async init() {
-        try {
-            UI.setConnectionStatus('warning', 'CONECTANDO...');
-            if (typeof supabaseClient === 'undefined') throw new Error('CLIENTE NO INICIALIZADO');
-            UI.setupMobileMenu();
-            await this.loadAllData();
-            this.setupEventListeners();
-            this.showDashboard();
-            UI.setConnectionStatus('success', 'CONECTADO');
-        } catch (error) { console.error(error); UI.setConnectionStatus('error', 'ERROR'); UI.showToast('ERROR AL CONECTAR', 'error'); }
-    },
+    try {
+        UI.setConnectionStatus('warning', 'CONECTANDO...');
+        if (typeof supabaseClient === 'undefined') throw new Error('CLIENTE NO INICIALIZADO');
+        UI.setupMobileMenu();
+        await this.loadAllData();
+        this.setupEventListeners();
+        this.showDashboard();
+        UI.setConnectionStatus('success', 'CONECTADO');
+        this.verificarConfiguracionInicial();
+    } catch (error) { console.error(error); UI.setConnectionStatus('error', 'ERROR'); UI.showToast('ERROR AL CONECTAR', 'error'); }
+},
+
+verificarConfiguracionInicial() {
+    const bodega = window.currentBodega || 'BODEGA';
+    const esBotiquin = bodega === 'BOTIQUIN';
+    const sinSecciones = this.state.secciones.length === 0;
+    const sinUnidades = this.state.unidades.length === 0;
+    
+    if (esBotiquin) {
+        if (sinUnidades) {
+            UI.showToast('NO TIENES UNIDADES DE MEDIDA CONFIGURADAS. CONFIGÚRALAS ANTES DE USAR EL SISTEMA.', 'warning');
+        }
+    } else {
+        if (sinSecciones && sinUnidades) {
+            UI.showToast('NO TIENES ANAQUELES NI UNIDADES DE MEDIDA CONFIGURADOS. CONFIGÚRALOS ANTES DE EMPEZAR A INGRESAR DATOS.', 'warning');
+        } else if (sinSecciones) {
+            UI.showToast('NO TIENES ANAQUELES CONFIGURADOS. CONFIGÚRALOS ANTES DE EMPEZAR A INGRESAR DATOS.', 'warning');
+        } else if (sinUnidades) {
+            UI.showToast('NO TIENES UNIDADES DE MEDIDA CONFIGURADAS. CONFIGÚRALAS ANTES DE USAR EL SISTEMA.', 'warning');
+        }
+    }
+},
 
     async loadAllData() {
         const b = window.currentBodega || 'BODEGA';
