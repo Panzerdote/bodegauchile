@@ -2,38 +2,31 @@ const App = {
     state: { inventario: [], secciones: [], unidades: [], movimientos: [], config: { porcentaje_critico: 20, dias_vencimiento: 30 } },
 
     async init() {
-    try {
-        UI.setConnectionStatus('warning', 'CONECTANDO...');
-        if (typeof supabaseClient === 'undefined') throw new Error('CLIENTE NO INICIALIZADO');
-        UI.setupMobileMenu();
-        await this.loadAllData();
-        this.setupEventListeners();
-        this.showDashboard();
-        UI.setConnectionStatus('success', 'CONECTADO');
-        this.verificarConfiguracionInicial();
-    } catch (error) { console.error(error); UI.setConnectionStatus('error', 'ERROR'); UI.showToast('ERROR AL CONECTAR', 'error'); }
-},
+        try {
+            UI.setConnectionStatus('warning', 'CONECTANDO...');
+            if (typeof supabaseClient === 'undefined') throw new Error('CLIENTE NO INICIALIZADO');
+            UI.setupMobileMenu();
+            await this.loadAllData();
+            this.setupEventListeners();
+            this.showDashboard();
+            UI.setConnectionStatus('success', 'CONECTADO');
+            this.verificarConfiguracionInicial();
+        } catch (error) { console.error(error); UI.setConnectionStatus('error', 'ERROR'); UI.showToast('ERROR AL CONECTAR', 'error'); }
+    },
 
-verificarConfiguracionInicial() {
-    const bodega = window.currentBodega || 'BODEGA';
-    const esBotiquin = bodega === 'BOTIQUIN';
-    const sinSecciones = this.state.secciones.length === 0;
-    const sinUnidades = this.state.unidades.length === 0;
-    
-    if (esBotiquin) {
-        if (sinUnidades) {
-            UI.showToast('NO TIENES UNIDADES DE MEDIDA CONFIGURADAS. CONFIGÚRALAS ANTES DE USAR EL SISTEMA.', 'warning');
+    verificarConfiguracionInicial() {
+        const bodega = window.currentBodega || 'BODEGA';
+        const esBotiquin = bodega === 'BOTIQUIN';
+        const sinSecciones = this.state.secciones.length === 0;
+        const sinUnidades = this.state.unidades.length === 0;
+        if (esBotiquin) {
+            if (sinUnidades) { UI.showToast('NO TIENES UNIDADES DE MEDIDA CONFIGURADAS. CONFIGÚRALAS ANTES DE USAR EL SISTEMA.', 'warning'); }
+        } else {
+            if (sinSecciones && sinUnidades) { UI.showToast('NO TIENES ANAQUELES NI UNIDADES DE MEDIDA CONFIGURADOS. CONFIGÚRALOS ANTES DE EMPEZAR A INGRESAR DATOS.', 'warning'); }
+            else if (sinSecciones) { UI.showToast('NO TIENES ANAQUELES CONFIGURADOS. CONFIGÚRALOS ANTES DE EMPEZAR A INGRESAR DATOS.', 'warning'); }
+            else if (sinUnidades) { UI.showToast('NO TIENES UNIDADES DE MEDIDA CONFIGURADAS. CONFIGÚRALAS ANTES DE USAR EL SISTEMA.', 'warning'); }
         }
-    } else {
-        if (sinSecciones && sinUnidades) {
-            UI.showToast('NO TIENES ANAQUELES NI UNIDADES DE MEDIDA CONFIGURADOS. CONFIGÚRALOS ANTES DE EMPEZAR A INGRESAR DATOS.', 'warning');
-        } else if (sinSecciones) {
-            UI.showToast('NO TIENES ANAQUELES CONFIGURADOS. CONFIGÚRALOS ANTES DE EMPEZAR A INGRESAR DATOS.', 'warning');
-        } else if (sinUnidades) {
-            UI.showToast('NO TIENES UNIDADES DE MEDIDA CONFIGURADAS. CONFIGÚRALAS ANTES DE USAR EL SISTEMA.', 'warning');
-        }
-    }
-},
+    },
 
     async loadAllData() {
         const b = window.currentBodega || 'BODEGA';
@@ -143,20 +136,14 @@ verificarConfiguracionInicial() {
 
     abrirEscannerIngreso() {
         const container = document.getElementById('scanner-container-ingreso');
-        container.style.display = 'block';
-        container.innerHTML = '';
+        container.style.display = 'block'; container.innerHTML = '';
         if (window.html5QrCodeIngreso) { window.html5QrCodeIngreso.stop(); }
         const html5QrCode = new Html5Qrcode('scanner-container-ingreso');
         html5QrCode.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 250, height: 150 } }, (decodedText) => {
-            html5QrCode.stop();
-            container.style.display = 'none';
+            html5QrCode.stop(); container.style.display = 'none';
             document.getElementById('ing-codigo-barras').value = decodedText;
-            this.buscarPorCodigoBarrasIngreso();
-            window.html5QrCodeIngreso = null;
-        }, (errorMessage) => { }).catch(err => {
-            container.style.display = 'none';
-            UI.showToast('NO SE PUDO ABRIR LA CÁMARA. INGRESE EL CÓDIGO MANUALMENTE.', 'warning');
-        });
+            this.buscarPorCodigoBarrasIngreso(); window.html5QrCodeIngreso = null;
+        }, (errorMessage) => { }).catch(err => { container.style.display = 'none'; UI.showToast('NO SE PUDO ABRIR LA CÁMARA. INGRESE EL CÓDIGO MANUALMENTE.', 'warning'); });
         window.html5QrCodeIngreso = html5QrCode;
     },
 
@@ -171,20 +158,28 @@ verificarConfiguracionInicial() {
 
     abrirEscannerSalida() {
         const container = document.getElementById('scanner-container-salida');
-        container.style.display = 'block';
-        container.innerHTML = '';
+        container.style.display = 'block'; container.innerHTML = '';
         if (window.html5QrCodeSalida) { window.html5QrCodeSalida.stop(); }
         const html5QrCode = new Html5Qrcode('scanner-container-salida');
         html5QrCode.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 250, height: 150 } }, (decodedText) => {
-            html5QrCode.stop();
-            container.style.display = 'none';
-            this.buscarPorCodigoBarrasSalida(decodedText);
-            window.html5QrCodeSalida = null;
-        }, (errorMessage) => { }).catch(err => {
-            container.style.display = 'none';
-            UI.showToast('NO SE PUDO ABRIR LA CÁMARA.', 'warning');
-        });
+            html5QrCode.stop(); container.style.display = 'none';
+            this.buscarPorCodigoBarrasSalida(decodedText); window.html5QrCodeSalida = null;
+        }, (errorMessage) => { }).catch(err => { container.style.display = 'none'; UI.showToast('NO SE PUDO ABRIR LA CÁMARA.', 'warning'); });
         window.html5QrCodeSalida = html5QrCode;
+    },
+
+    abrirEscannerEdicion() {
+        const container = document.getElementById('scanner-container-edicion');
+        container.style.display = 'block'; container.innerHTML = '';
+        if (window.html5QrCodeEdicion) { window.html5QrCodeEdicion.stop(); }
+        const html5QrCode = new Html5Qrcode('scanner-container-edicion');
+        html5QrCode.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 250, height: 150 } }, (decodedText) => {
+            html5QrCode.stop(); container.style.display = 'none';
+            document.getElementById('edit-codigo-barras').value = decodedText;
+            window.html5QrCodeEdicion = null;
+            UI.showToast('CÓDIGO ESCANEADO: ' + decodedText, 'success');
+        }, (errorMessage) => { }).catch(err => { container.style.display = 'none'; UI.showToast('NO SE PUDO ABRIR LA CÁMARA.', 'warning'); });
+        window.html5QrCodeEdicion = html5QrCode;
     },
 
     async buscarPorCodigoBarrasIngreso() {
@@ -298,7 +293,17 @@ verificarConfiguracionInicial() {
     async crearNuevaSeccion() { const l = document.getElementById('nueva-seccion-letra').value.trim().toUpperCase(); const d = document.getElementById('nueva-seccion-descripcion').value.trim().toUpperCase(); const c = parseInt(document.getElementById('nueva-seccion-cantidad').value) || 1; if (!l || !d) { UI.showToast('COMPLETE LOS CAMPOS', 'error'); return; } try { for (let i = 1; i <= c; i++) await DB.addSeccion(l, d, String(i)); await DB.addMovimiento({ tipo: 'CREACION_SECCION', insumo: `SECCIÓN ${l}`, cantidad: c }); await this.loadAllData(); this.mostrarContenidoSecciones(); this.renderDashboard(); UI.showToast('SECCIÓN CREADA', 'success'); } catch (e) { UI.showToast('ERROR', 'error'); } },
     async eliminarSeccionCompleta(sec) { if (!confirm('¿ELIMINAR SECCIÓN ' + sec + '?')) return; const items = this.state.secciones.filter(s => s.seccion === sec); try { await DB.addMovimiento({ tipo: 'ELIMINACION_SECCION', insumo: `SECCIÓN ${sec}`, cantidad: items.length }); for (const item of items) await DB.deleteSeccion(item.id); await this.loadAllData(); this.mostrarContenidoSecciones(); UI.showToast('SECCIÓN ELIMINADA', 'success'); } catch (e) { UI.showToast('ERROR', 'error'); } },
 
-    editarInsumo(id) { const i = this.state.inventario.find(x => x.id === id); if (!i) return; const esB = window.currentBodega === 'BOTIQUIN'; const anaq = this.state.secciones.map(s => s.seccion+s.anaquel).sort(); const und = this.state.unidades.map(u => u.nombre).sort(); const campoA = esB ? '' : `<div class="form-group"><label>ANAQUEL *</label><select id="edit-anaquel">${anaq.map(a => `<option value="${a}" ${a===i.anaquel?'selected':''}>${a}</option>`).join('')}</select></div>`; UI.openModal(`<h2>EDITAR #${i.id}</h2><div class="form-group"><label>NOMBRE *</label><input type="text" id="edit-nombre" value="${i.nombre||''}" style="text-transform:uppercase;"></div><div class="form-group"><label>CÓDIGO DE BARRAS</label><input type="text" id="edit-codigo-barras" value="${i.codigo_barras||''}"></div>${campoA}<div class="form-row"><div class="form-group"><label>STOCK</label><input type="number" id="edit-stock" value="${i.stock}" min="0"></div><div class="form-group"><label>UNIDAD</label><select id="edit-unidad"><option value="">SELECCIONE...</option>${und.map(u => `<option value="${u}" ${u===i.unidad?'selected':''}>${u}</option>`).join('')}</select></div></div><div class="form-row"><div class="form-group"><label>LOTE</label><input type="text" id="edit-lote" value="${i.lote||''}" style="text-transform:uppercase;"></div><div class="form-group"><label>VENCIMIENTO</label><input type="date" id="edit-vencimiento" value="${i.vencimiento||''}"></div></div><div class="form-group"><label>COMENTARIOS</label><textarea id="edit-comentarios" style="text-transform:uppercase;">${i.comentarios||''}</textarea></div><div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">CANCELAR</button><button class="btn btn-success" onclick="App.procesarEdicion(${id})">${UI.icons.edit} GUARDAR</button></div>`); },
+    editarInsumo(id) {
+        const i = this.state.inventario.find(x => x.id === id);
+        if (!i) return;
+        const esB = window.currentBodega === 'BOTIQUIN';
+        const anaq = this.state.secciones.map(s => s.seccion + s.anaquel).sort();
+        const und = this.state.unidades.map(u => u.nombre).sort();
+        const esMovil = window.innerWidth <= 768;
+        const campoA = esB ? '' : `<div class="form-group"><label>ANAQUEL *</label><select id="edit-anaquel">${anaq.map(a => `<option value="${a}" ${a===i.anaquel?'selected':''}>${a}</option>`).join('')}</select></div>`;
+        const botonEscaner = esMovil ? `<div class="form-group"><button type="button" class="btn btn-info btn-block" onclick="App.abrirEscannerEdicion()" style="margin-bottom:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg> ESCANEAR CÓDIGO DE BARRAS</button></div>` : '';
+        UI.openModal(`<h2>EDITAR #${i.id}</h2>${botonEscaner}<div id="scanner-container-edicion" style="display:none;margin-bottom:10px;"></div><div class="form-group"><label>NOMBRE *</label><input type="text" id="edit-nombre" value="${i.nombre||''}" style="text-transform:uppercase;"></div><div class="form-group"><label>CÓDIGO DE BARRAS</label><input type="text" id="edit-codigo-barras" value="${i.codigo_barras||''}" placeholder="ESCANEE O INGRESE EL CÓDIGO..."></div>${campoA}<div class="form-row"><div class="form-group"><label>STOCK</label><input type="number" id="edit-stock" value="${i.stock}" min="0"></div><div class="form-group"><label>UNIDAD</label><select id="edit-unidad"><option value="">SELECCIONE...</option>${und.map(u => `<option value="${u}" ${u===i.unidad?'selected':''}>${u}</option>`).join('')}</select></div></div><div class="form-row"><div class="form-group"><label>LOTE</label><input type="text" id="edit-lote" value="${i.lote||''}" style="text-transform:uppercase;"></div><div class="form-group"><label>VENCIMIENTO</label><input type="date" id="edit-vencimiento" value="${i.vencimiento||''}"></div></div><div class="form-group"><label>COMENTARIOS</label><textarea id="edit-comentarios" style="text-transform:uppercase;">${i.comentarios||''}</textarea></div><div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">CANCELAR</button><button class="btn btn-success" onclick="App.procesarEdicion(${id})">${UI.icons.edit} GUARDAR</button></div>`);
+    },
     async procesarEdicion(id) { const i = this.state.inventario.find(x => x.id === id); if (!i) return; const esB = window.currentBodega === 'BOTIQUIN'; const an = esB ? i.anaquel : document.getElementById('edit-anaquel').value; const ns = parseInt(document.getElementById('edit-stock').value); const up = { nombre: document.getElementById('edit-nombre').value.trim().toUpperCase(), seccion: esB ? 'B' : an.charAt(0), anaquel: an, stock: ns, codigo_barras: document.getElementById('edit-codigo-barras').value.trim().toUpperCase() || null, unidad: document.getElementById('edit-unidad').value, lote: document.getElementById('edit-lote').value.trim().toUpperCase(), vencimiento: document.getElementById('edit-vencimiento').value || null, comentarios: document.getElementById('edit-comentarios').value.trim().toUpperCase() }; if (!up.nombre || isNaN(ns) || ns < 0) { UI.showToast('COMPLETE LOS CAMPOS', 'error'); return; } try { await DB.updateInventarioItem(id, up); await DB.addMovimiento({ tipo: 'EDICION', insumo: up.nombre, cantidad: ns !== i.stock ? Math.abs(ns - i.stock) : 0, stock_anterior: i.stock, stock_nuevo: ns, anaquel: an }); UI.closeModal(); UI.showToast('INSUMO ACTUALIZADO', 'success'); await this.loadAllData(); this.renderDashboard(); this.renderInventario(); } catch (e) { UI.showToast('ERROR', 'error'); } },
     async eliminarInsumo(id) { const i = this.state.inventario.find(x => x.id === id); if (!i || !confirm('¿ELIMINAR?')) return; try { await DB.addMovimiento({ tipo: 'ELIMINACION', insumo: i.nombre, cantidad: 0, stock_anterior: i.stock }); await DB.deleteInventarioItem(id); UI.showToast('INSUMO ELIMINADO', 'success'); await this.loadAllData(); this.renderDashboard(); this.renderInventario(); } catch (e) { UI.showToast('ERROR', 'error'); } },
 
