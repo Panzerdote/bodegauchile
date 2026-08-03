@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PLANILLA DE SALIDA - CEHAQ</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="img/escudo.svg">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a3a6b">
+    <style>
+        /* Estilos específicos para la planilla */
+        .planilla-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .planilla-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            background: white;
+        }
+        
+        .planilla-header h2 {
+            color: var(--primary);
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .planilla-header h3 {
+            color: var(--text-light);
+            font-size: 14px;
+            font-weight: normal;
+        }
+        
+        .insumos-seleccionados {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            min-height: 100px;
+        }
+        
+        .insumo-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            flex-wrap: wrap;
+        }
+        
+        .insumo-item:last-child {
+            border-bottom: none;
+        }
+        
+        .insumo-item .info {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .insumo-item .info strong {
+            color: var(--primary);
+            font-size: 14px;
+        }
+        
+        .insumo-item .info small {
+            color: #888;
+            font-size: 11px;
+            display: block;
+        }
+        
+        .insumo-item .cantidad-input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .insumo-item .btn-quitar {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        .datos-entrega {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .datos-entrega h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+        }
+        
+        .firmas-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+        
+        .firma-box {
+            text-align: center;
+        }
+        
+        .firma-box .linea-firma {
+            border-bottom: 1px solid #333;
+            margin: 50px 20px 10px;
+        }
+        
+        .firma-box .nombre-firma {
+            font-weight: bold;
+            font-size: 14px;
+            color: var(--primary);
+        }
+        
+        .firma-box .cargo-firma {
+            font-size: 11px;
+            color: #888;
+        }
+        
+        .empty-planilla {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .total-section {
+            background: var(--primary);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            
+            .sidebar, .header, .hamburger, .sidebar-overlay,
+            #btn-agregar-insumo, .btn-quitar, .btn,
+            .search-box, #busqueda-insumo, #sugerencias-busqueda,
+            #modal, #toast, .header-actions, .no-print {
+                display: none !important;
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
+            
+            .container {
+                padding: 0 !important;
+                max-width: 100% !important;
+            }
+            
+            .planilla-container {
+                max-width: 100%;
+            }
+            
+            .planilla-header {
+                border: 2px solid #000;
+            }
+            
+            .insumos-seleccionados {
+                border: 1px solid #000;
+            }
+            
+            .datos-entrega {
+                border: 1px solid #000;
+            }
+            
+            .firmas-section {
+                border: 1px solid #000;
+                page-break-inside: avoid;
+            }
+            
+            .insumo-item {
+                border-bottom: 1px solid #000;
+            }
+            
+            .insumo-item .cantidad-input {
+                border: 1px solid #000;
+                background: white;
+                -webkit-appearance: none;
+            }
+            
+            @page {
+                margin: 1cm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="escudo-container"><img src="img/escudo.svg" alt="Escudo" class="escudo-svg"></div>
+            <h2>CEHAQ</h2>
+            <p>SISTEMA DE BODEGA</p>
+        </div>
+        <nav>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">PRINCIPAL</div>
+                <ul class="sidebar-menu">
+                    <li><a href="index.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>DASHBOARD</a></li>
+                    <li><a href="inventario.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>INVENTARIO</a></li>
+                    <li><a href="movimientos.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>MOVIMIENTOS</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section" id="menu-operaciones">
+                <div class="sidebar-section-title">OPERACIONES</div>
+                <ul class="sidebar-menu">
+                    <li><a href="#" id="btn-ingreso"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>NUEVO INGRESO</a></li>
+                    <li><a href="#" id="btn-salida"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>NUEVA SALIDA</a></li>
+                    <li><a href="salida-planilla.html" class="active"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>PLANILLA DE SALIDA</a></li>
+                    <li id="menu-buscar-anaquel"><a href="#" id="btn-buscar-anaquel"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>BUSCAR ANAQUEL</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">CONFIGURACIÓN</div>
+                <ul class="sidebar-menu">
+                    <li id="menu-gestionar"><a href="#" id="btn-gestionar"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>SECCIONES Y UM</a></li>
+                    <li><a href="#" id="btn-exportar"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>EXPORTAR EXCEL</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">CUENTA</div>
+                <ul class="sidebar-menu">
+                    <li id="menu-admin-usuarios" style="display:none;"><a href="#" id="btn-admin-usuarios"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>GESTIONAR USUARIOS</a></li>
+                    <li><a href="#" onclick="cerrarSesion()"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/></svg>CERRAR SESIÓN<span style="font-size:9px; color:var(--accent-light); margin-left:auto;" id="user-name-display"></span></a></li>
+                </ul>
+            </div>
+        </nav>
+        <div class="sidebar-footer"><span id="connection-status"><svg viewBox="0 0 24 24" width="10" height="10" fill="#f39c12"><circle cx="12" cy="12" r="6"/></svg> CONECTANDO...</span><br>v5.0 | SUPABASE</div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <button class="hamburger" onclick="toggleSidebar()"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+                <img src="img/escudo.svg" alt="Escudo" class="header-escudo-small">
+                <h1>PLANILLA DE SALIDA</h1>
+                <span class="badge badge-accent" id="bodega-activa" style="margin-left:10px; font-size:11px;">BODEGA</span>
+                <button class="btn btn-sm btn-accent" onclick="cambiarBodega()" style="margin-left:10px; font-size:10px;">CAMBIAR</button>
+            </div>
+            <div class="header-actions no-print">
+                <button class="btn btn-info" onclick="window.print()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 12H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>IMPRIMIR</button>
+                <button class="btn btn-success" onclick="PlanillaSalida.procesarSalida()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>CONFIRMAR SALIDA</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="planilla-container">
+                
+                <!-- Encabezado de la planilla -->
+                <div class="planilla-header">
+                    <img src="img/escudo.svg" alt="CEHAQ" style="width:40px;height:55px;margin-bottom:10px;">
+                    <h2>CEHAQ - SISTEMA DE BODEGA</h2>
+                    <h3>PLANILLA DE SALIDA DE INSUMOS</h3>
+                    <p style="font-size:12px;color:#888;margin-top:5px;">
+                        FECHA: <strong id="planilla-fecha"></strong> | 
+                        BODEGA: <strong id="planilla-bodega"></strong>
+                    </p>
+                </div>
+
+                <!-- Datos de quien recibe -->
+                <div class="datos-entrega no-print">
+                    <h3>DATOS DEL RECEPTOR</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>NOMBRE DE QUIEN RECIBE *</label>
+                            <input type="text" id="receptor-nombre" placeholder="NOMBRE COMPLETO" style="text-transform:uppercase;">
+                        </div>
+                        <div class="form-group">
+                            <label>CARGO / DEPARTAMENTO</label>
+                            <input type="text" id="receptor-cargo" placeholder="EJ: ENFERMERÍA" style="text-transform:uppercase;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>MOTIVO / OBSERVACIONES</label>
+                        <textarea id="receptor-observaciones" style="text-transform:uppercase;height:50px;" placeholder="MOTIVO DE LA SALIDA..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Buscador de insumos -->
+                <div class="section no-print">
+                    <h2>AGREGAR INSUMOS</h2>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <div class="form-group" style="flex:1;min-width:250px;position:relative;">
+                            <input type="text" id="busqueda-insumo" placeholder="🔍 BUSCAR INSUMO POR NOMBRE O CÓDIGO..." autocomplete="off" style="text-transform:uppercase;">
+                            <div id="sugerencias-busqueda" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:0 0 5px 5px;max-height:200px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div>
+                        </div>
+                        <button class="btn btn-primary" id="btn-agregar-insumo" style="height:40px;align-self:flex-end;">
+                            AGREGAR
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lista de insumos seleccionados -->
+                <div class="insumos-seleccionados" id="lista-insumos">
+                    <div class="empty-planilla">
+                        <p>NO HAY INSUMOS AGREGADOS.</p>
+                        <p style="font-size:12px;">BUSQUE Y AGREGUE INSUMOS PARA GENERAR LA PLANILLA.</p>
+                    </div>
+                </div>
+
+                <!-- Total -->
+                <div class="total-section" id="total-section" style="display:none;">
+                    <span>TOTAL DE ÍTEMS: <strong id="total-items">0</strong></span>
+                    <span>TOTAL UNIDADES: <strong id="total-unidades">0</strong></span>
+                </div>
+
+                <!-- Datos del que entrega (automático) -->
+                <div class="datos-entrega">
+                    <h3>DATOS DE QUIEN ENTREGA</h3>
+                    <p><strong>NOMBRE:</strong> <span id="entrega-nombre"></span></p>
+                    <p><strong>USUARIO:</strong> <span id="entrega-usuario"></span></p>
+                    <p><strong>FECHA Y HORA:</strong> <span id="entrega-fecha"></span></p>
+                </div>
+
+                <!-- Firmas -->
+                <div class="firmas-section">
+                    <div class="firma-box">
+                        <div class="linea-firma"></div>
+                        <div class="nombre-firma" id="firma-entrega-nombre"></div>
+                        <div class="cargo-firma">QUIEN ENTREGA</div>
+                    </div>
+                    <div class="firma-box">
+                        <div class="linea-firma"></div>
+                        <div class="nombre-firma" id="firma-receptor-nombre">_________________</div>
+                        <div class="cargo-firma">QUIEN RECIBE</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div id="modal" class="modal"><div class="modal-content" id="modal-content"></div></div>
+    <div id="toast" class="toast" style="display:none;"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="js/config.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/scanner.js"></script>
+    <script src="js/modales.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/salida-planilla.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const auth = checkAuth();
+            if (!auth) return;
+            
+            document.getElementById('bodega-activa').textContent = auth.bodega;
+            document.getElementById('user-name-display').textContent = (auth.user.nombre || auth.user.usuario).toUpperCase();
+            if (auth.user.rol === 'admin') document.getElementById('menu-admin-usuarios').style.display = 'block';
+            
+            if (auth.bodega === 'BOTIQUIN') {
+                document.getElementById('menu-buscar-anaquel').style.display = 'none';
+                const btnGestionar = document.getElementById('btn-gestionar');
+                if (btnGestionar) btnGestionar.innerHTML = '<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>UNIDADES DE MEDIDA';
+            }
+            
+            UI.setConnectionStatus('warning', 'CONECTANDO...');
+            await App.init();
+            PlanillaSalida.init();
+            UI.setConnectionStatus('success', 'CONECTADO');
+        });
+    </script>
+</body>
+</html>
