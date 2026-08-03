@@ -52,42 +52,24 @@ const App = {
     },
 
     setupEventListeners() {
-        // Eventos comunes del sidebar (verificar existencia)
-        const btnIngreso = document.getElementById('btn-ingreso');
-        const btnSalida = document.getElementById('btn-salida');
-        const btnBuscar = document.getElementById('btn-buscar-anaquel');
-        const btnGestionar = document.getElementById('btn-gestionar');
-        const btnExportar = document.getElementById('btn-exportar');
-        const btnAdmin = document.getElementById('btn-admin-usuarios');
-        
-        if (btnIngreso) btnIngreso.addEventListener('click', (e) => { 
-            e.preventDefault(); 
-            Modales.showIngreso(this.state); 
-        });
-        
-        if (btnSalida) btnSalida.addEventListener('click', (e) => { 
-            e.preventDefault(); 
-            Modales.showSalida(this.state); 
-        });
-        
-        if (btnBuscar) btnBuscar.addEventListener('click', (e) => { 
-            e.preventDefault(); 
-            this.showBusquedaAnaquelModal(); 
-        });
-        
-        if (btnGestionar) btnGestionar.addEventListener('click', (e) => { 
-            e.preventDefault(); 
-            this.showGestionSeccionesModal(); 
-        });
-        
-        if (btnExportar) btnExportar.addEventListener('click', (e) => { 
-            e.preventDefault(); 
-            this.exportarExcel(); 
-        });
-        
-        if (btnAdmin) btnAdmin.addEventListener('click', (e) => { 
-            e.preventDefault(); 
-            this.showGestionUsuariosModal(); 
+        // Eventos del sidebar (verificar existencia de cada elemento)
+        const elements = {
+            'btn-ingreso': () => this.abrirIngreso(),
+            'btn-salida': () => this.abrirSalida(),
+            'btn-buscar-anaquel': () => this.showBusquedaAnaquelModal(),
+            'btn-gestionar': () => this.showGestionSeccionesModal(),
+            'btn-exportar': () => this.exportarExcel(),
+            'btn-admin-usuarios': () => this.showGestionUsuariosModal()
+        };
+
+        Object.entries(elements).forEach(([id, handler]) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    handler();
+                });
+            }
         });
         
         document.addEventListener('keydown', (e) => { 
@@ -96,6 +78,19 @@ const App = {
                 if (typeof Scanner !== 'undefined') Scanner.stop();
             }
         });
+    },
+
+    // Métodos helper para abrir modales desde cualquier página
+    abrirIngreso() {
+        if (typeof Modales !== 'undefined') {
+            Modales.showIngreso(this.state);
+        }
+    },
+
+    abrirSalida() {
+        if (typeof Modales !== 'undefined') {
+            Modales.showSalida(this.state);
+        }
     },
 
     esStockCritico(item) {
