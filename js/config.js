@@ -49,3 +49,16 @@ function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
+
+// Registrar Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/js/service-worker.js')
+            .then((registration) => {
+                console.log('Service Worker registrado:', registration.scope);
+            })
+            .catch((error) => {
+                console.error('Error al registrar Service Worker:', error);
+            });
+    });
+}
