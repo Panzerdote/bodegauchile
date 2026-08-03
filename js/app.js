@@ -52,44 +52,39 @@ const App = {
     },
 
     setupEventListeners() {
-        document.querySelectorAll('.sidebar-menu a[data-section]').forEach(link => { 
-            link.addEventListener('click', (e) => { 
-                e.preventDefault(); 
-                const s = link.dataset.section; 
-                if (s === 'dashboard') window.location.href = 'index.html'; 
-                else if (s === 'inventario') window.location.href = 'inventario.html'; 
-                else if (s === 'movimientos') window.location.href = 'movimientos.html'; 
-            }); 
-        });
+        // Eventos comunes del sidebar (verificar existencia)
+        const btnIngreso = document.getElementById('btn-ingreso');
+        const btnSalida = document.getElementById('btn-salida');
+        const btnBuscar = document.getElementById('btn-buscar-anaquel');
+        const btnGestionar = document.getElementById('btn-gestionar');
+        const btnExportar = document.getElementById('btn-exportar');
+        const btnAdmin = document.getElementById('btn-admin-usuarios');
         
-        document.getElementById('btn-ingreso').addEventListener('click', (e) => { 
+        if (btnIngreso) btnIngreso.addEventListener('click', (e) => { 
             e.preventDefault(); 
             Modales.showIngreso(this.state); 
         });
         
-        document.getElementById('btn-salida').addEventListener('click', (e) => { 
+        if (btnSalida) btnSalida.addEventListener('click', (e) => { 
             e.preventDefault(); 
             Modales.showSalida(this.state); 
         });
         
-        const btnBuscar = document.getElementById('btn-buscar-anaquel'); 
         if (btnBuscar) btnBuscar.addEventListener('click', (e) => { 
             e.preventDefault(); 
             this.showBusquedaAnaquelModal(); 
         });
         
-        const btnGestionar = document.getElementById('btn-gestionar'); 
         if (btnGestionar) btnGestionar.addEventListener('click', (e) => { 
             e.preventDefault(); 
             this.showGestionSeccionesModal(); 
         });
         
-        document.getElementById('btn-exportar').addEventListener('click', (e) => { 
+        if (btnExportar) btnExportar.addEventListener('click', (e) => { 
             e.preventDefault(); 
             this.exportarExcel(); 
         });
         
-        const btnAdmin = document.getElementById('btn-admin-usuarios'); 
         if (btnAdmin) btnAdmin.addEventListener('click', (e) => { 
             e.preventDefault(); 
             this.showGestionUsuariosModal(); 
@@ -98,7 +93,7 @@ const App = {
         document.addEventListener('keydown', (e) => { 
             if (e.key === 'Escape') {
                 UI.closeModal();
-                Scanner.stop();
+                if (typeof Scanner !== 'undefined') Scanner.stop();
             }
         });
     },
@@ -141,37 +136,52 @@ const App = {
 
     seleccionarSugerencia(tipo, nombre, unidad) {
         if (tipo === 'ing') { 
-            document.getElementById('ing-nombre').value = nombre; 
+            const ingNombre = document.getElementById('ing-nombre');
+            if (ingNombre) ingNombre.value = nombre; 
             if (unidad) { 
-                const s = document.getElementById('ing-unidad'); 
-                for (let i = 0; i < s.options.length; i++) { 
-                    if (s.options[i].value === unidad) { s.selectedIndex = i; break; } 
-                } 
+                const s = document.getElementById('ing-unidad');
+                if (s) {
+                    for (let i = 0; i < s.options.length; i++) { 
+                        if (s.options[i].value === unidad) { s.selectedIndex = i; break; } 
+                    }
+                }
             } 
-            document.getElementById('sugerencias-ing').style.display = 'none'; 
+            const sugIng = document.getElementById('sugerencias-ing');
+            if (sugIng) sugIng.style.display = 'none'; 
         } else { 
-            document.getElementById('sal-busqueda').value = nombre; 
-            document.getElementById('sugerencias-sal').style.display = 'none'; 
+            const salBusqueda = document.getElementById('sal-busqueda');
+            if (salBusqueda) salBusqueda.value = nombre; 
+            const sugSal = document.getElementById('sugerencias-sal');
+            if (sugSal) sugSal.style.display = 'none'; 
             this.buscarInsumoSalida(); 
         }
     },
 
     async buscarPorCodigoBarrasIngreso() {
-        const codigo = limpiarCodigoBarras(document.getElementById('ing-codigo-barras').value);
+        const codigoInput = document.getElementById('ing-codigo-barras');
+        if (!codigoInput) return;
+        const codigo = limpiarCodigoBarras(codigoInput.value);
         if (!codigo) return;
-        document.getElementById('ing-codigo-barras').value = codigo;
+        codigoInput.value = codigo;
         try {
             const resultados = await DB.buscarPorCodigoBarras(codigo);
             if (resultados.length > 0) {
                 const item = resultados[0];
-                document.getElementById('ing-nombre').value = item.nombre;
-                document.getElementById('ing-unidad').value = item.unidad || '';
-                if (document.getElementById('ing-anaquel')) document.getElementById('ing-anaquel').value = item.anaquel;
-                document.getElementById('ing-vencimiento').value = item.vencimiento || '';
+                const ingNombre = document.getElementById('ing-nombre');
+                const ingUnidad = document.getElementById('ing-unidad');
+                const ingAnaque = document.getElementById('ing-anaquel');
+                const ingVenc = document.getElementById('ing-vencimiento');
+                
+                if (ingNombre) ingNombre.value = item.nombre;
+                if (ingUnidad) ingUnidad.value = item.unidad || '';
+                if (ingAnaque) ingAnaque.value = item.anaquel;
+                if (ingVenc) ingVenc.value = item.vencimiento || '';
+                
                 this.construirSelectorLotesIngreso(resultados, item);
                 UI.showToast('INSUMO ENCONTRADO: ' + item.nombre + ' | ' + resultados.length + ' LOTE(S)', 'success');
             } else { 
-                document.getElementById('ing-lote-container').innerHTML = '<input type="text" id="ing-lote" style="text-transform:uppercase;">';
+                const loteContainer = document.getElementById('ing-lote-container');
+                if (loteContainer) loteContainer.innerHTML = '<input type="text" id="ing-lote" style="text-transform:uppercase;">';
                 UI.showToast('CÓDIGO NUEVO. COMPLETE LOS DATOS.', 'warning'); 
             }
         } catch (e) { UI.showToast('ERROR AL BUSCAR CÓDIGO', 'error'); }
@@ -209,9 +219,12 @@ const App = {
         const selectedValue = select.value;
         if (selectedValue === '__NUEVO_LOTE__') {
             const container = document.getElementById('ing-lote-container');
-            container.innerHTML = '<input type="text" id="ing-lote" style="text-transform:uppercase;" placeholder="INGRESE NUEVO LOTE...">';
-            document.getElementById('ing-vencimiento').value = '';
-            document.getElementById('ing-vencimiento').focus();
+            if (container) container.innerHTML = '<input type="text" id="ing-lote" style="text-transform:uppercase;" placeholder="INGRESE NUEVO LOTE...">';
+            const ingVenc = document.getElementById('ing-vencimiento');
+            if (ingVenc) {
+                ingVenc.value = '';
+                ingVenc.focus();
+            }
             return;
         }
         if (!selectedValue) return;
@@ -219,24 +232,40 @@ const App = {
         const vencimiento = selectedOption.getAttribute('data-vencimiento') || '';
         const unidad = selectedOption.getAttribute('data-unidad') || '';
         const anaquel = selectedOption.getAttribute('data-anaquel') || '';
-        document.getElementById('ing-vencimiento').value = vencimiento;
-        if (unidad && document.getElementById('ing-unidad')) document.getElementById('ing-unidad').value = unidad;
-        if (anaquel && document.getElementById('ing-anaquel')) document.getElementById('ing-anaquel').value = anaquel;
+        
+        const ingVenc = document.getElementById('ing-vencimiento');
+        const ingUnidad = document.getElementById('ing-unidad');
+        const ingAnaque = document.getElementById('ing-anaquel');
+        
+        if (ingVenc) ingVenc.value = vencimiento;
+        if (unidad && ingUnidad) ingUnidad.value = unidad;
+        if (anaquel && ingAnaque) ingAnaque.value = anaquel;
         UI.showToast('DATOS DEL LOTE CARGADOS', 'success');
     },
 
     async procesarIngreso() {
         const esBotiquin = window.currentBodega === 'BOTIQUIN';
-        const nombre = document.getElementById('ing-nombre').value.trim().toUpperCase();
-        const anaquel = esBotiquin ? 'BOTIQUIN' : document.getElementById('ing-anaquel').value;
-        const cantidad = parseInt(document.getElementById('ing-cantidad').value);
-        const unidad = document.getElementById('ing-unidad').value;
-        const loteInput = document.getElementById('ing-lote');
-        const lote = loteInput ? (loteInput.tagName === 'SELECT' ? loteInput.value : loteInput.value.trim().toUpperCase()) : '';
-        const vencimiento = document.getElementById('ing-vencimiento').value;
-        const codigoBarras = limpiarCodigoBarras(document.getElementById('ing-codigo-barras').value);
-        const comentarios = document.getElementById('ing-comentarios').value.trim().toUpperCase();
+        const ingNombre = document.getElementById('ing-nombre');
+        const ingAnaque = document.getElementById('ing-anaquel');
+        const ingCantidad = document.getElementById('ing-cantidad');
+        const ingUnidad = document.getElementById('ing-unidad');
+        const ingLote = document.getElementById('ing-lote');
+        const ingVenc = document.getElementById('ing-vencimiento');
+        const ingCB = document.getElementById('ing-codigo-barras');
+        const ingCom = document.getElementById('ing-comentarios');
+        
+        if (!ingNombre || !ingCantidad) return;
+        
+        const nombre = ingNombre.value.trim().toUpperCase();
+        const anaquel = esBotiquin ? 'BOTIQUIN' : (ingAnaque ? ingAnaque.value : '');
+        const cantidad = parseInt(ingCantidad.value);
+        const unidad = ingUnidad ? ingUnidad.value : '';
+        const lote = ingLote ? (ingLote.tagName === 'SELECT' ? ingLote.value : ingLote.value.trim().toUpperCase()) : '';
+        const vencimiento = ingVenc ? ingVenc.value : '';
+        const codigoBarras = ingCB ? limpiarCodigoBarras(ingCB.value) : '';
+        const comentarios = ingCom ? ingCom.value.trim().toUpperCase() : '';
         const loteFinal = (lote === '__NUEVO_LOTE__') ? '' : lote;
+        
         if (!nombre || (!esBotiquin && !anaquel) || !cantidad || cantidad <= 0) { 
             UI.showToast('COMPLETE LOS CAMPOS (*)', 'error'); 
             return; 
@@ -263,25 +292,30 @@ const App = {
         if (r.length === 0) { sug.style.display = 'none'; return; }
         let h = ''; 
         r.slice(0, 10).forEach(i => { 
-            h += `<div onclick="App.seleccionarSugerenciaSalida('${i.nombre.replace(/'/g, "\\'")}')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #eee;font-size:13px;" onmouseover="this.style.background='#eef2f7'" onmouseout="this.style.background='white'"><strong>${i.nombre}</strong><span style="color:#888;font-size:11px;">STOCK: ${i.stock} | ${i.anaquel}${i.lote?` | LOTE: ${i.lote}`:''}${i.vencimiento?` | VENC: ${i.vencimiento}`:''}${i.codigo_barras?` | CB: ${i.codigo_barras}`:''}</span></div>`; 
+            const nombreEscapado = i.nombre.replace(/'/g, "\\'");
+            h += `<div onclick="App.seleccionarSugerenciaSalida('${nombreEscapado}')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #eee;font-size:13px;" onmouseover="this.style.background='#eef2f7'" onmouseout="this.style.background='white'"><strong>${i.nombre}</strong><span style="color:#888;font-size:11px;">STOCK: ${i.stock} | ${i.anaquel}${i.lote?` | LOTE: ${i.lote}`:''}${i.vencimiento?` | VENC: ${i.vencimiento}`:''}${i.codigo_barras?` | CB: ${i.codigo_barras}`:''}</span></div>`; 
         });
         sug.innerHTML = h; 
         sug.style.display = 'block';
     },
 
     seleccionarSugerenciaSalida(nombre) { 
-        document.getElementById('sal-busqueda').value = nombre; 
-        document.getElementById('sugerencias-sal').style.display = 'none'; 
+        const salBusqueda = document.getElementById('sal-busqueda');
+        if (salBusqueda) salBusqueda.value = nombre; 
+        const sugSal = document.getElementById('sugerencias-sal');
+        if (sugSal) sugSal.style.display = 'none'; 
         this.buscarInsumoSalida(); 
     },
 
     buscarInsumoSalida() {
         const af = document.getElementById('sal-anaquel-filtro')?.value; 
-        const b = document.getElementById('sal-busqueda').value.trim().toLowerCase();
+        const salBusqueda = document.getElementById('sal-busqueda');
+        const b = salBusqueda ? salBusqueda.value.trim().toLowerCase() : '';
         let r = this.state.inventario.filter(i => i.stock > 0); 
         if (af) r = r.filter(i => i.anaquel === af); 
         if (b) r = r.filter(i => i.nombre.toLowerCase().includes(b));
         const c = document.getElementById('resultados-busqueda'); 
+        if (!c) return;
         if (r.length === 0) { c.innerHTML = '<p style="padding:15px;">NO SE ENCONTRARON INSUMOS.</p>'; return; }
         let h = '<div style="max-height:400px;overflow-y:auto;">';
         r.forEach(i => { 
@@ -311,12 +345,17 @@ const App = {
     },
 
     prepararSalida(id) { 
-        Modales.prepararSalida(id, this.state); 
+        if (typeof Modales !== 'undefined') {
+            Modales.prepararSalida(id, this.state);
+        }
     },
 
     async procesarSalida(id) { 
-        const c = parseInt(document.getElementById('sal-cantidad').value); 
-        const co = document.getElementById('sal-comentarios').value.trim().toUpperCase(); 
+        const salCantidad = document.getElementById('sal-cantidad');
+        const salCom = document.getElementById('sal-comentarios');
+        if (!salCantidad) return;
+        const c = parseInt(salCantidad.value); 
+        const co = salCom ? salCom.value.trim().toUpperCase() : ''; 
         if (!c || c <= 0) { UI.showToast('CANTIDAD INVÁLIDA', 'error'); return; } 
         try { 
             const r = await DB.procesarSalida(id, c, co); 
@@ -324,6 +363,29 @@ const App = {
             UI.showToast('SALIDA REGISTRADA' + (r.stockNuevo <= 5 ? ' - STOCK BAJO' : ''), r.stockNuevo <= 5 ? 'warning' : 'success'); 
             await this.loadAllData(); 
         } catch (e) { UI.showToast('ERROR: ' + e.message, 'error'); } 
+    },
+
+    showBusquedaAnaquelModal() { 
+        if (window.currentBodega === 'BOTIQUIN') return; 
+        UI.openModal(`<h2>BUSCAR ANAQUEL</h2><div class="form-group"><label>ANAQUEL</label><select id="bus-anaquel" onchange="App.buscarAnaquel()"><option value="">SELECCIONE...</option>${this.state.secciones.map(s => s.seccion+s.anaquel).sort().map(a => `<option value="${a}">${a}</option>`).join('')}</select></div><div id="resultado-anaquel"></div><div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">CERRAR</button></div>`); 
+    },
+
+    buscarAnaquel() { 
+        const busAnaque = document.getElementById('bus-anaquel');
+        if (!busAnaque) return;
+        const a = busAnaque.value; 
+        if (!a) return; 
+        const items = this.state.inventario.filter(i => i.anaquel === a); 
+        const c = document.getElementById('resultado-anaquel'); 
+        if (!c) return;
+        let h = `<h3>ANAQUEL: <span class="badge badge-info">${a}</span></h3>`; 
+        if (items.length === 0) h += '<p>VACÍO.</p>'; 
+        else { 
+            h += '<div class="table-container"><table><thead><tr><th>INSUMO</th><th class="text-center">STOCK</th><th class="text-center">UND.</th><th class="text-center">LOTE</th><th class="text-center">VENC.</th></tr></thead><tbody>'; 
+            items.forEach(i => { h += `<tr><td><strong>${i.nombre}</strong></td><td class="text-center">${i.stock}</td><td class="text-center">${i.unidad||''}</td><td class="text-center">${i.lote||'-'}</td><td class="text-center">${i.vencimiento||'-'}</td></tr>`; }); 
+            h += '</tbody></table></div>'; 
+        } 
+        c.innerHTML = h; 
     },
 
     // Gestión de secciones y unidades
@@ -341,17 +403,25 @@ const App = {
 
     mostrarTabConfig(tab) { 
         if (window.currentBodega === 'BOTIQUIN') { this.mostrarContenidoUnidades(); return; } 
-        document.getElementById('tab-secciones').style.borderBottom = tab === 'secciones' ? '2px solid var(--primary)' : '2px solid transparent'; 
-        document.getElementById('tab-secciones').style.background = tab === 'secciones' ? 'white' : 'transparent'; 
-        document.getElementById('tab-secciones').style.fontWeight = tab === 'secciones' ? 'bold' : 'normal'; 
-        document.getElementById('tab-unidades').style.borderBottom = tab === 'unidades' ? '2px solid var(--primary)' : '2px solid transparent'; 
-        document.getElementById('tab-unidades').style.background = tab === 'unidades' ? 'white' : 'transparent'; 
-        document.getElementById('tab-unidades').style.fontWeight = tab === 'unidades' ? 'bold' : 'normal'; 
+        const tabSecciones = document.getElementById('tab-secciones');
+        const tabUnidades = document.getElementById('tab-unidades');
+        if (tabSecciones) {
+            tabSecciones.style.borderBottom = tab === 'secciones' ? '2px solid var(--primary)' : '2px solid transparent'; 
+            tabSecciones.style.background = tab === 'secciones' ? 'white' : 'transparent'; 
+            tabSecciones.style.fontWeight = tab === 'secciones' ? 'bold' : 'normal'; 
+        }
+        if (tabUnidades) {
+            tabUnidades.style.borderBottom = tab === 'unidades' ? '2px solid var(--primary)' : '2px solid transparent'; 
+            tabUnidades.style.background = tab === 'unidades' ? 'white' : 'transparent'; 
+            tabUnidades.style.fontWeight = tab === 'unidades' ? 'bold' : 'normal'; 
+        }
         if (tab === 'secciones') this.mostrarContenidoSecciones(); 
         else this.mostrarContenidoUnidades(); 
     },
 
     mostrarContenidoSecciones() { 
+        const tabContenido = document.getElementById('tab-contenido');
+        if (!tabContenido) return;
         let html = ''; 
         const ag = {}; 
         this.state.secciones.forEach(s => { 
@@ -370,10 +440,12 @@ const App = {
             html += '</div>'; 
         } 
         html += `<h3 style="margin-top:25px;padding-top:20px;border-top:2px solid #eee;">CREAR SECCIÓN</h3><div class="form-row"><div class="form-group"><label>LETRA *</label><input type="text" id="nueva-seccion-letra" maxlength="1" placeholder="A" style="text-transform:uppercase;"></div><div class="form-group"><label>DESCRIPCIÓN *</label><input type="text" id="nueva-seccion-descripcion" placeholder="EJ: MATERIAL QUIRÚRGICO" style="text-transform:uppercase;"></div><div class="form-group"><label>CANTIDAD</label><input type="number" id="nueva-seccion-cantidad" value="1" min="1" max="50"></div></div><button class="btn btn-success" onclick="App.crearNuevaSeccion()">${UI.icons.plus} CREAR</button>`; 
-        document.getElementById('tab-contenido').innerHTML = html; 
+        tabContenido.innerHTML = html; 
     },
 
     mostrarContenidoUnidades() { 
+        const tabContenido = document.getElementById('tab-contenido');
+        if (!tabContenido) return;
         const unidades = this.state.unidades.sort((a,b) => a.nombre.localeCompare(b.nombre)); 
         let html = '<p style="font-size:12px;color:#666;margin-bottom:15px;">CONFIGURE LAS UNIDADES DE MEDIDA DISPONIBLES.</p>'; 
         if (unidades.length === 0) html += '<div class="empty-state"><p>NO HAY UNIDADES.</p></div>'; 
@@ -383,11 +455,13 @@ const App = {
             html += '</div>'; 
         } 
         html += `<h3 style="margin-top:20px;padding-top:15px;border-top:2px solid #eee;">AGREGAR UNIDAD</h3><div class="form-group"><label>NOMBRE *</label><input type="text" id="nueva-unidad" placeholder="EJ: CAJA" style="text-transform:uppercase;"></div><button class="btn btn-success" onclick="App.agregarUnidad()">${UI.icons.plus} AGREGAR</button>`; 
-        document.getElementById('tab-contenido').innerHTML = html; 
+        tabContenido.innerHTML = html; 
     },
 
     async agregarUnidad() { 
-        const n = document.getElementById('nueva-unidad').value.trim().toUpperCase(); 
+        const nuevaUnidad = document.getElementById('nueva-unidad');
+        if (!nuevaUnidad) return;
+        const n = nuevaUnidad.value.trim().toUpperCase(); 
         if (!n) { UI.showToast('INGRESE UN NOMBRE', 'error'); return; } 
         try { 
             await DB.addUnidadMedida(n); 
@@ -411,9 +485,13 @@ const App = {
     },
 
     async crearNuevaSeccion() { 
-        const l = document.getElementById('nueva-seccion-letra').value.trim().toUpperCase(); 
-        const d = document.getElementById('nueva-seccion-descripcion').value.trim().toUpperCase(); 
-        const c = parseInt(document.getElementById('nueva-seccion-cantidad').value) || 1; 
+        const letra = document.getElementById('nueva-seccion-letra');
+        const desc = document.getElementById('nueva-seccion-descripcion');
+        const cant = document.getElementById('nueva-seccion-cantidad');
+        if (!letra || !desc) return;
+        const l = letra.value.trim().toUpperCase(); 
+        const d = desc.value.trim().toUpperCase(); 
+        const c = cant ? (parseInt(cant.value) || 1) : 1; 
         if (!l || !d) { UI.showToast('COMPLETE LOS CAMPOS', 'error'); return; } 
         try { 
             for (let i = 1; i <= c; i++) await DB.addSeccion(l, d, String(i)); 
