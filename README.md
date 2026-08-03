@@ -1,116 +1,196 @@
 # 🏥 CEHAQ - Sistema de Gestión de Bodega
 
-Sistema web para la gestión integral de insumos clínicos del Centro de Especialidades Hospitalarias de Alta Quilpué (CEHAQ). Permite administrar inventario, movimientos de entrada/salida, control de stock crítico, vencimientos y generación de planillas de entrega.
+> Sistema web para la gestión integral de insumos clínicos del **Centro de Especialidades Hospitalarias de Alta Quilpué (CEHAQ)**.
 
-![Versión](https://img.shields.io/badge/versión-5.0.0-blue)
-![Supabase](https://img.shields.io/badge/backend-Supabase-green)
-![Render](https://img.shields.io/badge/deploy-Render-46e3b7)
-![PWA](https://img.shields.io/badge/PWA-ready-purple)
+Administra inventario, movimientos, control de stock crítico, vencimientos, códigos de barras y planillas de entrega desde una interfaz rápida, responsive y preparada para instalarse como aplicación (PWA).
 
----
+<p align="center">
 
-## 📋 Características
+![Versión](https://img.shields.io/badge/Versión-5.0.0-blue?style=for-the-badge)
+![Supabase](https://img.shields.io/badge/Backend-Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Render](https://img.shields.io/badge/Deploy-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)
+![PWA](https://img.shields.io/badge/PWA-Ready-purple?style=for-the-badge)
 
-### 🔐 Autenticación y Roles
-- Sistema de login con encriptación SHA-256
-- Roles de usuario: **Admin** y **Usuario**
-- Registro de nuevos usuarios con activación por administrador
-- Selección de área de trabajo: **Bodega** o **Botiquín**
-
-### 📦 Gestión de Inventario
-- CRUD completo de insumos
-- Organización por secciones y anaqueles (solo Bodega)
-- Control de stock con alertas de nivel crítico
-- Seguimiento de lotes y fechas de vencimiento
-- Soporte para códigos de barras (escaneo y pistoleo)
-- Búsqueda avanzada con filtros combinados
-
-### 📊 Dashboard
-- Tarjetas resumen: total insumos, stock total, secciones activas
-- Alertas de stock crítico
-- Próximos a vencer y vencidos
-- Visualización adaptable para Bodega (5 cards) y Botiquín (4 cards)
-
-### 🔄 Movimientos
-- Registro de ingresos con autocompletado por código de barras
-- Selector de lotes existentes al ingresar
-- Salidas individuales y masivas
-- Historial completo de movimientos con filtros
-- Exportación a Excel (CSV)
-
-### 📄 Planilla de Salida (Escritorio)
-- Formulario de entrega masiva
-- Datos del receptor (nombre, cargo, motivo)
-- Lista de insumos con cantidades
-- Formato imprimible con sección de firmas
-- Procesamiento de salida en lote
-
-### 📱 Diseño Responsive
-- Interfaz adaptada para escritorio y dispositivos móviles
-- Sidebar colapsable en móvil
-- Escaneo de códigos de barras con cámara en móvil
-- Modales optimizados para pantallas táctiles
-- PWA instalable con soporte offline básico
+</p>
 
 ---
 
-## 🛠️ Tecnologías
+# 📑 Tabla de Contenidos
 
-| Tecnología | Uso |
-|------------|-----|
-| **HTML5 / CSS3** | Estructura y estilos |
-| **JavaScript (Vanilla)** | Lógica del frontend |
-| **Supabase** | Backend como servicio (PostgreSQL) |
-| **Render** | Hosting y despliegue |
-| **html5-qrcode** | Escaneo de códigos de barras |
-| **Service Worker** | Soporte PWA y offline |
-| **CSS Grid / Flexbox** | Layout responsive |
+- [Características](#-características)
+- [Tecnologías](#-tecnologías)
+- [Estructura del Proyecto](#-estructura-del-proyecto)
+- [Instalación](#-instalación)
+- [Configuración de Supabase](#-configuración-de-supabase)
+- [Despliegue](#-despliegue-en-render)
+- [Credenciales Iniciales](#-credenciales-iniciales)
+- [Instalación como PWA](#-instalación-como-pwa)
+- [Flujo de Trabajo](#-flujo-de-trabajo)
+- [Exportación](#-exportación-de-datos)
+- [Seguridad](#-seguridad)
+- [Limitaciones](#-limitaciones)
+- [Contribución](#-contribución)
+- [Licencia](#-licencia)
 
 ---
 
-## 📁 Estructura del Proyecto
+# ✨ Características
+
+## 🔐 Autenticación
+
+- Login seguro con **SHA-256**
+- Roles:
+  - 👑 Administrador
+  - 👤 Usuario
+- Registro de usuarios con aprobación del administrador
+- Selección de área de trabajo:
+  - 📦 Bodega
+  - 💊 Botiquín
+
+---
+
+## 📦 Gestión de Inventario
+
+- ✅ CRUD completo de insumos
+- ✅ Organización por secciones y anaqueles
+- ✅ Control de stock
+- ✅ Alertas de stock crítico
+- ✅ Control por lote
+- ✅ Control de vencimientos
+- ✅ Código de barras
+- ✅ Escaneo mediante cámara
+- ✅ Búsqueda avanzada
+
+---
+
+## 📊 Dashboard
+
+### Bodega
+
+- Total de insumos
+- Stock total
+- Secciones activas
+- Stock crítico
+- Productos próximos a vencer
+
+### Botiquín
+
+- Total de insumos
+- Stock total
+- Stock crítico
+- Vencimientos
+
+---
+
+## 🔄 Movimientos
+
+- Registro de ingresos
+- Registro de salidas
+- Salidas masivas
+- Historial completo
+- Exportación CSV
+- Autocompletado por código de barras
+- Selección automática de lotes existentes
+
+---
+
+## 📄 Planilla de Salida
+
+*(Disponible solo en escritorio)*
+
+- Datos del receptor
+- Cargo
+- Motivo
+- Selección múltiple de insumos
+- Impresión lista para firmas
+- Procesamiento masivo
+
+---
+
+## 📱 Diseño Responsive
+
+- Compatible con PC
+- Tablets
+- Teléfonos
+- Sidebar adaptable
+- Modales optimizados
+- Escáner mediante cámara
+- Aplicación PWA
+
+---
+
+# 🛠 Tecnologías
+
+| Tecnología | Descripción |
+|------------|-------------|
+| HTML5 | Estructura |
+| CSS3 | Estilos |
+| JavaScript Vanilla | Frontend |
+| Supabase | Base de datos PostgreSQL |
+| Render | Hosting |
+| html5-qrcode | Escaneo de códigos |
+| Service Worker | PWA |
+| CSS Grid / Flexbox | Responsive |
+
+---
+
+# 📁 Estructura del Proyecto
+
+```text
 /
-├── index.html # Dashboard principal
-├── login.html # Inicio de sesión
-├── seleccionar.html # Selección de bodega/botiquín
-├── inventario.html # Página de inventario
-├── movimientos.html # Historial de movimientos
-├── salida-planilla.html # Planilla de salida (escritorio)
-├── manifest.json # Configuración PWA
+│
+├── index.html
+├── login.html
+├── seleccionar.html
+├── inventario.html
+├── movimientos.html
+├── salida-planilla.html
+├── manifest.json
+│
 ├── css/
-│ └── styles.css # Estilos globales
+│   └── styles.css
+│
 ├── js/
-│ ├── config.js # Configuración y autenticación
-│ ├── database.js # Operaciones con Supabase
-│ ├── ui.js # Utilidades de interfaz
-│ ├── app.js # Lógica core compartida
-│ ├── dashboard.js # Módulo del dashboard
-│ ├── inventario.js # Módulo de inventario
-│ ├── movimientos.js # Módulo de movimientos
-│ ├── modales.js # Gestión de modales
-│ ├── scanner.js # Módulo de escáner
-│ ├── salida-planilla.js # Módulo de planilla
-│ └── service-worker.js # Service Worker PWA
+│   ├── app.js
+│   ├── config.js
+│   ├── dashboard.js
+│   ├── database.js
+│   ├── inventario.js
+│   ├── modales.js
+│   ├── movimientos.js
+│   ├── scanner.js
+│   ├── salida-planilla.js
+│   ├── service-worker.js
+│   └── ui.js
+│
 └── img/
-└── escudo.svg # Logo CEHAQ
-
+    └── escudo.svg
+```
 
 ---
 
-## 🚀 Instalación y Configuración
+# 🚀 Instalación
 
-### Requisitos Previos
-- Cuenta en [Supabase](https://supabase.com)
-- Cuenta en [Render](https://render.com) (o cualquier hosting estático)
-- Navegador moderno con soporte JavaScript
+## Requisitos
 
-### Configuración de Supabase
+- Cuenta en Supabase
+- Cuenta en Render (o cualquier hosting estático)
+- Navegador moderno
 
-1. Crea un proyecto en Supabase
-2. Ejecuta el siguiente SQL en el editor:
+---
+
+# ⚙ Configuración de Supabase
+
+## 1. Crear un proyecto
+
+Crear un nuevo proyecto desde Supabase.
+
+---
+
+## 2. Ejecutar el siguiente SQL
 
 ```sql
--- Tabla de usuarios
+-- Tabla usuarios
 CREATE TABLE usuarios (
     id SERIAL PRIMARY KEY,
     usuario VARCHAR(50) UNIQUE NOT NULL,
@@ -121,7 +201,7 @@ CREATE TABLE usuarios (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Tabla de inventario
+-- Tabla inventario
 CREATE TABLE inventario (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(200) NOT NULL,
@@ -138,13 +218,13 @@ CREATE TABLE inventario (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Tabla de movimientos
+-- Tabla movimientos
 CREATE TABLE movimientos (
     id SERIAL PRIMARY KEY,
     fecha TIMESTAMP DEFAULT NOW(),
-    tipo VARCHAR(30) NOT NULL,
+    tipo VARCHAR(30),
     insumo VARCHAR(200),
-    cantidad INTEGER DEFAULT 0,
+    cantidad INTEGER,
     stock_anterior INTEGER,
     stock_nuevo INTEGER,
     anaquel VARCHAR(20),
@@ -153,175 +233,221 @@ CREATE TABLE movimientos (
     bodega VARCHAR(20) DEFAULT 'BODEGA'
 );
 
--- Tabla de secciones
+-- Tabla secciones
 CREATE TABLE secciones (
     id SERIAL PRIMARY KEY,
-    seccion VARCHAR(10) NOT NULL,
+    seccion VARCHAR(10),
     descripcion VARCHAR(200),
-    anaquel VARCHAR(10) NOT NULL,
+    anaquel VARCHAR(10),
     bodega VARCHAR(20) DEFAULT 'BODEGA',
     UNIQUE(seccion, anaquel, bodega)
 );
 
--- Tabla de unidades de medida
+-- Tabla unidades
 CREATE TABLE unidades_medida (
     id SERIAL PRIMARY KEY,
-    nombre VARCHAR(50) NOT NULL,
+    nombre VARCHAR(50),
     bodega VARCHAR(20) DEFAULT 'BODEGA',
     UNIQUE(nombre, bodega)
 );
 
--- Tabla de configuración
+-- Tabla configuración
 CREATE TABLE configuracion (
     id SERIAL PRIMARY KEY,
     porcentaje_critico INTEGER DEFAULT 20,
     dias_vencimiento INTEGER DEFAULT 30,
-    bodega VARCHAR(20) DEFAULT 'BODEGA'
+    bodega VARCHAR(20)
 );
 
--- Insertar configuración por defecto
-INSERT INTO configuracion (porcentaje_critico, dias_vencimiento, bodega) VALUES (20, 30, 'BODEGA');
-INSERT INTO configuracion (porcentaje_critico, dias_vencimiento, bodega) VALUES (20, 30, 'BOTIQUIN');
+INSERT INTO configuracion VALUES
+(DEFAULT,20,30,'BODEGA'),
+(DEFAULT,20,30,'BOTIQUIN');
 
--- Crear usuario admin por defecto
--- Contraseña: admin123 (encriptada con SHA-256)
-INSERT INTO usuarios (usuario, password, nombre, rol, activo) 
-VALUES ('admin', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'Administrador', 'admin', true);
+INSERT INTO usuarios
+(usuario,password,nombre,rol,activo)
+VALUES
+(
+'admin',
+'240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',
+'Administrador',
+'admin',
+true
+);
+```
+
+---
+
+## 3. Configurar credenciales
+
+Editar:
+
+```javascript
+// js/config.js
+
+const SUPABASE_URL = "https://tu-proyecto.supabase.co";
+const SUPABASE_ANON_KEY = "TU_ANON_KEY";
+```
+
+---
+
+# ☁ Despliegue en Render
+
+1. Subir el proyecto a GitHub.
+2. Crear un **Static Site**.
+3. Configurar:
+
+| Opción | Valor |
+|---------|------|
+| Build Command | *(vacío)* |
+| Publish Directory | `.` |
+
+Deploy.
+
+---
+
+# 🔑 Credenciales Iniciales
+
+| Usuario | Contraseña | Rol |
+|----------|------------|-----|
+| admin | admin123 | Administrador |
+
+> ⚠️ Se recomienda cambiar la contraseña después del primer inicio de sesión.
+
+---
+
+# 📱 Instalación como PWA
+
+## Android (Chrome)
 
 ```
-Obtén las credenciales de tu proyecto Supabase (URL y ANON_KEY)
-
-Actualiza el archivo js/config.js:
-
-```sql
-const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
-const SUPABASE_ANON_KEY = 'tu-anon-key';
+Menú ⋮
+↓
+Instalar aplicación
 ```
-Despliegue en Render
-Conecta tu repositorio de GitHub con Render
 
-Crea un nuevo Static Site
+## iPhone (Safari)
 
-Configura:
+```
+Compartir
+↓
+Agregar a inicio
+```
 
-Build Command: (dejar vacío)
+---
 
-Publish Directory: . (raíz)
+# 🔄 Flujo de Trabajo
 
-¡Desplegar!
+## 📦 Bodega
 
-🔑 Credenciales por Defecto
-Usuario	Contraseña	Rol
-admin	admin123	Admin
-⚠️ Importante: Cambia la contraseña del admin después del primer inicio de sesión.
+1. Configurar secciones
+2. Configurar anaqueles
+3. Configurar unidades
+4. Registrar insumos
+5. Gestionar ingresos
+6. Gestionar salidas
+7. Revisar Dashboard
 
-📱 Instalación como PWA
-El sistema puede instalarse como aplicación en dispositivos móviles:
+---
 
-Accede a la URL desde Chrome/Safari en tu dispositivo
+## 💊 Botiquín
 
-Chrome: Toca el menú ⋮ → "Instalar aplicación"
+1. Configurar unidades
+2. Registrar medicamentos
+3. Gestionar entregas
+4. Controlar vencimientos
 
-Safari (iOS): Toca el botón Compartir → "Agregar a inicio"
+---
 
-🎯 Flujo de Trabajo
-Bodega
-Configurar secciones y anaqueles → Crear estructura organizativa
+# 🔍 Funcionalidades
 
-Configurar unidades de medida → Definir unidades disponibles
+## Código de Barras
 
-Ingresar insumos → Registrar con código de barras, lote y vencimiento
+### Escritorio
 
-Gestionar salidas → Individuales o mediante planilla
+- Pistoleo directo
 
-Monitorear dashboard → Revisar alertas y stock crítico
+### Móvil
 
-Botiquín
-Configurar unidades de medida → Solo unidades (sin secciones)
+- Escaneo mediante cámara
 
-Ingresar fármacos → Control por lote y vencimiento
+Funciones:
 
-Gestionar salidas → Registro de medicamentos entregados
+- Autocompletado
+- Detección de productos existentes
+- Selección automática de lotes
 
-Monitorear vencimientos → Alertas de productos próximos a vencer
+---
 
-🔍 Funcionalidades Específicas
-Código de Barras
-Escritorio: Pistoleo directo al campo de código
+## 🚨 Alertas
 
-Móvil: Botón de escaneo con cámara
+- 🔴 Stock crítico
+- 🟡 Próximos a vencer
+- ⚫ Productos vencidos
 
-Autocompletado de datos al detectar código existente
+---
 
-Selector de lotes al ingresar productos ya registrados
+# 📊 Exportación de Datos
 
-Planilla de Salida (Solo Escritorio)
-Búsqueda y selección múltiple de insumos
+Se puede exportar:
 
-Datos del receptor para registro
+- Inventario
+- Movimientos
 
-Formato imprimible con firmas
+Formato:
 
-Procesamiento masivo de salidas
+- CSV
+- Compatible con Excel
+- Compatible con Google Sheets
 
-Alertas
-Stock crítico: Productos bajo el porcentaje configurado
+---
 
-Por vencer: Productos que vencen dentro de los días configurados
+# 🔒 Seguridad
 
-Vencidos: Productos con fecha de vencimiento pasada
+- Contraseñas SHA-256
+- Sesiones mediante LocalStorage
+- Roles de usuario
+- Registro de auditoría
+- Activación de usuarios por administrador
 
-📊 Exportación de Datos
-Inventario: Exportación CSV con todos los campos
+---
 
-Movimientos: Exportación CSV con filtros aplicados
+# ⚠ Limitaciones
 
-Compatible con Excel y Google Sheets
+- La planilla de salida solo está disponible en escritorio.
+- El modo offline solo almacena archivos estáticos.
+- El escáner requiere permisos de cámara.
 
-🛡️ Seguridad
-Contraseñas encriptadas con SHA-256
+---
 
-Autenticación por sesión (localStorage)
+# 🤝 Contribución
 
-Roles de usuario con permisos diferenciados
+```bash
+# Fork
 
-Registro de auditoría en movimientos
+# Crear rama
+git checkout -b feature/nueva-funcionalidad
 
-Activación de usuarios por administrador
+# Commit
+git commit -m "Nueva funcionalidad"
 
-📝 Notas de Desarrollo
-Navegador Recomendado
-Google Chrome (última versión)
+# Push
+git push origin feature/nueva-funcionalidad
+```
 
-Microsoft Edge (última versión)
+Luego abrir un Pull Request.
 
-Safari (iOS 14+)
+---
 
-Limitaciones
-La versión móvil no incluye la funcionalidad de planilla de salida
+# 📄 Licencia
 
-El modo offline solo cachea archivos estáticos (requiere conexión para operaciones CRUD)
+Proyecto de uso interno del
 
-El escáner de códigos de barras requiere permisos de cámara en móvil
+**Centro de Especialidades Hospitalarias de Alta Quilpué (CEHAQ).**
 
-🤝 Contribución
-Para contribuir al proyecto:
+---
 
-Fork del repositorio
+# ❤️ Desarrollo
 
-Crea una rama para tu feature (git checkout -b feature/nueva-funcionalidad)
+Desarrollado para apoyar la gestión clínica y logística del CEHAQ.
 
-Commit de cambios (git commit -m 'Agrega nueva funcionalidad')
-
-Push a la rama (git push origin feature/nueva-funcionalidad)
-
-Abre un Pull Request
-
-📄 Licencia
-Este proyecto es de uso interno del Centro de Especialidades Hospitalarias de Alta Quilpué (CEHAQ).
-
-📞 Soporte
-Para consultas o soporte técnico, contactar al equipo de desarrollo.
-
-CEHAQ - Sistema de Bodega v5.0.0
-Desarrollado con ❤️ para el sector salud
+**Versión 5.0.0**
