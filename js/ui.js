@@ -35,27 +35,6 @@ const UI = {
         });
     },
 
-    setActiveSection(sectionName) {
-        document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
-        const section = document.getElementById(`section-${sectionName}`);
-        if (section) section.style.display = 'block';
-        document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
-        const menuLink = document.querySelector(`[data-section="${sectionName}"]`);
-        if (menuLink) menuLink.classList.add('active');
-        const titles = { dashboard: 'Dashboard', inventario: 'Inventario Completo', movimientos: 'Historial de Movimientos' };
-        document.getElementById('page-title').textContent = titles[sectionName] || '';
-        const headerActions = document.getElementById('header-actions');
-        if (sectionName === 'dashboard') {
-            headerActions.innerHTML = `<button class="btn btn-success" id="header-btn-ingreso">${this.icons.plus} Ingreso</button><button class="btn btn-danger" id="header-btn-salida">${this.icons.minus} Salida</button>`;
-        } else if (sectionName === 'inventario') {
-            headerActions.innerHTML = `<button class="btn btn-success" id="header-btn-ingreso">${this.icons.plus} Ingreso</button><button class="btn btn-info" id="header-btn-buscar">${this.icons.search} Anaquel</button>`;
-        } else if (sectionName === 'movimientos') {
-            headerActions.innerHTML = `<button class="btn btn-success" onclick="App.exportarMovimientosExcel()">${this.icons.download} Exportar Excel</button>`;
-        } else {
-            headerActions.innerHTML = '';
-        }
-    },
-
     showToast(mensaje, tipo = '') {
         const toast = document.getElementById('toast');
         toast.textContent = mensaje; toast.className = `toast ${tipo}`; toast.style.display = 'block';
@@ -68,7 +47,10 @@ const UI = {
         document.getElementById('modal').classList.add('active'); document.body.style.overflow = 'hidden';
     },
 
-    closeModal() { document.getElementById('modal').classList.remove('active'); document.body.style.overflow = ''; },
+    closeModal() { 
+        document.getElementById('modal').classList.remove('active'); 
+        document.body.style.overflow = ''; 
+    },
 
     setConnectionStatus(estado, text) {
         const el = document.getElementById('connection-status');
