@@ -16,10 +16,6 @@ const UI = {
         close: '✕'
     },
 
-    isMobile() {
-        return window.innerWidth <= 768;
-    },
-
     toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
@@ -37,32 +33,15 @@ const UI = {
         const overlay = document.getElementById('sidebar-overlay');
         sidebar.classList.remove('active'); 
         overlay.classList.remove('active'); 
-        document.body.style.overflow = ''; 
+        document.body.style.overflow = '';
     },
 
     setupMobileMenu() {
-        // Close sidebar when clicking menu items on mobile
         document.querySelectorAll('.sidebar-menu a').forEach(link => {
             link.addEventListener('click', () => { 
                 if (window.innerWidth <= 768) this.closeSidebar(); 
             });
         });
-        
-        // Handle resize events
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 768) {
-                this.closeSidebar();
-            }
-        });
-        
-        // Handle touch events for sidebar
-        const overlay = document.getElementById('sidebar-overlay');
-        if (overlay) {
-            overlay.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.closeSidebar();
-            });
-        }
     },
 
     showToast(mensaje, tipo = '') {
@@ -71,27 +50,14 @@ const UI = {
         toast.className = `toast ${tipo}`; 
         toast.style.display = 'block';
         clearTimeout(this.toastTimeout); 
-        this.toastTimeout = setTimeout(() => { 
-            toast.style.display = 'none'; 
-        }, 3000);
+        this.toastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 3000);
     },
 
     openModal(content) {
         const contentWithClose = `<button class="modal-close" onclick="UI.closeModal()" title="Cerrar">${this.icons.close}</button>${content}`;
-        const modalContent = document.getElementById('modal-content');
-        modalContent.innerHTML = contentWithClose;
+        document.getElementById('modal-content').innerHTML = contentWithClose;
         document.getElementById('modal').classList.add('active'); 
         document.body.style.overflow = 'hidden';
-        
-        // Scroll to top of modal
-        modalContent.scrollTop = 0;
-        
-        // Close modal when clicking outside on desktop
-        document.getElementById('modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                UI.closeModal();
-            }
-        });
     },
 
     closeModal() { 
