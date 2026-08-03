@@ -1,6 +1,6 @@
 # 🏥 CEHAQ - Sistema de Gestión de Bodega
 
-> Sistema web para la gestión integral de insumos clínicos del **Centro de Especialidades Hospitalarias de Alta Quilpué (CEHAQ)**.
+> Sistema web para la gestión integral de insumos clínicos del **Centro de Entrenamiento de Habilidades Querúrgicas (CEHAQ)**.
 
 Administra inventario, movimientos, control de stock crítico, vencimientos, códigos de barras y planillas de entrega desde una interfaz rápida, responsive y preparada para instalarse como aplicación (PWA).
 
