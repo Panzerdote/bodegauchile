@@ -1,9 +1,14 @@
 const Dashboard = {
     async render() {
         const { inventario, secciones, config } = App.state;
+        const esBotiquin = window.currentBodega === 'BOTIQUIN';
+        
         document.getElementById('total-insumos').textContent = inventario.length;
         document.getElementById('stock-total').textContent = inventario.reduce((s, i) => s + (i.stock || 0), 0);
-        document.getElementById('secciones-activas').textContent = [...new Set(secciones.map(s => s.seccion))].length;
+        
+        if (!esBotiquin) {
+            document.getElementById('secciones-activas').textContent = [...new Set(secciones.map(s => s.seccion))].length;
+        }
         
         const criticos = inventario.filter(i => App.esStockCritico(i));
         document.getElementById('stock-critico').textContent = criticos.length;
@@ -21,6 +26,16 @@ const Dashboard = {
             return v >= hoy && v <= lim; 
         }).length;
         document.getElementById('vencimientos-proximos').textContent = vc + pv;
+        
+        // Ajustar grid de cards para botiquín (4 columnas en vez de 5)
+        const cardsContainer = document.querySelector('.dashboard-cards');
+        if (cardsContainer) {
+            if (esBotiquin) {
+                cardsContainer.style.gridTemplateColumns = 'repeat(4, 1fr)';
+            } else {
+                cardsContainer.style.gridTemplateColumns = 'repeat(5, 1fr)';
+            }
+        }
         
         this.renderAlertas(criticos);
     },
