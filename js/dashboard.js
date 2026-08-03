@@ -2,7 +2,6 @@ const Dashboard = {
     async render() {
         const { inventario, secciones, config } = App.state;
         document.getElementById('total-insumos').textContent = inventario.length;
-        document.getElementById('total-badge').textContent = inventario.length;
         document.getElementById('stock-total').textContent = inventario.reduce((s, i) => s + (i.stock || 0), 0);
         document.getElementById('secciones-activas').textContent = [...new Set(secciones.map(s => s.seccion))].length;
         
