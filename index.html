@@ -86,6 +86,7 @@
                         <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px;"><input type="checkbox" id="filtro-stock-critico" onchange="App.renderInventario()"> STOCK CRÍTICO</label>
                         <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px;"><input type="checkbox" id="filtro-por-vencer" onchange="App.renderInventario()"> POR VENCER</label>
                         <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px;"><input type="checkbox" id="filtro-vencidos" onchange="App.renderInventario()"> VENCIDOS</label>
+                        <input type="text" class="search-box" id="busqueda-inventario" placeholder="🔍 BUSCAR POR NOMBRE, LOTE, CB O ANAQUEL..." style="flex:1; min-width:200px; margin-bottom:0;">
                         <span style="font-size:11px; color:#888; margin-left:auto;">MOSTRANDO: <strong id="contador-inventario">0</strong> INSUMOS</span>
                     </div>
                     <div class="table-responsive"><div class="table-container" id="tabla-inventario"></div></div>

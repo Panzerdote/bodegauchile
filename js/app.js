@@ -42,6 +42,11 @@ const App = {
         const ft = document.getElementById('filtro-tipo-movimiento'); if (ft) ft.addEventListener('change', () => this.renderMovimientos());
         const fu = document.getElementById('filtro-usuario-movimiento'); if (fu) fu.addEventListener('change', () => this.renderMovimientos());
         const bm = document.getElementById('busqueda-movimientos'); if (bm) bm.addEventListener('input', () => this.renderMovimientos());
+        
+        // Event listener para el buscador de inventario
+        const buscadorInventario = document.getElementById('busqueda-inventario');
+        if (buscadorInventario) buscadorInventario.addEventListener('input', () => this.renderInventario());
+        
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') UI.closeModal(); });
     },
 
@@ -96,18 +101,67 @@ const App = {
 
     async showInventario() { UI.setActiveSection('inventario'); await this.loadAllData(); this.renderInventario(); },
     renderInventario() {
-        const sc = document.getElementById('filtro-stock-critico')?.checked ?? false; const pv = document.getElementById('filtro-por-vencer')?.checked ?? false;
-        const vc = document.getElementById('filtro-vencidos')?.checked ?? false; const ninguno = !sc && !pv && !vc;
-        const hoy = new Date(); const lim = new Date(hoy); lim.setDate(lim.getDate() + (this.state.config.dias_vencimiento || 30));
-        let items = [...this.state.inventario]; let filtrados = [];
-        if (ninguno) { filtrados = items; } else { items.forEach(item => { const ec = this.esStockCritico(item); const v = item.vencimiento ? new Date(item.vencimiento + 'T00:00:00') : null; const venc = v && v < hoy; const vp = v && !venc && v <= lim; let inc = false; if (sc && ec && !venc) inc = true; if (pv && vp && !ec) inc = true; if (vc && venc) inc = true; if (ec && venc && (sc || vc)) inc = true; if (inc) filtrados.push(item); }); }
+        const sc = document.getElementById('filtro-stock-critico')?.checked ?? false; 
+        const pv = document.getElementById('filtro-por-vencer')?.checked ?? false;
+        const vc = document.getElementById('filtro-vencidos')?.checked ?? false; 
+        const ninguno = !sc && !pv && !vc;
+        const busqueda = document.getElementById('busqueda-inventario')?.value?.trim().toLowerCase() || '';
+        
+        const hoy = new Date(); 
+        const lim = new Date(hoy); 
+        lim.setDate(lim.getDate() + (this.state.config.dias_vencimiento || 30));
+        let items = [...this.state.inventario]; 
+        let filtrados = [];
+        
+        if (ninguno) { 
+            filtrados = items; 
+        } else { 
+            items.forEach(item => { 
+                const ec = this.esStockCritico(item); 
+                const v = item.vencimiento ? new Date(item.vencimiento + 'T00:00:00') : null; 
+                const venc = v && v < hoy; 
+                const vp = v && !venc && v <= lim; 
+                let inc = false; 
+                if (sc && ec && !venc) inc = true; 
+                if (pv && vp && !ec) inc = true; 
+                if (vc && venc) inc = true; 
+                if (ec && venc && (sc || vc)) inc = true; 
+                if (inc) filtrados.push(item); 
+            }); 
+        }
+        
+        // Aplicar búsqueda por nombre
+        if (busqueda) {
+            filtrados = filtrados.filter(item => 
+                item.nombre.toLowerCase().includes(busqueda) ||
+                (item.lote && item.lote.toLowerCase().includes(busqueda)) ||
+                (item.codigo_barras && item.codigo_barras.toLowerCase().includes(busqueda)) ||
+                (item.anaquel && item.anaquel.toLowerCase().includes(busqueda))
+            );
+        }
+        
         document.getElementById('contador-inventario').textContent = filtrados.length;
-        const c = document.getElementById('tabla-inventario'); if (filtrados.length === 0) { c.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.box}</div><p>SIN RESULTADOS.</p></div>`; return; }
+        const c = document.getElementById('tabla-inventario'); 
+        if (filtrados.length === 0) { 
+            c.innerHTML = `<div class="empty-state"><div class="icon">${UI.icons.box}</div><p>SIN RESULTADOS.</p></div>`; 
+            return; 
+        }
         const esB = window.currentBodega === 'BOTIQUIN';
         let th = esB ? '<th>NOMBRE</th><th class="text-center">STOCK</th><th class="text-center">UND.</th><th class="text-center">LOTE</th><th class="text-center">VENC.</th><th class="text-center">CB</th><th class="text-center">ACC.</th>' : '<th>NOMBRE</th><th class="text-center">ANAQUEL</th><th class="text-center">STOCK</th><th class="text-center">UND.</th><th class="text-center">LOTE</th><th class="text-center">VENC.</th><th class="text-center">CB</th><th class="text-center">ACC.</th>';
         let h = `<table><thead><tr>${th}</tr></thead><tbody>`;
-        filtrados.forEach(item => { const ec = this.esStockCritico(item); const v = item.vencimiento ? new Date(item.vencimiento + 'T00:00:00') : null; const venc = v && v < hoy; const vp = v && !venc && v <= lim; let cl = ''; if (venc) cl = 'stock-critical'; else if (ec) cl = 'stock-critical'; else if (vp) cl = 'stock-warning'; h += `<tr class="${cl}"><td><strong>${item.nombre}</strong></td>${esB ? '' : `<td class="text-center">${item.anaquel}</td>`}<td class="text-center">${item.stock}</td><td class="text-center">${item.unidad||''}</td><td class="text-center">${item.lote||'-'}</td><td class="text-center">${item.vencimiento||'-'}${venc?' <span class="badge badge-danger">VENC</span>':''}${vp&&!ec?' <span class="badge badge-warning">PRONT</span>':''}</td><td class="text-center">${item.codigo_barras ? `<span class="badge badge-info">${item.codigo_barras}</span>` : '-'}</td><td class="text-center"><button class="btn btn-warning btn-sm" onclick="App.editarInsumo(${item.id})">${UI.icons.edit}</button><button class="btn btn-danger btn-sm" onclick="App.eliminarInsumo(${item.id})">${UI.icons.trash}</button></td></tr>`; });
-        h += '</tbody></table>'; c.innerHTML = h;
+        filtrados.forEach(item => { 
+            const ec = this.esStockCritico(item); 
+            const v = item.vencimiento ? new Date(item.vencimiento + 'T00:00:00') : null; 
+            const venc = v && v < hoy; 
+            const vp = v && !venc && v <= lim; 
+            let cl = ''; 
+            if (venc) cl = 'stock-critical'; 
+            else if (ec) cl = 'stock-critical'; 
+            else if (vp) cl = 'stock-warning'; 
+            h += `<tr class="${cl}"><td><strong>${item.nombre}</strong></td>${esB ? '' : `<td class="text-center">${item.anaquel}</td>`}<td class="text-center">${item.stock}</td><td class="text-center">${item.unidad||''}</td><td class="text-center">${item.lote||'-'}</td><td class="text-center">${item.vencimiento||'-'}${venc?' <span class="badge badge-danger">VENC</span>':''}${vp&&!ec?' <span class="badge badge-warning">PRONT</span>':''}</td><td class="text-center">${item.codigo_barras ? `<span class="badge badge-info">${item.codigo_barras}</span>` : '-'}</td><td class="text-center"><button class="btn btn-warning btn-sm" onclick="App.editarInsumo(${item.id})">${UI.icons.edit}</button><button class="btn btn-danger btn-sm" onclick="App.eliminarInsumo(${item.id})">${UI.icons.trash}</button></td></tr>`; 
+        });
+        h += '</tbody></table>'; 
+        c.innerHTML = h;
     },
 
     async showMovimientos() { UI.setActiveSection('movimientos'); UI.showLoading('tabla-movimientos'); try { await this.loadAllData(); this.cargarFiltroUsuarios(); this.renderMovimientos(); } catch (e) { document.getElementById('tabla-movimientos').innerHTML = '<div class="empty-state"><p>ERROR AL CARGAR.</p></div>'; } },
@@ -131,7 +185,7 @@ const App = {
         const esMovil = window.innerWidth <= 768;
         const campoAnaquel = esBotiquin ? '' : `<div class="form-group"><label>ANAQUEL *</label><select id="ing-anaquel"><option value="">SELECCIONE...</option>${anaqueles.map(a => `<option value="${a}">${a}</option>`).join('')}</select>${anaqueles.length===0?'<small style="color:#c0392b;">NO HAY ANAQUELES.</small>':''}</div>`;
         const botonEscaner = esMovil ? `<div class="form-group"><button type="button" class="btn btn-info btn-block" onclick="App.abrirEscanner('ingreso')" style="margin-bottom:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg> ESCANEAR CÓDIGO DE BARRAS</button></div>` : '';
-        UI.openModal(`<h2>NUEVO INGRESO</h2>${botonEscaner}<div id="scanner-container-ingreso" style="display:none;margin-bottom:10px;"></div><div class="form-group" style="position:relative;"><label>NOMBRE DEL INSUMO *</label><input type="text" id="ing-nombre" placeholder="ESCRIBA EL NOMBRE..." autofocus autocomplete="off" onkeyup="App.buscarCoincidencias('ing')" onfocus="App.buscarCoincidencias('ing')" style="text-transform:uppercase;"><div id="sugerencias-ing" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:0 0 5px 5px;max-height:200px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div></div><div class="form-group"><label>CÓDIGO DE BARRAS</label><input type="text" id="ing-codigo-barras" placeholder="ESCANEE O INGRESE EL CÓDIGO..." onkeypress="if(event.key==='Enter'){event.preventDefault();App.buscarPorCodigoBarrasIngreso();}"></div>${campoAnaquel}<div class="form-row"><div class="form-group"><label>CANTIDAD *</label><input type="number" id="ing-cantidad" value="1" min="1"></div><div class="form-group"><label>UNIDAD</label><select id="ing-unidad"><option value="">SELECCIONE...</option>${unidades.map(u => `<option value="${u}">${u}</option>`).join('')}</select></div></div><div class="form-row"><div class="form-group"><label>LOTE</label><input type="text" id="ing-lote" style="text-transform:uppercase;"></div><div class="form-group"><label>VENCIMIENTO</label><input type="date" id="ing-vencimiento"></div></div><div class="form-group"><label>COMENTARIOS</label><textarea id="ing-comentarios" style="text-transform:uppercase;"></textarea></div><div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">CANCELAR</button><button class="btn btn-success" onclick="App.procesarIngreso()">${UI.icons.plus} REGISTRAR</button></div>`);
+        UI.openModal(`<h2>NUEVO INGRESO</h2>${botonEscaner}<div id="scanner-container-ingreso" style="display:none;margin-bottom:10px;"></div><div class="form-group" style="position:relative;"><label>NOMBRE DEL INSUMO *</label><input type="text" id="ing-nombre" placeholder="ESCRIBA EL NOMBRE..." autofocus autocomplete="off" onkeyup="App.buscarCoincidencias('ing')" onfocus="App.buscarCoincidencias('ing')" style="text-transform:uppercase;"><div id="sugerencias-ing" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:0 0 5px 5px;max-height:200px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div></div><div class="form-group"><label>CÓDIGO DE BARRAS</label><input type="text" id="ing-codigo-barras" placeholder="ESCANEE O INGRESE EL CÓDIGO..." onkeypress="if(event.key==='Enter'){event.preventDefault();App.buscarPorCodigoBarrasIngreso();}"></div>${campoAnaquel}<div class="form-row"><div class="form-group"><label>CANTIDAD *</label><input type="number" id="ing-cantidad" value="1" min="1"></div><div class="form-group"><label>UNIDAD</label><select id="ing-unidad"><option value="">SELECCIONE...</option>${unidades.map(u => `<option value="${u}">${u}</option>`).join('')}</select></div></div><div class="form-row"><div class="form-group"><label>LOTE</label><div id="ing-lote-container"><input type="text" id="ing-lote" style="text-transform:uppercase;"></div></div><div class="form-group"><label>VENCIMIENTO</label><input type="date" id="ing-vencimiento"></div></div><div class="form-group"><label>COMENTARIOS</label><textarea id="ing-comentarios" style="text-transform:uppercase;"></textarea></div><div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">CANCELAR</button><button class="btn btn-success" onclick="App.procesarIngreso()">${UI.icons.plus} REGISTRAR</button></div>`);
         setTimeout(() => { document.addEventListener('click', function cerrar(e) { const inp = document.getElementById('ing-nombre'); const sug = document.getElementById('sugerencias-ing'); if (inp && sug && e.target !== inp && !sug.contains(e.target)) sug.style.display = 'none'; }); }, 100);
     },
 
@@ -141,7 +195,8 @@ const App = {
         const esMovil = window.innerWidth <= 768;
         const campoAnaquel = esBotiquin ? '' : `<div class="form-group"><label>FILTRAR POR ANAQUEL</label><select id="sal-anaquel-filtro" onchange="App.filtrarPorAnaquelSalida()"><option value="">TODOS</option>${anaqueles.map(a => `<option value="${a}">${a}</option>`).join('')}</select></div>`;
         const botonEscaner = esMovil ? `<div class="form-group"><button type="button" class="btn btn-info btn-block" onclick="App.abrirEscanner('salida')" style="margin-bottom:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg> ESCANEAR CÓDIGO DE BARRAS</button></div>` : '';
-        UI.openModal(`<h2>NUEVA SALIDA</h2>${botonEscaner}<div id="scanner-container-salida" style="display:none;margin-bottom:10px;"></div>${campoAnaquel}<div class="form-group" style="position:relative;"><label>BUSCAR POR NOMBRE</label><input type="text" id="sal-busqueda" placeholder="ESCRIBA EL NOMBRE..." autocomplete="off" onkeyup="App.buscarCoincidenciasSalida()" onfocus="App.buscarCoincidenciasSalida()" style="text-transform:uppercase;"><div id="sugerencias-sal" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:0 0 5px 5px;max-height:200px;overflow-y:auto;z-index:100;display:none;"></div></div><div id="resultados-busqueda"><p style="color:#666;padding:15px;">BUSQUE UN INSUMO PARA RETIRAR.</p></div><div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">CANCELAR</button></div>`);
+        const campoCodigoBarras = `<div class="form-group"><label>CÓDIGO DE BARRAS</label><input type="text" id="sal-codigo-barras" placeholder="ESCANEE O INGRESE EL CÓDIGO..." onkeypress="if(event.key==='Enter'){event.preventDefault();App.buscarPorCodigoBarrasSalida(document.getElementById('sal-codigo-barras').value);}"></div>`;
+        UI.openModal(`<h2>NUEVA SALIDA</h2>${botonEscaner}<div id="scanner-container-salida" style="display:none;margin-bottom:10px;"></div>${campoCodigoBarras}${campoAnaquel}<div class="form-group" style="position:relative;"><label>BUSCAR POR NOMBRE</label><input type="text" id="sal-busqueda" placeholder="ESCRIBA EL NOMBRE..." autocomplete="off" onkeyup="App.buscarCoincidenciasSalida()" onfocus="App.buscarCoincidenciasSalida()" style="text-transform:uppercase;"><div id="sugerencias-sal" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:0 0 5px 5px;max-height:200px;overflow-y:auto;z-index:100;display:none;"></div></div><div id="resultados-busqueda"><p style="color:#666;padding:15px;">BUSQUE UN INSUMO PARA RETIRAR.</p></div><div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">CANCELAR</button></div>`);
     },
 
     abrirEscanner(tipo) {
@@ -157,9 +212,19 @@ const App = {
             html5QrCode.stop();
             container.style.display = 'none';
             const codigoLimpio = this.limpiarCodigoBarras(decodedText);
-            if (tipo === 'ingreso') { document.getElementById('ing-codigo-barras').value = codigoLimpio; this.buscarPorCodigoBarrasIngreso(); }
-            else if (tipo === 'salida') { this.buscarPorCodigoBarrasSalida(codigoLimpio); }
-            else if (tipo === 'edicion') { document.getElementById('edit-codigo-barras').value = codigoLimpio; this.buscarPorCodigoBarrasEdicion(); }
+            if (tipo === 'ingreso') { 
+                document.getElementById('ing-codigo-barras').value = codigoLimpio; 
+                this.buscarPorCodigoBarrasIngreso(); 
+            }
+            else if (tipo === 'salida') { 
+                const campoCB = document.getElementById('sal-codigo-barras');
+                if (campoCB) campoCB.value = codigoLimpio;
+                this.buscarPorCodigoBarrasSalida(codigoLimpio); 
+            }
+            else if (tipo === 'edicion') { 
+                document.getElementById('edit-codigo-barras').value = codigoLimpio; 
+                this.buscarPorCodigoBarrasEdicion(); 
+            }
             window[key] = null;
         }, (errorMessage) => { }).catch(err => { container.style.display = 'none'; UI.showToast('NO SE PUDO ABRIR LA CÁMARA.', 'warning'); });
         window[key] = html5QrCode;
@@ -176,11 +241,90 @@ const App = {
                 document.getElementById('ing-nombre').value = item.nombre;
                 document.getElementById('ing-unidad').value = item.unidad || '';
                 if (document.getElementById('ing-anaquel')) document.getElementById('ing-anaquel').value = item.anaquel;
-                document.getElementById('ing-lote').value = item.lote || '';
                 document.getElementById('ing-vencimiento').value = item.vencimiento || '';
-                UI.showToast('INSUMO ENCONTRADO: ' + item.nombre, 'success');
-            } else { UI.showToast('CÓDIGO NUEVO. COMPLETE LOS DATOS.', 'warning'); }
+                
+                // Construir lista de lotes existentes para este código de barras
+                this.construirSelectorLotesIngreso(resultados, item);
+                
+                UI.showToast('INSUMO ENCONTRADO: ' + item.nombre + ' | ' + resultados.length + ' LOTE(S)', 'success');
+            } else { 
+                // Restaurar campo de lote como input normal
+                document.getElementById('ing-lote-container').innerHTML = '<input type="text" id="ing-lote" style="text-transform:uppercase;">';
+                UI.showToast('CÓDIGO NUEVO. COMPLETE LOS DATOS.', 'warning'); 
+            }
         } catch (e) { UI.showToast('ERROR AL BUSCAR CÓDIGO', 'error'); }
+    },
+
+    construirSelectorLotesIngreso(resultados, itemSeleccionado) {
+        const container = document.getElementById('ing-lote-container');
+        if (!container) return;
+        
+        // Agrupar por lote (evitar duplicados)
+        const lotesUnicos = [];
+        const lotesVistos = new Set();
+        resultados.forEach(r => {
+            const loteKey = (r.lote || 'SIN LOTE').toUpperCase();
+            if (!lotesVistos.has(loteKey)) {
+                lotesVistos.add(loteKey);
+                lotesUnicos.push(r);
+            }
+        });
+        
+        let html = '<select id="ing-lote" onchange="App.seleccionarLoteIngreso()" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;font-family:inherit;">';
+        html += '<option value="">SELECCIONE UN LOTE...</option>';
+        
+        lotesUnicos.forEach(r => {
+            const selected = (r.lote || '') === (itemSeleccionado.lote || '') ? ' selected' : '';
+            const loteStr = r.lote || 'SIN LOTE';
+            const vencStr = r.vencimiento || 'SIN VENC.';
+            const stockStr = r.stock || 0;
+            html += `<option value="${this.escapeHtml(r.lote || '')}" data-vencimiento="${r.vencimiento || ''}" data-unidad="${this.escapeHtml(r.unidad || '')}" data-anaquel="${this.escapeHtml(r.anaquel || '')}"${selected}>${loteStr} | VENC: ${vencStr} | STOCK: ${stockStr}</option>`;
+        });
+        
+        html += '<option value="__NUEVO_LOTE__">➕ INGRESAR LOTE NUEVO...</option>';
+        html += '</select>';
+        
+        container.innerHTML = html;
+    },
+
+    seleccionarLoteIngreso() {
+        const select = document.getElementById('ing-lote');
+        if (!select) return;
+        
+        const selectedValue = select.value;
+        
+        if (selectedValue === '__NUEVO_LOTE__') {
+            // Convertir a input de texto para lote nuevo
+            const container = document.getElementById('ing-lote-container');
+            container.innerHTML = '<input type="text" id="ing-lote" style="text-transform:uppercase;" placeholder="INGRESE NUEVO LOTE...">';
+            document.getElementById('ing-vencimiento').value = '';
+            document.getElementById('ing-vencimiento').focus();
+            return;
+        }
+        
+        if (!selectedValue) return;
+        
+        // Obtener datos del option seleccionado
+        const selectedOption = select.options[select.selectedIndex];
+        const vencimiento = selectedOption.getAttribute('data-vencimiento') || '';
+        const unidad = selectedOption.getAttribute('data-unidad') || '';
+        const anaquel = selectedOption.getAttribute('data-anaquel') || '';
+        
+        // Rellenar campos
+        document.getElementById('ing-vencimiento').value = vencimiento;
+        if (unidad && document.getElementById('ing-unidad')) {
+            document.getElementById('ing-unidad').value = unidad;
+        }
+        if (anaquel && document.getElementById('ing-anaquel')) {
+            document.getElementById('ing-anaquel').value = anaquel;
+        }
+        
+        UI.showToast('DATOS DEL LOTE CARGADOS', 'success');
+    },
+
+    escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     },
 
     async buscarPorCodigoBarrasSalida(codigo) {
@@ -242,13 +386,18 @@ const App = {
         const anaquel = esBotiquin ? 'BOTIQUIN' : document.getElementById('ing-anaquel').value;
         const cantidad = parseInt(document.getElementById('ing-cantidad').value);
         const unidad = document.getElementById('ing-unidad').value;
-        const lote = document.getElementById('ing-lote').value.trim().toUpperCase();
+        const loteInput = document.getElementById('ing-lote');
+        const lote = loteInput ? (loteInput.tagName === 'SELECT' ? loteInput.value : loteInput.value.trim().toUpperCase()) : '';
         const vencimiento = document.getElementById('ing-vencimiento').value;
         const codigoBarras = this.limpiarCodigoBarras(document.getElementById('ing-codigo-barras').value);
         const comentarios = document.getElementById('ing-comentarios').value.trim().toUpperCase();
+        
+        // Si se seleccionó "INGRESAR LOTE NUEVO", limpiar el valor
+        const loteFinal = (lote === '__NUEVO_LOTE__') ? '' : lote;
+        
         if (!nombre || (!esBotiquin && !anaquel) || !cantidad || cantidad <= 0) { UI.showToast('COMPLETE LOS CAMPOS (*)', 'error'); return; }
         const seccion = esBotiquin ? 'B' : anaquel.charAt(0);
-        try { await DB.procesarIngreso(nombre, seccion, anaquel, cantidad, unidad, lote, vencimiento, codigoBarras || null, comentarios); UI.closeModal(); UI.showToast('INGRESO REGISTRADO', 'success'); await this.loadAllData(); this.renderDashboard(); } catch (e) { UI.showToast('ERROR: ' + e.message, 'error'); }
+        try { await DB.procesarIngreso(nombre, seccion, anaquel, cantidad, unidad, loteFinal, vencimiento, codigoBarras || null, comentarios); UI.closeModal(); UI.showToast('INGRESO REGISTRADO', 'success'); await this.loadAllData(); this.renderDashboard(); } catch (e) { UI.showToast('ERROR: ' + e.message, 'error'); }
     },
 
     buscarCoincidenciasSalida() {
