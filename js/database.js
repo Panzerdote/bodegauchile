@@ -80,8 +80,19 @@ const DB = {
     },
     async addUnidadMedida(nombre) {
         const bodega = window.currentBodega || 'BODEGA';
+        
+        // Verificar si ya existe primero
+        const { data: existente } = await supabaseClient.from('unidades_medida').select('id').eq('nombre', nombre.toUpperCase()).eq('bodega', bodega).single();
+        if (existente) {
+            throw new Error('LA UNIDAD "' + nombre.toUpperCase() + '" YA EXISTE EN ' + bodega);
+        }
+        
         const { data, error } = await supabaseClient.from('unidades_medida').insert([{ nombre: nombre.toUpperCase(), bodega }]).select();
-        if (error) { if (error.code === '23505') throw new Error('LA UNIDAD YA EXISTE'); throw error; } return data[0];
+        if (error) { 
+            if (error.code === '23505') throw new Error('LA UNIDAD "' + nombre.toUpperCase() + '" YA EXISTE EN ' + bodega); 
+            throw error; 
+        } 
+        return data[0];
     },
     async deleteUnidadMedida(id) { const { error } = await supabaseClient.from('unidades_medida').delete().eq('id', id); if (error) throw error; return true; },
 
