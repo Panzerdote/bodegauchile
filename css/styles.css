@@ -444,7 +444,6 @@ tr:nth-child(even) td { background: #fafbfc; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-#section-inventario input[type="checkbox"], 
 input[type="checkbox"] { 
     width: 16px; 
     height: 16px; 
@@ -452,7 +451,6 @@ input[type="checkbox"] {
     accent-color: var(--primary); 
 }
 
-#section-inventario label,
 label:has(input[type="checkbox"]) { 
     padding: 6px 10px; 
     border-radius: 5px; 
@@ -466,13 +464,11 @@ label:has(input[type="checkbox"]) {
     font-size: 12px; 
 }
 
-#section-inventario label:hover,
 label:has(input[type="checkbox"]):hover { 
     background: #eef2f7; 
     border-color: var(--primary); 
 }
 
-#section-inventario label:has(input:checked),
 label:has(input[type="checkbox"]:checked) { 
     background: var(--primary); 
     color: white; 
@@ -522,6 +518,9 @@ label:has(input[type="checkbox"]:checked) {
     /* OCULTAR BOTONES DEL HEADER EN MÓVIL */
     .header-actions { display: none !important; }
     
+    /* OCULTAR MENÚ DE PLANILLA DE SALIDA EN MÓVIL */
+    #menu-planilla-salida { display: none !important; }
+    
     .dashboard-cards { 
         grid-template-columns: repeat(5, 1fr); 
         gap: 5px; 
@@ -565,7 +564,7 @@ label:has(input[type="checkbox"]:checked) {
     .form-group select, 
     .form-group textarea { 
         padding: 10px; 
-        font-size: 16px; /* Evita zoom en iOS */ 
+        font-size: 16px;
     }
     
     .modal-content { 
@@ -620,12 +619,12 @@ label:has(input[type="checkbox"]:checked) {
     }
     
     /* Filtros en móvil */
-    #section-inventario .section > div:first-child {
+    .section > div:first-child {
         flex-direction: column !important;
+        gap: 8px !important;
         align-items: stretch !important;
     }
     
-    #section-inventario label,
     label:has(input[type="checkbox"]) {
         width: 100%;
         justify-content: center;
@@ -638,13 +637,6 @@ label:has(input[type="checkbox"]:checked) {
         flex: none !important;
         min-width: auto !important;
         margin-bottom: 0 !important;
-    }
-    
-    /* Filtros de movimientos en móvil */
-    #section-movimientos .section > div:first-child,
-    .section > div:first-child {
-        flex-direction: column !important;
-        gap: 8px !important;
     }
     
     #filtro-tipo-movimiento,
