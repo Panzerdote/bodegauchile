@@ -188,13 +188,15 @@ INSERT INTO configuracion (porcentaje_critico, dias_vencimiento, bodega) VALUES 
 INSERT INTO usuarios (usuario, password, nombre, rol, activo) 
 VALUES ('admin', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'Administrador', 'admin', true);
 
+```
 Obtén las credenciales de tu proyecto Supabase (URL y ANON_KEY)
 
 Actualiza el archivo js/config.js:
 
+```sql
 const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
 const SUPABASE_ANON_KEY = 'tu-anon-key';
-
+```
 Despliegue en Render
 Conecta tu repositorio de GitHub con Render
 
