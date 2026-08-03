@@ -52,7 +52,6 @@ const App = {
     },
 
     setupEventListeners() {
-        // Eventos del sidebar (verificar existencia de cada elemento)
         const elements = {
             'btn-ingreso': () => this.abrirIngreso(),
             'btn-salida': () => this.abrirSalida(),
@@ -80,7 +79,6 @@ const App = {
         });
     },
 
-    // Métodos helper para abrir modales desde cualquier página
     abrirIngreso() {
         if (typeof Modales !== 'undefined') {
             Modales.showIngreso(this.state);
@@ -108,7 +106,6 @@ const App = {
         return (item.stock / sm) * 100 <= this.state.config.porcentaje_critico;
     },
 
-    // Métodos de ingreso
     async buscarCoincidencias(tipo) {
         const input = document.getElementById(tipo === 'ing' ? 'ing-nombre' : 'sal-busqueda');
         const sugerencias = document.getElementById(tipo === 'ing' ? 'sugerencias-ing' : 'sugerencias-sal');
@@ -274,7 +271,6 @@ const App = {
         } catch (e) { UI.showToast('ERROR: ' + e.message, 'error'); }
     },
 
-    // Métodos de salida
     buscarCoincidenciasSalida() {
         const af = document.getElementById('sal-anaquel-filtro')?.value;
         const input = document.getElementById('sal-busqueda'); 
@@ -383,7 +379,6 @@ const App = {
         c.innerHTML = h; 
     },
 
-    // Gestión de secciones y unidades
     showGestionSeccionesModal() {
         const esBotiquin = window.currentBodega === 'BOTIQUIN';
         let h = '<h2>CONFIGURACIÓN</h2>';
@@ -509,7 +504,6 @@ const App = {
         } catch (e) { UI.showToast('ERROR', 'error'); } 
     },
 
-    // Utilidades
     getColorTipo(t) { 
         const c = {
             'INGRESO':'#27ae60','SALIDA':'#c0392b','EDICION':'#2980b9','ELIMINACION':'#e74c3c',
@@ -533,7 +527,7 @@ const App = {
         if (!inventario.length) { UI.showToast('SIN DATOS', 'warning'); return; } 
         let csv = 'ID;NOMBRE;ANAQUEL;STOCK;UNIDAD;LOTE;VENCIMIENTO;CODIGO_BARRAS;COMENTARIOS\n'; 
         inventario.forEach(i => { 
-            csv += `${i.id};"${i.nombre}";${i.anaquel};${i.stock};${i.unidad||''};${i.lote||''};${i.vencimiento||''};${i.codigo_barras||''};"${i.comentarios||''}"\n`; 
+            csv += `${i.id};"${i.nombre}";${i.anaquel};${i.stock};${i.unidad||''};${i.lote||''};${i.vencimiento||''};'${i.codigo_barras||''};"${i.comentarios||''}"\n`; 
         }); 
         const b = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'}); 
         const u = URL.createObjectURL(b); 
