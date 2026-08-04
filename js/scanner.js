@@ -20,6 +20,8 @@ const Scanner = {
             (decodedText) => {
                 html5QrCode.stop();
                 container.style.display = 'none';
+                
+                // Limpiar el código ANTES de procesar
                 const codigoLimpio = limpiarCodigoBarras(decodedText);
                 this.procesarCodigo(tipo, codigoLimpio);
                 this.currentScanner = null;
@@ -36,32 +38,30 @@ const Scanner = {
     procesarCodigo(tipo, codigoLimpio) {
         if (!codigoLimpio) return;
         
-        // Asegurar que sea string
-        const codigoStr = String(codigoLimpio);
-        
         switch(tipo) {
             case 'ingreso':
                 const campoIngreso = document.getElementById('ing-codigo-barras');
                 if (campoIngreso) {
-                    campoIngreso.value = codigoStr;
-                }
-                if (typeof App !== 'undefined' && App.buscarPorCodigoBarrasIngreso) {
-                    App.buscarPorCodigoBarrasIngreso();
+                    campoIngreso.value = codigoLimpio;
+                    // Disparar búsqueda
+                    if (typeof App !== 'undefined' && App.buscarPorCodigoBarrasIngreso) {
+                        App.buscarPorCodigoBarrasIngreso();
+                    }
                 }
                 break;
             case 'salida':
                 const campoSalida = document.getElementById('sal-codigo-barras');
                 if (campoSalida) {
-                    campoSalida.value = codigoStr;
+                    campoSalida.value = codigoLimpio;
                 }
                 if (typeof App !== 'undefined' && App.buscarPorCodigoBarrasSalida) {
-                    App.buscarPorCodigoBarrasSalida(codigoStr);
+                    App.buscarPorCodigoBarrasSalida(codigoLimpio);
                 }
                 break;
             case 'edicion':
                 const campoEdicion = document.getElementById('edit-codigo-barras');
                 if (campoEdicion) {
-                    campoEdicion.value = codigoStr;
+                    campoEdicion.value = codigoLimpio;
                 }
                 if (typeof App !== 'undefined' && App.buscarPorCodigoBarrasEdicion) {
                     App.buscarPorCodigoBarrasEdicion();
