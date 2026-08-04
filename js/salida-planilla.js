@@ -44,7 +44,6 @@ const PlanillaSalida = {
             btnAgregar.addEventListener('click', () => this.agregarPrimerResultado());
         }
         
-        // Actualizar firma del receptor en tiempo real
         const receptorNombre = document.getElementById('receptor-nombre');
         if (receptorNombre) {
             receptorNombre.addEventListener('input', () => {
@@ -65,7 +64,6 @@ const PlanillaSalida = {
             return;
         }
         
-        // Buscar en inventario por nombre o código de barras
         let resultados = App.state.inventario.filter(i => 
             i.stock > 0 && (
                 i.nombre.toLowerCase().includes(busqueda) ||
@@ -81,7 +79,6 @@ const PlanillaSalida = {
         let html = '';
         resultados.slice(0, 15).forEach(i => {
             const yaAgregado = this.insumosSeleccionados.find(x => x.id === i.id);
-            const nombreEscapado = i.nombre.replace(/'/g, "\\'");
             html += `<div onclick="PlanillaSalida.agregarInsumo(${i.id})" 
                 style="padding:10px 12px;cursor:pointer;border-bottom:1px solid #eee;font-size:12px;
                 ${yaAgregado ? 'background:#e8f5e9;' : ''}"
@@ -121,7 +118,6 @@ const PlanillaSalida = {
         const item = App.state.inventario.find(i => i.id === id);
         if (!item) return;
         
-        // Verificar si ya está agregado
         const existente = this.insumosSeleccionados.find(x => x.id === id);
         if (existente) {
             UI.showToast('ESTE INSUMO YA FUE AGREGADO', 'warning');
@@ -235,7 +231,6 @@ const PlanillaSalida = {
             return;
         }
         
-        // Confirmar
         if (!confirm(`¿CONFIRMAR SALIDA DE ${this.insumosSeleccionados.length} INSUMO(S)?\n\nRECEPTOR: ${receptorNombre.toUpperCase()}`)) {
             return;
         }
@@ -259,7 +254,6 @@ const PlanillaSalida = {
         
         if (errores === 0) {
             UI.showToast(`${procesados} INSUMO(S) PROCESADO(S) CORRECTAMENTE`, 'success');
-            // Limpiar planilla
             this.insumosSeleccionados = [];
             this.renderizarLista();
             document.getElementById('receptor-nombre').value = '';
