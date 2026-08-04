@@ -38,13 +38,14 @@ async function cerrarSesion() {
 }
 
 // Función para limpiar códigos de barras
-// Solo extrae números del código escaneado
+// Extrae solo números pero mantiene el 0 inicial como string
 function limpiarCodigoBarras(codigo) {
     if (!codigo) return '';
     
-    // Extraer SOLO los números del código
+    // Extraer SOLO los números del código (como string, no como número)
     let numeros = codigo.replace(/\D/g, '');
     
+    // Retornar tal cual, manteniendo ceros a la izquierda
     return numeros;
 }
 
