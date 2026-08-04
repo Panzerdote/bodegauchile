@@ -149,6 +149,40 @@ const App = {
         }
     },
 
+    async buscarAnaquelesIngreso() {
+        const input = document.getElementById('ing-anaquel');
+        const sugerencias = document.getElementById('sugerencias-anaquel');
+        if (!input || !sugerencias) return;
+        
+        const busqueda = input.value.trim();
+        
+        try {
+            const resultados = await DB.buscarAnaqueles(busqueda);
+            
+            if (resultados.length === 0) {
+                sugerencias.style.display = 'none';
+                return;
+            }
+            
+            let html = '';
+            resultados.forEach(a => {
+                html += `<div onclick="App.seleccionarAnaquel('${a}')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #eee;font-size:13px;" onmouseover="this.style.background='#eef2f7'" onmouseout="this.style.background='white'"><strong>${a}</strong></div>`;
+            });
+            
+            sugerencias.innerHTML = html;
+            sugerencias.style.display = 'block';
+        } catch (error) {
+            console.error('Error al buscar anaqueles:', error);
+        }
+    },
+
+    seleccionarAnaquel(anaquel) {
+        const input = document.getElementById('ing-anaquel');
+        const sugerencias = document.getElementById('sugerencias-anaquel');
+        if (input) input.value = anaquel;
+        if (sugerencias) sugerencias.style.display = 'none';
+    },
+
     async buscarPorCodigoBarrasIngreso() {
         const codigoInput = document.getElementById('ing-codigo-barras');
         if (!codigoInput) return;
@@ -249,7 +283,7 @@ const App = {
         if (!ingNombre || !ingCantidad) return;
         
         const nombre = ingNombre.value.trim().toUpperCase();
-        const anaquel = esBotiquin ? 'BOTIQUIN' : (ingAnaque ? ingAnaque.value : '');
+        const anaquel = esBotiquin ? 'BOTIQUIN' : (ingAnaque ? ingAnaque.value.trim().toUpperCase() : '');
         const cantidad = parseInt(ingCantidad.value);
         const unidad = ingUnidad ? ingUnidad.value : '';
         const lote = ingLote ? (ingLote.tagName === 'SELECT' ? ingLote.value : ingLote.value.trim().toUpperCase()) : '';
@@ -459,19 +493,19 @@ const App = {
             await this.loadAllData(); 
             this.mostrarContenidoUnidades(); 
             UI.showToast('UNIDAD AGREGADA', 'success'); 
-        } catch (e) { UI.showToast('ERROR', 'error'); } 
+        } catch (e) { UI.showToast('ERROR: ' + e.message, 'error'); } 
     },
 
     async eliminarUnidad(id) { 
         const u = this.state.unidades.find(x => x.id === id); 
-        if (!u || !confirm('¿ELIMINAR?')) return; 
+        if (!u || !confirm('¿ELIMINAR UNIDAD "' + u.nombre + '"?')) return; 
         try { 
             await DB.addMovimiento({ tipo: 'ELIMINACION_UNIDAD', insumo: `UNIDAD: ${u.nombre}`, cantidad: 0 }); 
             await DB.deleteUnidadMedida(id); 
             await this.loadAllData(); 
             this.mostrarContenidoUnidades(); 
             UI.showToast('UNIDAD ELIMINADA', 'success'); 
-        } catch (e) { UI.showToast('ERROR', 'error'); } 
+        } catch (e) { UI.showToast('ERROR: ' + e.message, 'error'); } 
     },
 
     async crearNuevaSeccion() { 
@@ -484,16 +518,20 @@ const App = {
         const c = cant ? (parseInt(cant.value) || 1) : 1; 
         if (!l || !d) { UI.showToast('COMPLETE LOS CAMPOS', 'error'); return; } 
         try { 
-            for (let i = 1; i <= c; i++) await DB.addSeccion(l, d, String(i)); 
+            for (let i = 1; i <= c; i++) {
+                // Formatear número: 1-9 -> 01-09, 10+ -> igual
+                const anaquelFormateado = i < 10 ? '0' + i : String(i);
+                await DB.addSeccion(l, d, anaquelFormateado);
+            }
             await DB.addMovimiento({ tipo: 'CREACION_SECCION', insumo: `SECCIÓN ${l}`, cantidad: c }); 
             await this.loadAllData(); 
             this.mostrarContenidoSecciones(); 
             UI.showToast('SECCIÓN CREADA', 'success'); 
-        } catch (e) { UI.showToast('ERROR', 'error'); } 
+        } catch (e) { UI.showToast('ERROR: ' + e.message, 'error'); } 
     },
 
     async eliminarSeccionCompleta(sec) { 
-        if (!confirm('¿ELIMINAR SECCIÓN ' + sec + '?')) return; 
+        if (!confirm('¿ELIMINAR SECCIÓN ' + sec + ' Y TODOS SUS ANAQUELES?')) return; 
         const items = this.state.secciones.filter(s => s.seccion === sec); 
         try { 
             await DB.addMovimiento({ tipo: 'ELIMINACION_SECCION', insumo: `SECCIÓN ${sec}`, cantidad: items.length }); 
@@ -501,7 +539,7 @@ const App = {
             await this.loadAllData(); 
             this.mostrarContenidoSecciones(); 
             UI.showToast('SECCIÓN ELIMINADA', 'success'); 
-        } catch (e) { UI.showToast('ERROR', 'error'); } 
+        } catch (e) { UI.showToast('ERROR: ' + e.message, 'error'); } 
     },
 
     getColorTipo(t) { 
@@ -560,7 +598,7 @@ const App = {
     },
 
     async desactivarUsuario(id) { 
-        if (!confirm('¿DESACTIVAR?')) return; 
+        if (!confirm('¿DESACTIVAR USUARIO?')) return; 
         await supabaseClient.from('usuarios').update({ activo: false }).eq('id', id); 
         UI.showToast('USUARIO DESACTIVADO', 'success'); 
         this.showGestionUsuariosModal(); 
