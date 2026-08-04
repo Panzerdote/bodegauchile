@@ -1,13 +1,59 @@
 const Modales = {
     async showIngreso(state) {
         const esBotiquin = window.currentBodega === 'BOTIQUIN';
-        const anaqueles = state.secciones.map(s => s.seccion + s.anaquel).sort();
         const unidades = state.unidades.map(u => u.nombre).sort();
         const esMovil = window.innerWidth <= 768;
-        const campoAnaquel = esBotiquin ? '' : `<div class="form-group"><label>ANAQUEL *</label><select id="ing-anaquel"><option value="">SELECCIONE...</option>${anaqueles.map(a => `<option value="${a}">${a}</option>`).join('')}</select>${anaqueles.length===0?'<small style="color:#c0392b;">NO HAY ANAQUELES.</small>':''}</div>`;
+        
+        // Campo anaquel con buscador (en lugar de select)
+        const campoAnaquel = esBotiquin ? '' : `
+            <div class="form-group" style="position:relative;">
+                <label>ANAQUEL *</label>
+                <input type="text" id="ing-anaquel" placeholder="ESCRIBA O ESCANEE EL ANAQUEL..." autocomplete="off" onkeyup="App.buscarAnaquelesIngreso()" onfocus="App.buscarAnaquelesIngreso()" style="text-transform:uppercase;">
+                <div id="sugerencias-anaquel" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:0 0 5px 5px;max-height:200px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div>
+                ${state.secciones.length===0?'<small style="color:#c0392b;">NO HAY ANAQUELES CONFIGURADOS.</small>':''}
+            </div>`;
+        
         const botonEscaner = esMovil ? `<div class="form-group"><button type="button" class="btn btn-info btn-block" onclick="Scanner.abrir('ingreso')" style="margin-bottom:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg> ESCANEAR CÓDIGO DE BARRAS</button></div>` : '';
-        UI.openModal(`<h2>NUEVO INGRESO</h2>${botonEscaner}<div id="scanner-container-ingreso" style="display:none;margin-bottom:10px;"></div><div class="form-group" style="position:relative;"><label>NOMBRE DEL INSUMO *</label><input type="text" id="ing-nombre" placeholder="ESCRIBA EL NOMBRE..." autofocus autocomplete="off" onkeyup="App.buscarCoincidencias('ing')" onfocus="App.buscarCoincidencias('ing')" style="text-transform:uppercase;"><div id="sugerencias-ing" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:0 0 5px 5px;max-height:200px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div></div><div class="form-group"><label>CÓDIGO DE BARRAS</label><input type="text" id="ing-codigo-barras" placeholder="ESCANEE O INGRESE EL CÓDIGO..." onkeypress="if(event.key==='Enter'){event.preventDefault();App.buscarPorCodigoBarrasIngreso();}"></div>${campoAnaquel}<div class="form-row"><div class="form-group"><label>CANTIDAD *</label><input type="number" id="ing-cantidad" value="1" min="1"></div><div class="form-group"><label>UNIDAD</label><select id="ing-unidad"><option value="">SELECCIONE...</option>${unidades.map(u => `<option value="${u}">${u}</option>`).join('')}</select></div></div><div class="form-row"><div class="form-group"><label>LOTE</label><div id="ing-lote-container"><input type="text" id="ing-lote" style="text-transform:uppercase;"></div></div><div class="form-group"><label>VENCIMIENTO</label><input type="date" id="ing-vencimiento"></div></div><div class="form-group"><label>COMENTARIOS</label><textarea id="ing-comentarios" style="text-transform:uppercase;"></textarea></div><div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">CANCELAR</button><button class="btn btn-success" onclick="App.procesarIngreso()">${UI.icons.plus} REGISTRAR</button></div>`);
-        setTimeout(() => { document.addEventListener('click', function cerrar(e) { const inp = document.getElementById('ing-nombre'); const sug = document.getElementById('sugerencias-ing'); if (inp && sug && e.target !== inp && !sug.contains(e.target)) sug.style.display = 'none'; }); }, 100);
+        
+        UI.openModal(`<h2>NUEVO INGRESO</h2>
+            ${botonEscaner}
+            <div id="scanner-container-ingreso" style="display:none;margin-bottom:10px;"></div>
+            <div class="form-group" style="position:relative;">
+                <label>NOMBRE DEL INSUMO *</label>
+                <input type="text" id="ing-nombre" placeholder="ESCRIBA EL NOMBRE..." autofocus autocomplete="off" onkeyup="App.buscarCoincidencias('ing')" onfocus="App.buscarCoincidencias('ing')" style="text-transform:uppercase;">
+                <div id="sugerencias-ing" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:0 0 5px 5px;max-height:200px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div>
+            </div>
+            <div class="form-group">
+                <label>CÓDIGO DE BARRAS</label>
+                <input type="text" id="ing-codigo-barras" placeholder="ESCANEE O INGRESE EL CÓDIGO..." onkeypress="if(event.key==='Enter'){event.preventDefault();App.buscarPorCodigoBarrasIngreso();}">
+            </div>
+            ${campoAnaquel}
+            <div class="form-row">
+                <div class="form-group"><label>CANTIDAD *</label><input type="number" id="ing-cantidad" value="1" min="1"></div>
+                <div class="form-group"><label>UNIDAD</label><select id="ing-unidad"><option value="">SELECCIONE...</option>${unidades.map(u => `<option value="${u}">${u}</option>`).join('')}</select></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>LOTE</label><div id="ing-lote-container"><input type="text" id="ing-lote" style="text-transform:uppercase;"></div></div>
+                <div class="form-group"><label>VENCIMIENTO</label><input type="date" id="ing-vencimiento"></div>
+            </div>
+            <div class="form-group"><label>COMENTARIOS</label><textarea id="ing-comentarios" style="text-transform:uppercase;"></textarea></div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="UI.closeModal()">CANCELAR</button>
+                <button class="btn btn-success" onclick="App.procesarIngreso()">${UI.icons.plus} REGISTRAR</button>
+            </div>`);
+        
+        setTimeout(() => { 
+            document.addEventListener('click', function cerrarIng(e) { 
+                const inp = document.getElementById('ing-nombre'); 
+                const sug = document.getElementById('sugerencias-ing'); 
+                if (inp && sug && e.target !== inp && !sug.contains(e.target)) sug.style.display = 'none'; 
+            }); 
+            document.addEventListener('click', function cerrarAnq(e) { 
+                const inp = document.getElementById('ing-anaquel'); 
+                const sug = document.getElementById('sugerencias-anaquel'); 
+                if (inp && sug && e.target !== inp && !sug.contains(e.target)) sug.style.display = 'none'; 
+            }); 
+        }, 100);
     },
 
     showSalida(state) {
