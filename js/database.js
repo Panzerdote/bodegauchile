@@ -13,8 +13,13 @@ const DB = {
     },
     async addSeccion(seccion, descripcion, anaquel) {
         const bodega = window.currentBodega || 'BODEGA';
-        const { data, error } = await supabaseClient.from('secciones').insert([{ seccion, descripcion: descripcion ? descripcion.toUpperCase() : null, anaquel, bodega }]).select();
-        if (error) { if (error.code === '23505') throw new Error('EL ANAQUEL ' + seccion + anaquel + ' YA EXISTE'); throw error; } return data[0];
+        // Formatear anaquel: si es un número del 1 al 9, agregar 0 adelante
+        let anaquelFormateado = anaquel;
+        if (/^\d$/.test(anaquel)) {
+            anaquelFormateado = '0' + anaquel;
+        }
+        const { data, error } = await supabaseClient.from('secciones').insert([{ seccion, descripcion: descripcion ? descripcion.toUpperCase() : null, anaquel: anaquelFormateado, bodega }]).select();
+        if (error) { if (error.code === '23505') throw new Error('EL ANAQUEL ' + seccion + anaquelFormateado + ' YA EXISTE'); throw error; } return data[0];
     },
     async deleteSeccion(id) { const { error } = await supabaseClient.from('secciones').delete().eq('id', id); if (error) throw error; return true; },
 
@@ -81,13 +86,23 @@ const DB = {
     async addUnidadMedida(nombre) {
         const bodega = window.currentBodega || 'BODEGA';
         
-        // Verificar si ya existe primero
-        const { data: existente } = await supabaseClient.from('unidades_medida').select('id').eq('nombre', nombre.toUpperCase()).eq('bodega', bodega).single();
-        if (existente) {
+        const { data: existentes, error: errorBusqueda } = await supabaseClient
+            .from('unidades_medida')
+            .select('id')
+            .eq('nombre', nombre.toUpperCase())
+            .eq('bodega', bodega);
+        
+        if (errorBusqueda) throw errorBusqueda;
+        
+        if (existentes && existentes.length > 0) {
             throw new Error('LA UNIDAD "' + nombre.toUpperCase() + '" YA EXISTE EN ' + bodega);
         }
         
-        const { data, error } = await supabaseClient.from('unidades_medida').insert([{ nombre: nombre.toUpperCase(), bodega }]).select();
+        const { data, error } = await supabaseClient
+            .from('unidades_medida')
+            .insert([{ nombre: nombre.toUpperCase(), bodega }])
+            .select();
+        
         if (error) { 
             if (error.code === '23505') throw new Error('LA UNIDAD "' + nombre.toUpperCase() + '" YA EXISTE EN ' + bodega); 
             throw error; 
@@ -109,6 +124,28 @@ const DB = {
         const bodega = window.currentBodega || 'BODEGA';
         const { data, error } = await supabaseClient.from('inventario').select('*').eq('codigo_barras', codigo).eq('bodega', bodega).order('stock', { ascending: false });
         if (error) throw error; return data || [];
+    },
+
+    // Buscar anaqueles por texto (para autocompletado)
+    async buscarAnaqueles(busqueda) {
+        const bodega = window.currentBodega || 'BODEGA';
+        const { data, error } = await supabaseClient
+            .from('secciones')
+            .select('seccion, anaquel')
+            .eq('bodega', bodega)
+            .order('seccion')
+            .order('anaquel');
+        if (error) throw error;
+        
+        if (!busqueda || busqueda.trim() === '') {
+            return (data || []).map(s => s.seccion + s.anaquel);
+        }
+        
+        const busquedaUpper = busqueda.toUpperCase();
+        return (data || [])
+            .map(s => s.seccion + s.anaquel)
+            .filter(a => a.includes(busquedaUpper))
+            .slice(0, 15);
     },
 
     async procesarIngreso(nombre, seccion, anaquel, cantidad, unidad, lote, vencimiento, codigoBarras, comentarios) {
@@ -140,14 +177,24 @@ const DB = {
             if (cantidad <= 0) throw new Error('CANTIDAD INVÁLIDA');
             const sa = item.stock, sn = sa - cantidad;
             
+            // NO ELIMINAR - Solo actualizar stock a 0
+            await this.updateInventarioItem(itemId, { stock: sn });
+            
+            let comentarioFinal = comentarios ? comentarios.toUpperCase() : '';
             if (sn === 0) {
-                await this.addMovimiento({ tipo: 'SALIDA', insumo: item.nombre, cantidad, stock_anterior: sa, stock_nuevo: 0, anaquel: item.anaquel, comentarios: (comentarios ? comentarios.toUpperCase() + ' | ' : '') + 'STOCK AGOTADO - ELIMINADO AUTOMÁTICAMENTE' });
-                await this.deleteInventarioItem(itemId);
-                return { stockNuevo: 0, nombre: item.nombre, anaquel: item.anaquel, eliminado: true };
+                comentarioFinal = comentarioFinal ? comentarioFinal + ' | STOCK AGOTADO' : 'STOCK AGOTADO';
             }
             
-            await this.updateInventarioItem(itemId, { stock: sn });
-            await this.addMovimiento({ tipo: 'SALIDA', insumo: item.nombre, cantidad, stock_anterior: sa, stock_nuevo: sn, anaquel: item.anaquel, comentarios: comentarios ? comentarios.toUpperCase() : null });
+            await this.addMovimiento({ 
+                tipo: 'SALIDA', 
+                insumo: item.nombre, 
+                cantidad, 
+                stock_anterior: sa, 
+                stock_nuevo: sn, 
+                anaquel: item.anaquel, 
+                comentarios: comentarioFinal || null 
+            });
+            
             return { stockNuevo: sn, nombre: item.nombre, anaquel: item.anaquel, eliminado: false };
         } catch (e) { console.error('Error procesarSalida:', e); throw e; }
     }
