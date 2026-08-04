@@ -1,79 +1,19 @@
+// Módulo de escáner deshabilitado para móvil
+// Solo se usa pistola lectora USB (funciona como entrada de teclado)
 const Scanner = {
     currentScanner: null,
 
     abrir(tipo) {
-        const containerId = tipo === 'edicion' ? 'scanner-container-edicion' : `scanner-container-${tipo}`;
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        container.style.display = 'block';
-        container.innerHTML = '';
-        
-        if (this.currentScanner) { 
-            this.currentScanner.stop(); 
-            this.currentScanner = null;
-        }
-        
-        const html5QrCode = new Html5Qrcode(containerId);
-        html5QrCode.start(
-            { facingMode: 'environment' }, 
-            { fps: 10, qrbox: { width: 250, height: 150 } }, 
-            (decodedText) => {
-                html5QrCode.stop();
-                container.style.display = 'none';
-                
-                // Limpiar el código ANTES de procesar
-                const codigoLimpio = limpiarCodigoBarras(decodedText);
-                this.procesarCodigo(tipo, codigoLimpio);
-                this.currentScanner = null;
-            }, 
-            (errorMessage) => { }
-        ).catch(err => { 
-            container.style.display = 'none'; 
-            UI.showToast('NO SE PUDO ABRIR LA CÁMARA.', 'warning'); 
-        });
-        
-        this.currentScanner = html5QrCode;
+        // Ya no se usa la cámara, solo pistola lectora
+        UI.showToast('USE LA PISTOLA LECTORA DE CÓDIGOS DE BARRAS', 'warning');
     },
 
     procesarCodigo(tipo, codigoLimpio) {
-        if (!codigoLimpio) return;
-        
-        switch(tipo) {
-            case 'ingreso':
-                const campoIngreso = document.getElementById('ing-codigo-barras');
-                if (campoIngreso) {
-                    campoIngreso.value = codigoLimpio;
-                    // Disparar búsqueda
-                    if (typeof App !== 'undefined' && App.buscarPorCodigoBarrasIngreso) {
-                        App.buscarPorCodigoBarrasIngreso();
-                    }
-                }
-                break;
-            case 'salida':
-                const campoSalida = document.getElementById('sal-codigo-barras');
-                if (campoSalida) {
-                    campoSalida.value = codigoLimpio;
-                }
-                if (typeof App !== 'undefined' && App.buscarPorCodigoBarrasSalida) {
-                    App.buscarPorCodigoBarrasSalida(codigoLimpio);
-                }
-                break;
-            case 'edicion':
-                const campoEdicion = document.getElementById('edit-codigo-barras');
-                if (campoEdicion) {
-                    campoEdicion.value = codigoLimpio;
-                }
-                if (typeof App !== 'undefined' && App.buscarPorCodigoBarrasEdicion) {
-                    App.buscarPorCodigoBarrasEdicion();
-                }
-                break;
-        }
+        // Este método ya no se llama desde la cámara
+        // La pistola lectora ingresa el código directamente en el campo
     },
 
     stop() {
-        if (this.currentScanner) {
-            this.currentScanner.stop();
-            this.currentScanner = null;
-        }
+        // Sin cámara, no hay nada que detener
     }
 };
