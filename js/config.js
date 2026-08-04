@@ -37,11 +37,12 @@ async function cerrarSesion() {
     window.location.href = 'login.html'; 
 }
 
-// Función para limpiar códigos de barras (usada en múltiples módulos)
+// Función para limpiar códigos de barras
+// Solo elimina espacios en blanco y guiones, mantiene todo lo demás
 function limpiarCodigoBarras(codigo) {
     if (!codigo) return '';
-    const match = codigo.match(/\(01\)(\d+)/);
-    return match ? match[1] : codigo.replace(/[()\s-]/g, '').toUpperCase();
+    // Solo quitar espacios y guiones, mantener paréntesis y todo lo demás
+    return codigo.replace(/[\s-]/g, '').toUpperCase();
 }
 
 // Función para escapar HTML
