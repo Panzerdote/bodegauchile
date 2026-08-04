@@ -2,22 +2,16 @@ const Modales = {
     async showIngreso(state) {
         const esBotiquin = window.currentBodega === 'BOTIQUIN';
         const unidades = state.unidades.map(u => u.nombre).sort();
-        const esMovil = window.innerWidth <= 768;
         
-        // Campo anaquel con buscador (en lugar de select)
         const campoAnaquel = esBotiquin ? '' : `
             <div class="form-group" style="position:relative;">
                 <label>ANAQUEL *</label>
-                <input type="text" id="ing-anaquel" placeholder="ESCRIBA O ESCANEE EL ANAQUEL..." autocomplete="off" onkeyup="App.buscarAnaquelesIngreso()" onfocus="App.buscarAnaquelesIngreso()" style="text-transform:uppercase;">
+                <input type="text" id="ing-anaquel" placeholder="ESCRIBA O PISTOLEE EL ANAQUEL..." autocomplete="off" onkeyup="App.buscarAnaquelesIngreso()" onfocus="App.buscarAnaquelesIngreso()" style="text-transform:uppercase;">
                 <div id="sugerencias-anaquel" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:0 0 5px 5px;max-height:200px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div>
                 ${state.secciones.length===0?'<small style="color:#c0392b;">NO HAY ANAQUELES CONFIGURADOS.</small>':''}
             </div>`;
         
-        const botonEscaner = esMovil ? `<div class="form-group"><button type="button" class="btn btn-info btn-block" onclick="Scanner.abrir('ingreso')" style="margin-bottom:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg> ESCANEAR CÓDIGO DE BARRAS</button></div>` : '';
-        
         UI.openModal(`<h2>NUEVO INGRESO</h2>
-            ${botonEscaner}
-            <div id="scanner-container-ingreso" style="display:none;margin-bottom:10px;"></div>
             <div class="form-group" style="position:relative;">
                 <label>NOMBRE DEL INSUMO *</label>
                 <input type="text" id="ing-nombre" placeholder="ESCRIBA EL NOMBRE..." autofocus autocomplete="off" onkeyup="App.buscarCoincidencias('ing')" onfocus="App.buscarCoincidencias('ing')" style="text-transform:uppercase;">
@@ -25,7 +19,7 @@ const Modales = {
             </div>
             <div class="form-group">
                 <label>CÓDIGO DE BARRAS</label>
-                <input type="text" id="ing-codigo-barras" placeholder="ESCANEE O INGRESE EL CÓDIGO..." onkeypress="if(event.key==='Enter'){event.preventDefault();App.buscarPorCodigoBarrasIngreso();}">
+                <input type="text" id="ing-codigo-barras" placeholder="PISTOLEE O INGRESE EL CÓDIGO..." onkeypress="if(event.key==='Enter'){event.preventDefault();App.buscarPorCodigoBarrasIngreso();}">
             </div>
             ${campoAnaquel}
             <div class="form-row">
@@ -59,11 +53,9 @@ const Modales = {
     showSalida(state) {
         const anaqueles = state.secciones.map(s => s.seccion + s.anaquel).sort();
         const esBotiquin = window.currentBodega === 'BOTIQUIN';
-        const esMovil = window.innerWidth <= 768;
         const campoAnaquel = esBotiquin ? '' : `<div class="form-group"><label>FILTRAR POR ANAQUEL</label><select id="sal-anaquel-filtro" onchange="App.filtrarPorAnaquelSalida()"><option value="">TODOS</option>${anaqueles.map(a => `<option value="${a}">${a}</option>`).join('')}</select></div>`;
-        const botonEscaner = esMovil ? `<div class="form-group"><button type="button" class="btn btn-info btn-block" onclick="Scanner.abrir('salida')" style="margin-bottom:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg> ESCANEAR CÓDIGO DE BARRAS</button></div>` : '';
-        const campoCodigoBarras = `<div class="form-group"><label>CÓDIGO DE BARRAS</label><input type="text" id="sal-codigo-barras" placeholder="ESCANEE O INGRESE EL CÓDIGO..." onkeypress="if(event.key==='Enter'){event.preventDefault();App.buscarPorCodigoBarrasSalida(document.getElementById('sal-codigo-barras').value);}"></div>`;
-        UI.openModal(`<h2>NUEVA SALIDA</h2>${botonEscaner}<div id="scanner-container-salida" style="display:none;margin-bottom:10px;"></div>${campoCodigoBarras}${campoAnaquel}<div class="form-group" style="position:relative;"><label>BUSCAR POR NOMBRE</label><input type="text" id="sal-busqueda" placeholder="ESCRIBA EL NOMBRE..." autocomplete="off" onkeyup="App.buscarCoincidenciasSalida()" onfocus="App.buscarCoincidenciasSalida()" style="text-transform:uppercase;"><div id="sugerencias-sal" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:0 0 5px 5px;max-height:200px;overflow-y:auto;z-index:100;display:none;"></div></div><div id="resultados-busqueda"><p style="color:#666;padding:15px;">BUSQUE UN INSUMO PARA RETIRAR.</p></div><div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">CANCELAR</button></div>`);
+        const campoCodigoBarras = `<div class="form-group"><label>CÓDIGO DE BARRAS</label><input type="text" id="sal-codigo-barras" placeholder="PISTOLEE O INGRESE EL CÓDIGO..." onkeypress="if(event.key==='Enter'){event.preventDefault();App.buscarPorCodigoBarrasSalida(document.getElementById('sal-codigo-barras').value);}"></div>`;
+        UI.openModal(`<h2>NUEVA SALIDA</h2>${campoCodigoBarras}${campoAnaquel}<div class="form-group" style="position:relative;"><label>BUSCAR POR NOMBRE</label><input type="text" id="sal-busqueda" placeholder="ESCRIBA EL NOMBRE..." autocomplete="off" onkeyup="App.buscarCoincidenciasSalida()" onfocus="App.buscarCoincidenciasSalida()" style="text-transform:uppercase;"><div id="sugerencias-sal" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:0 0 5px 5px;max-height:200px;overflow-y:auto;z-index:100;display:none;"></div></div><div id="resultados-busqueda"><p style="color:#666;padding:15px;">BUSQUE UN INSUMO PARA RETIRAR.</p></div><div class="form-actions"><button class="btn btn-secondary" onclick="UI.closeModal()">CANCELAR</button></div>`);
     },
 
     prepararSalida(id, state) {
