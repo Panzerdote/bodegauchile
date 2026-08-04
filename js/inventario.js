@@ -44,7 +44,6 @@ const InventarioModule = {
             }); 
         }
         
-        // Aplicar búsqueda por nombre, lote, código de barras o anaquel
         if (busqueda) {
             filtrados = filtrados.filter(item => 
                 item.nombre.toLowerCase().includes(busqueda) ||
@@ -103,15 +102,11 @@ const InventarioModule = {
         const esB = window.currentBodega === 'BOTIQUIN';
         const anaq = App.state.secciones.map(s => s.seccion + s.anaquel).sort();
         const und = App.state.unidades.map(u => u.nombre).sort();
-        const esMovil = window.innerWidth <= 768;
         const campoA = esB ? '' : `<div class="form-group"><label>ANAQUEL *</label><select id="edit-anaquel">${anaq.map(a => `<option value="${a}" ${a===i.anaquel?'selected':''}>${a}</option>`).join('')}</select></div>`;
-        const botonEscaner = esMovil ? `<div class="form-group"><button type="button" class="btn btn-info btn-block" onclick="Scanner.abrir('edicion')" style="margin-bottom:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg> ESCANEAR CÓDIGO DE BARRAS</button></div>` : '';
         
         UI.openModal(`<h2>EDITAR #${i.id}</h2>
-            ${botonEscaner}
-            <div id="scanner-container-edicion" style="display:none;margin-bottom:10px;"></div>
             <div class="form-group"><label>NOMBRE *</label><input type="text" id="edit-nombre" value="${escapeHtml(i.nombre||'')}" style="text-transform:uppercase;"></div>
-            <div class="form-group"><label>CÓDIGO DE BARRAS</label><input type="text" id="edit-codigo-barras" value="${escapeHtml(i.codigo_barras||'')}" onkeypress="if(event.key==='Enter'){event.preventDefault();InventarioModule.buscarPorCodigoBarrasEdicion();}"></div>
+            <div class="form-group"><label>CÓDIGO DE BARRAS</label><input type="text" id="edit-codigo-barras" value="${escapeHtml(i.codigo_barras||'')}"></div>
             ${campoA}
             <div class="form-row">
                 <div class="form-group"><label>STOCK</label><input type="number" id="edit-stock" value="${i.stock}" min="0"></div>
@@ -132,19 +127,29 @@ const InventarioModule = {
         const i = App.state.inventario.find(x => x.id === id); 
         if (!i) return; 
         const esB = window.currentBodega === 'BOTIQUIN'; 
-        const an = esB ? i.anaquel : document.getElementById('edit-anaquel').value; 
-        const ns = parseInt(document.getElementById('edit-stock').value); 
+        const editAnaque = document.getElementById('edit-anaquel');
+        const an = esB ? i.anaquel : (editAnaque ? editAnaque.value : i.anaquel); 
+        const editStock = document.getElementById('edit-stock');
+        const ns = editStock ? parseInt(editStock.value) : i.stock; 
+        const editNombre = document.getElementById('edit-nombre');
+        const editCB = document.getElementById('edit-codigo-barras');
+        const editUnidad = document.getElementById('edit-unidad');
+        const editLote = document.getElementById('edit-lote');
+        const editVenc = document.getElementById('edit-vencimiento');
+        const editCom = document.getElementById('edit-comentarios');
+        
         const up = { 
-            nombre: document.getElementById('edit-nombre').value.trim().toUpperCase(), 
+            nombre: editNombre ? editNombre.value.trim().toUpperCase() : i.nombre, 
             seccion: esB ? 'B' : an.charAt(0), 
             anaquel: an, 
             stock: ns, 
-            codigo_barras: limpiarCodigoBarras(document.getElementById('edit-codigo-barras').value) || null, 
-            unidad: document.getElementById('edit-unidad').value, 
-            lote: document.getElementById('edit-lote').value.trim().toUpperCase(), 
-            vencimiento: document.getElementById('edit-vencimiento').value || null, 
-            comentarios: document.getElementById('edit-comentarios').value.trim().toUpperCase() 
+            codigo_barras: editCB ? editCB.value.trim() : null, 
+            unidad: editUnidad ? editUnidad.value : i.unidad, 
+            lote: editLote ? editLote.value.trim().toUpperCase() : i.lote, 
+            vencimiento: editVenc ? editVenc.value : null, 
+            comentarios: editCom ? editCom.value.trim().toUpperCase() : i.comentarios
         }; 
+        
         if (!up.nombre || isNaN(ns) || ns < 0) { UI.showToast('COMPLETE LOS CAMPOS', 'error'); return; } 
         try { 
             await DB.updateInventarioItem(id, up); 
@@ -160,25 +165,7 @@ const InventarioModule = {
             UI.showToast('INSUMO ACTUALIZADO', 'success'); 
             await App.loadAllData(); 
             this.render(); 
-        } catch (e) { UI.showToast('ERROR', 'error'); } 
-    },
-
-    async buscarPorCodigoBarrasEdicion() {
-        const codigo = limpiarCodigoBarras(document.getElementById('edit-codigo-barras').value);
-        if (!codigo) return;
-        document.getElementById('edit-codigo-barras').value = codigo;
-        try {
-            const resultados = await DB.buscarPorCodigoBarras(codigo);
-            if (resultados.length > 0) {
-                const item = resultados[0];
-                document.getElementById('edit-nombre').value = item.nombre;
-                document.getElementById('edit-unidad').value = item.unidad || '';
-                if (document.getElementById('edit-anaquel')) document.getElementById('edit-anaquel').value = item.anaquel;
-                document.getElementById('edit-lote').value = item.lote || '';
-                document.getElementById('edit-vencimiento').value = item.vencimiento || '';
-                UI.showToast('INSUMO ENCONTRADO: ' + item.nombre, 'success');
-            } else { UI.showToast('CÓDIGO NUEVO.', 'warning'); }
-        } catch (e) { UI.showToast('ERROR AL BUSCAR CÓDIGO', 'error'); }
+        } catch (e) { UI.showToast('ERROR: ' + e.message, 'error'); } 
     },
 
     async eliminarInsumo(id) { 
@@ -192,6 +179,6 @@ const InventarioModule = {
             UI.showToast('INSUMO ELIMINADO', 'success'); 
             await App.loadAllData(); 
             this.render(); 
-        } catch (e) { UI.showToast('ERROR', 'error'); } 
+        } catch (e) { UI.showToast('ERROR: ' + e.message, 'error'); } 
     }
 };
