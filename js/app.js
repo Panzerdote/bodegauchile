@@ -188,9 +188,10 @@ const App = {
         if (!codigoInput) return;
         const codigo = limpiarCodigoBarras(codigoInput.value);
         if (!codigo) return;
-        codigoInput.value = codigo;
+        // Guardar como string para mantener ceros a la izquierda
+        codigoInput.value = String(codigo);
         try {
-            const resultados = await DB.buscarPorCodigoBarras(codigo);
+            const resultados = await DB.buscarPorCodigoBarras(String(codigo));
             if (resultados.length > 0) {
                 const item = resultados[0];
                 const ingNombre = document.getElementById('ing-nombre');
@@ -298,7 +299,7 @@ const App = {
         }
         const seccion = esBotiquin ? 'B' : anaquel.charAt(0);
         try { 
-            await DB.procesarIngreso(nombre, seccion, anaquel, cantidad, unidad, loteFinal, vencimiento, codigoBarras || null, comentarios); 
+            await DB.procesarIngreso(nombre, seccion, anaquel, cantidad, unidad, loteFinal, vencimiento, codigoBarras ? String(codigoBarras) : null, comentarios); 
             UI.closeModal(); 
             UI.showToast('INGRESO REGISTRADO', 'success'); 
             await this.loadAllData(); 
@@ -351,7 +352,7 @@ const App = {
     },
 
     async buscarPorCodigoBarrasSalida(codigo) {
-        const codigoLimpio = limpiarCodigoBarras(codigo);
+        const codigoLimpio = String(limpiarCodigoBarras(codigo));
         if (!codigoLimpio) return;
         try {
             const resultados = await DB.buscarPorCodigoBarras(codigoLimpio);
@@ -519,7 +520,6 @@ const App = {
         if (!l || !d) { UI.showToast('COMPLETE LOS CAMPOS', 'error'); return; } 
         try { 
             for (let i = 1; i <= c; i++) {
-                // Formatear número: 1-9 -> 01-09, 10+ -> igual
                 const anaquelFormateado = i < 10 ? '0' + i : String(i);
                 await DB.addSeccion(l, d, anaquelFormateado);
             }
