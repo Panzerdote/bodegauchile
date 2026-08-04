@@ -74,7 +74,6 @@ const App = {
         document.addEventListener('keydown', (e) => { 
             if (e.key === 'Escape') {
                 UI.closeModal();
-                if (typeof Scanner !== 'undefined') Scanner.stop();
             }
         });
     },
@@ -92,7 +91,7 @@ const App = {
     },
 
     esStockCritico(item) {
-        if (item.stock === 0) return true;
+        if (!item.stock || item.stock === 0) return true;
         const movs = this.state.movimientos.filter(m => 
             m.insumo && item.nombre && 
             m.insumo.toLowerCase() === item.nombre.toLowerCase() && 
@@ -153,17 +152,27 @@ const App = {
         const input = document.getElementById('ing-anaquel');
         const sugerencias = document.getElementById('sugerencias-anaquel');
         if (!input || !sugerencias) return;
+        
         const busqueda = input.value.trim();
+        
         try {
             const resultados = await DB.buscarAnaqueles(busqueda);
-            if (resultados.length === 0) { sugerencias.style.display = 'none'; return; }
+            
+            if (resultados.length === 0) {
+                sugerencias.style.display = 'none';
+                return;
+            }
+            
             let html = '';
             resultados.forEach(a => {
                 html += `<div onclick="App.seleccionarAnaquel('${a}')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #eee;font-size:13px;" onmouseover="this.style.background='#eef2f7'" onmouseout="this.style.background='white'"><strong>${a}</strong></div>`;
             });
+            
             sugerencias.innerHTML = html;
             sugerencias.style.display = 'block';
-        } catch (error) { console.error('Error al buscar anaqueles:', error); }
+        } catch (error) {
+            console.error('Error al buscar anaqueles:', error);
+        }
     },
 
     seleccionarAnaquel(anaquel) {
@@ -176,9 +185,9 @@ const App = {
     async buscarPorCodigoBarrasIngreso() {
         const codigoInput = document.getElementById('ing-codigo-barras');
         if (!codigoInput) return;
-        const codigo = limpiarCodigoBarras(codigoInput.value);
+        const codigo = codigoInput.value.trim();
         if (!codigo) return;
-        codigoInput.value = codigo;
+        
         try {
             const resultados = await DB.buscarPorCodigoBarras(codigo);
             if (resultados.length > 0) {
@@ -237,7 +246,10 @@ const App = {
             const container = document.getElementById('ing-lote-container');
             if (container) container.innerHTML = '<input type="text" id="ing-lote" style="text-transform:uppercase;" placeholder="INGRESE NUEVO LOTE...">';
             const ingVenc = document.getElementById('ing-vencimiento');
-            if (ingVenc) { ingVenc.value = ''; ingVenc.focus(); }
+            if (ingVenc) {
+                ingVenc.value = '';
+                ingVenc.focus();
+            }
             return;
         }
         if (!selectedValue) return;
@@ -245,9 +257,11 @@ const App = {
         const vencimiento = selectedOption.getAttribute('data-vencimiento') || '';
         const unidad = selectedOption.getAttribute('data-unidad') || '';
         const anaquel = selectedOption.getAttribute('data-anaquel') || '';
+        
         const ingVenc = document.getElementById('ing-vencimiento');
         const ingUnidad = document.getElementById('ing-unidad');
         const ingAnaque = document.getElementById('ing-anaquel');
+        
         if (ingVenc) ingVenc.value = vencimiento;
         if (unidad && ingUnidad) ingUnidad.value = unidad;
         if (anaquel && ingAnaque) ingAnaque.value = anaquel;
@@ -273,7 +287,7 @@ const App = {
         const unidad = ingUnidad ? ingUnidad.value : '';
         const lote = ingLote ? (ingLote.tagName === 'SELECT' ? ingLote.value : ingLote.value.trim().toUpperCase()) : '';
         const vencimiento = ingVenc ? ingVenc.value : '';
-        const codigoBarras = ingCB ? limpiarCodigoBarras(ingCB.value) : '';
+        const codigoBarras = ingCB ? ingCB.value.trim() : '';
         const comentarios = ingCom ? ingCom.value.trim().toUpperCase() : '';
         const loteFinal = (lote === '__NUEVO_LOTE__') ? '' : lote;
         
@@ -336,10 +350,9 @@ const App = {
     },
 
     async buscarPorCodigoBarrasSalida(codigo) {
-        const codigoLimpio = limpiarCodigoBarras(codigo);
-        if (!codigoLimpio) return;
+        if (!codigo) return;
         try {
-            const resultados = await DB.buscarPorCodigoBarras(codigoLimpio);
+            const resultados = await DB.buscarPorCodigoBarras(codigo);
             if (resultados.length > 0) {
                 const itemsConStock = resultados.filter(i => i.stock > 0);
                 if (itemsConStock.length === 0) { UI.showToast('SIN STOCK DISPONIBLE', 'warning'); return; }
