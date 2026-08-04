@@ -38,11 +38,18 @@ async function cerrarSesion() {
 }
 
 // Función para limpiar códigos de barras
-// Solo elimina espacios en blanco y guiones, mantiene todo lo demás
 function limpiarCodigoBarras(codigo) {
     if (!codigo) return '';
-    // Solo quitar espacios y guiones, mantener paréntesis y todo lo demás
-    return codigo.replace(/[\s-]/g, '').toUpperCase();
+    
+    // Eliminar todo lo que esté entre paréntesis, incluyendo los paréntesis
+    // Ejemplo: (01)123456789 -> 123456789
+    // También maneja casos como ]01123456789 -> 123456789
+    let limpio = codigo.replace(/\([^)]*\)/g, '');
+    
+    // Eliminar cualquier carácter que no sea número o letra
+    limpio = limpio.replace(/[^A-Za-z0-9]/g, '');
+    
+    return limpio.toUpperCase();
 }
 
 // Función para escapar HTML
