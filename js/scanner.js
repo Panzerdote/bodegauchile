@@ -34,22 +34,35 @@ const Scanner = {
     },
 
     procesarCodigo(tipo, codigoLimpio) {
+        if (!codigoLimpio) return;
+        
+        // Asegurar que sea string
+        const codigoStr = String(codigoLimpio);
+        
         switch(tipo) {
             case 'ingreso':
-                document.getElementById('ing-codigo-barras').value = codigoLimpio;
+                const campoIngreso = document.getElementById('ing-codigo-barras');
+                if (campoIngreso) {
+                    campoIngreso.value = codigoStr;
+                }
                 if (typeof App !== 'undefined' && App.buscarPorCodigoBarrasIngreso) {
                     App.buscarPorCodigoBarrasIngreso();
                 }
                 break;
             case 'salida':
                 const campoSalida = document.getElementById('sal-codigo-barras');
-                if (campoSalida) campoSalida.value = codigoLimpio;
+                if (campoSalida) {
+                    campoSalida.value = codigoStr;
+                }
                 if (typeof App !== 'undefined' && App.buscarPorCodigoBarrasSalida) {
-                    App.buscarPorCodigoBarrasSalida(codigoLimpio);
+                    App.buscarPorCodigoBarrasSalida(codigoStr);
                 }
                 break;
             case 'edicion':
-                document.getElementById('edit-codigo-barras').value = codigoLimpio;
+                const campoEdicion = document.getElementById('edit-codigo-barras');
+                if (campoEdicion) {
+                    campoEdicion.value = codigoStr;
+                }
                 if (typeof App !== 'undefined' && App.buscarPorCodigoBarrasEdicion) {
                     App.buscarPorCodigoBarrasEdicion();
                 }
