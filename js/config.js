@@ -38,33 +38,14 @@ async function cerrarSesion() {
 }
 
 // Función para limpiar códigos de barras
+// Solo extrae números del código escaneado
 function limpiarCodigoBarras(codigo) {
     if (!codigo) return '';
     
-    let limpio = codigo.toUpperCase();
+    // Extraer SOLO los números del código
+    let numeros = codigo.replace(/\D/g, '');
     
-    // Reemplazar caracteres malinterpretados por el escáner
-    limpio = limpio.replace(/C01/g, '(01)');   // C01 -> (01)
-    limpio = limpio.replace(/]/g, '(');         // ] -> (
-    limpio = limpio.replace(/\[/g, '(');        // [ -> (
-    
-    // Si el código contiene (01), extraer solo los números después
-    const match = limpio.match(/\(01\)(\d+)/);
-    if (match) {
-        return '01' + match[1];
-    }
-    
-    // Si empieza con 01 seguido de números (sin paréntesis)
-    const match3 = limpio.match(/^01(\d+)/);
-    if (match3 && match3[1].length >= 6) {
-        return '01' + match3[1];
-    }
-    
-    // Eliminar paréntesis, corchetes, llaves y caracteres especiales
-    limpio = limpio.replace(/[()\[\]{}]/g, '');
-    limpio = limpio.replace(/[^A-Z0-9]/g, '');
-    
-    return limpio;
+    return numeros;
 }
 
 // Función para escapar HTML
