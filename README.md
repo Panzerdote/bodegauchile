@@ -1,6 +1,6 @@
 # 🏥 CEHAQ - Sistema de Gestión de Bodega
 
-> Sistema web para la gestión integral de insumos clínicos del **Centro de Entrenamiento de Habilidades Quirúrgicas (CEHAQ) - U. de Chile**.
+> Sistema web para la gestión integral de insumos clínicos del **Centro de Entrenamiento en Habilidades Quirúrgicas (CEHAQ) - U. de Chile**.
 
 Administra inventario, movimientos, control de stock crítico, vencimientos, códigos de barras y planillas de entrega desde una interfaz rápida, responsive y preparada para instalarse como aplicación (PWA).
 
@@ -442,7 +442,7 @@ Luego abrir un Pull Request.
 
 Proyecto de uso interno del
 
-**Centro de Entrenamiento de Habilidades Quirúrgicas (CEHAQ) - U. de Chile.**
+**Centro de Entrenamiento en Habilidades Quirúrgicas (CEHAQ) - U. de Chile.**
 
 ---
 
