@@ -38,18 +38,32 @@ async function cerrarSesion() {
 }
 
 // Función para limpiar códigos de barras
+// Convierte ] a (, elimina ) y otros caracteres no alfanuméricos (excepto letras/números)
 function limpiarCodigoBarras(codigo) {
     if (!codigo) return '';
     
-    // Eliminar todo lo que esté entre paréntesis, incluyendo los paréntesis
-    // Ejemplo: (01)123456789 -> 123456789
-    // También maneja casos como ]01123456789 -> 123456789
-    let limpio = codigo.replace(/\([^)]*\)/g, '');
+    let limpio = codigo.toUpperCase();
     
-    // Eliminar cualquier carácter que no sea número o letra
-    limpio = limpio.replace(/[^A-Za-z0-9]/g, '');
+    // Reemplazar caracteres malinterpretados por el escáner
+    limpio = limpio.replace(/]/g, '(');      // ] -> (
     
-    return limpio.toUpperCase();
+    // Si el código empieza con (01) o ]01), extraer solo los números después
+    const match = limpio.match(/\(01\)(\d+)/);
+    if (match) {
+        return '01' + match[1];
+    }
+    
+    // Si empieza con ]01, extraer los números
+    const match2 = limpio.match(/\]01(\d+)/);
+    if (match2) {
+        return '01' + match2[1];
+    }
+    
+    // Eliminar paréntesis y caracteres especiales, dejar solo letras y números
+    limpio = limpio.replace(/[()\[\]{}]/g, '');
+    limpio = limpio.replace(/[^A-Z0-9]/g, '');
+    
+    return limpio;
 }
 
 // Función para escapar HTML
