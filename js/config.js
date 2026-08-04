@@ -11,7 +11,6 @@ const CONFIG = {
     pageSize: 50
 };
 
-// Función global para verificar autenticación
 function checkAuth() {
     const userData = localStorage.getItem('cehaq_user');
     const bodega = localStorage.getItem('cehaq_bodega');
@@ -37,14 +36,6 @@ async function cerrarSesion() {
     window.location.href = 'login.html'; 
 }
 
-// Función para limpiar códigos de barras
-// Extrae SOLO los números del código escaneado
-function limpiarCodigoBarras(codigo) {
-    if (!codigo) return '';
-    return codigo.replace(/\D/g, '');
-}
-
-// Función para escapar HTML
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
